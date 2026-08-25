@@ -46,3 +46,15 @@ html, body, #root { margin: 0; height: 100%; }
   cursor: pointer;
 }
 .pg-save:hover { border-color: var(--md-accent); color: var(--md-accent); }
+
+.pg-reset {
+  padding: 3px 8px;
+  border: 1px solid #43434f;
+  border-radius: 4px;
+  background: #24242c;
+  color: #f2f2f5;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pg-reset:hover { border-color: #6a8bff; color: #fff; }

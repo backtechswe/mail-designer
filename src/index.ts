@@ -10,6 +10,9 @@
 export { MailDesigner } from "./MailDesigner.js";
 export type { MailDesignerProps } from "./MailDesigner.js";
 export { TemplateMenu } from "./editor/TemplateMenu.js";
+export { HistoryBar } from "./editor/HistoryBar.js";
+export type { HistoryControls, CommitOptions } from "./editor/useHistory.js";
+export type { HistoryEntry, HistoryState } from "./editor/history.js";
 export { Icon, iconPaths } from "./editor/icons.js";
 export type { IconName, IconProps } from "./editor/icons.js";
 export { sv, en, createI18n, createTranslate } from "./i18n.js";

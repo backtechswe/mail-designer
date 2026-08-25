@@ -4,6 +4,7 @@ import {
   TemplateMenu,
   builtInPresets,
   createLocalStorageTemplateStore,
+  emptyDocument,
   extractMergeFields,
 } from "@backtech/mail-designer";
 import type { ColorScheme, DesignerTheme, Locale, MailDocument } from "@backtech/mail-designer";
@@ -85,6 +86,13 @@ export function App() {
             <option value="en">English</option>
           </select>
         </label>
+
+        {/* Replaces the document from *outside* the editor, the way a host app's own
+            "new mail" button would. The editor records it as a history step rather than
+            discarding what came before. */}
+        <button type="button" className="pg-reset" onClick={() => setDoc(emptyDocument())}>
+          Nytt mejl (utifrån)
+        </button>
 
         <span className="pg-note">Merge-fält: {mergeFields.join(", ")}</span>
       </div>

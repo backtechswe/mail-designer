@@ -1,104 +1,124 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useReducer, useRef } from "react";
 import type { MailDocument } from "../types.js";
+import {
+  historyReducer,
+  initialHistory,
+  redoLabel,
+  redoTarget,
+  undoLabel,
+  undoTarget,
+} from "./history.js";
+
+export interface CommitOptions {
+  /** Names the change for the undo button. */
+  label: string;
+  /** Consecutive changes sharing a key merge into one step. See history.ts. */
+  coalesceKey?: string;
+}
 
 export interface HistoryControls {
   canUndo: boolean;
   canRedo: boolean;
+  /** What undo would reverse, and what redo would reapply. Null when unavailable. */
+  undoLabel: string | null;
+  redoLabel: string | null;
+  /** How many steps are stored, so a host can show the depth if it wants to. */
+  depth: number;
   undo: () => void;
   redo: () => void;
-  /**
-   * Commit a new document. `coalesce` merges this change into the previous one when they
-   * arrive within the coalesce window — that is what makes typing a sentence one undo step
-   * instead of thirty.
-   */
-  commit: (next: MailDocument, coalesce?: boolean) => void;
+  commit: (next: MailDocument, options: CommitOptions) => void;
 }
 
 export interface HistoryOptions {
   limit?: number;
   coalesceMs?: number;
+  /** Label used when the host swaps the document out from under the editor. */
+  externalLabel?: string;
 }
 
 /**
  * Undo/redo for a *controlled* document.
  *
  * MailDesigner takes `value` and `onChange`, so the document lives in the host app. Keeping
- * a second copy here would mean two sources of truth and a sync bug waiting to happen.
- * Instead only the past and future stacks live here; `value` is always the present.
+ * a second copy here would mean two sources of truth and a sync bug waiting to happen; only
+ * the past and future stacks live here, and `value` is always the present.
  *
- * A consequence worth knowing: when the host replaces `value` itself — loading a template,
- * say — that is not an edit, and the stacks are cleared. Undo cannot walk back into a
- * different document.
+ * A document that arrives from outside — the host loading a template from its own chrome —
+ * is recorded as a step rather than clearing the stacks. It is a change the user caused, so
+ * undo should reverse it like any other.
  */
 export function useHistory(
   value: MailDocument,
   onChange: (next: MailDocument) => void,
   options: HistoryOptions = {},
 ): HistoryControls {
-  const limit = options.limit ?? 50;
-  const coalesceMs = options.coalesceMs ?? 500;
+  const limit = options.limit ?? 200;
+  const coalesceMs = options.coalesceMs ?? 600;
+  const externalLabel = options.externalLabel ?? "";
 
-  const [past, setPast] = useState<MailDocument[]>([]);
-  const [future, setFuture] = useState<MailDocument[]>([]);
+  const [state, dispatch] = useReducer(historyReducer, initialHistory);
 
-  // What we last handed to onChange. Anything else arriving as `value` came from outside.
+  // The last document this hook handed to onChange. Anything else arriving as `value` came
+  // from the host.
   const emitted = useRef<MailDocument | null>(null);
-  const lastCommitAt = useRef(0);
-  const lastWasCoalescing = useRef(false);
+  const previous = useRef(value);
 
-  if (emitted.current !== null && emitted.current !== value) {
-    // Detected during render rather than in an effect so the stale stacks are never
-    // observable — an undo button must not be enabled for one frame against a document
-    // this hook has never seen.
-    emitted.current = null;
-    lastCommitAt.current = 0;
-    lastWasCoalescing.current = false;
-    if (past.length > 0) setPast([]);
-    if (future.length > 0) setFuture([]);
+  if (emitted.current !== value && previous.current !== value) {
+    // Detected during render so the stacks are never observably stale — an undo button must
+    // not point at a document that has already been replaced.
+    dispatch({
+      type: "commit",
+      previous: previous.current,
+      label: externalLabel,
+      at: Date.now(),
+      limit,
+      coalesceMs,
+    });
+    emitted.current = value;
   }
+  previous.current = value;
 
   const commit = useCallback(
-    (next: MailDocument, coalesce = false) => {
-      const now = Date.now();
-      const merge =
-        coalesce && lastWasCoalescing.current && now - lastCommitAt.current < coalesceMs;
-
-      if (!merge) {
-        setPast((prev) => {
-          const grown = [...prev, value];
-          return grown.length > limit ? grown.slice(grown.length - limit) : grown;
-        });
-      }
-      setFuture([]);
-      lastCommitAt.current = now;
-      lastWasCoalescing.current = coalesce;
+    (next: MailDocument, { label, coalesceKey }: CommitOptions) => {
+      dispatch({
+        type: "commit",
+        previous: value,
+        label,
+        coalesceKey,
+        at: Date.now(),
+        limit,
+        coalesceMs,
+      });
       emitted.current = next;
+      previous.current = next;
       onChange(next);
     },
     [value, onChange, limit, coalesceMs],
   );
 
-  const undo = useCallback(() => {
-    if (past.length === 0) return;
-    const previous = past[past.length - 1] as MailDocument;
-    setPast(past.slice(0, -1));
-    setFuture((prev) => [value, ...prev]);
-    // Break coalescing: the next keystroke must start a fresh step, not merge into
-    // whatever the undo landed on.
-    lastWasCoalescing.current = false;
-    emitted.current = previous;
-    onChange(previous);
-  }, [past, value, onChange]);
+  const step = useCallback(
+    (direction: "undo" | "redo") => {
+      const target = direction === "undo" ? undoTarget(state) : redoTarget(state);
+      if (!target) return;
+      dispatch({ type: direction, current: value });
+      emitted.current = target;
+      previous.current = target;
+      onChange(target);
+    },
+    [state, value, onChange],
+  );
 
-  const redo = useCallback(() => {
-    if (future.length === 0) return;
-    const next = future[0] as MailDocument;
-    setFuture(future.slice(1));
-    setPast((prev) => [...prev, value]);
-    lastWasCoalescing.current = false;
-    emitted.current = next;
-    onChange(next);
-  }, [future, value, onChange]);
-
-  return { canUndo: past.length > 0, canRedo: future.length > 0, undo, redo, commit };
+  return useMemo<HistoryControls>(
+    () => ({
+      canUndo: state.past.length > 0,
+      canRedo: state.future.length > 0,
+      undoLabel: undoLabel(state),
+      redoLabel: redoLabel(state),
+      depth: state.past.length,
+      undo: () => step("undo"),
+      redo: () => step("redo"),
+      commit,
+    }),
+    [state, step, commit],
+  );
 }

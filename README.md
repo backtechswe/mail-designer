@@ -85,6 +85,42 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
 
+### History
+
+Undo and redo are global: one stack covering every change the editor makes — typing, styling,
+moving, adding, deleting, email settings, applying a template — plus documents the host swaps
+in from its own chrome, which are recorded as a step rather than discarding what came before.
+
+The controls sit in their own recessed cluster, set apart from the view and viewport toggles,
+because history acts on the whole document and a button grouped with the preview toggle reads
+as belonging to the preview. Each step is named, so the button says *Undo: Moved a block*
+rather than just *Undo*.
+
+| | |
+|---|---|
+| `Cmd`/`Ctrl` + `Z` | Undo |
+| `Shift` + `Cmd`/`Ctrl` + `Z`, or `Ctrl` + `Y` | Redo |
+
+The shortcut is captured at the editor root. That beats the browser's own contenteditable
+undo — which would otherwise restore DOM text the document model knows nothing about, and the
+two histories would drift apart within a few keystrokes — while keeping the shortcut scoped to
+the editor rather than the whole host application.
+
+200 steps are kept. Consecutive changes merge only while they share a key scoped to what is
+being changed (`text:blockId`), so typing a sentence is one step but moving to another block
+starts a new one.
+
+```tsx
+<MailDesigner
+  historyLimit={500}
+  showHistory={false}                 // render no built-in cluster
+  onHistoryChange={setHistoryControls} // …and drive it from your own chrome
+/>
+```
+
+`HistoryControls` carries `canUndo`, `canRedo`, `undoLabel`, `redoLabel`, `depth`, `undo()`
+and `redo()`.
+
 ### Two levels of settings
 
 The inspector has two tabs, and the relationship between them is the thing to understand:

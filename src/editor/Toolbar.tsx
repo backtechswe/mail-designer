@@ -1,5 +1,6 @@
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
+import { HistoryBar } from "./HistoryBar.js";
 import type { ReactNode } from "react";
 
 export type ViewMode = "edit" | "preview";
@@ -10,39 +11,22 @@ export function Toolbar({
   onViewChange,
   viewport,
   onViewportChange,
+  showHistory = true,
   extra,
 }: {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
   viewport: Viewport;
   onViewportChange: (viewport: Viewport) => void;
+  showHistory?: boolean;
   /** Host-supplied controls — the template menu lands here. */
   extra?: ReactNode;
 }) {
-  const { history, t } = useEditor();
+  const { t } = useEditor();
 
   return (
     <div className="md-toolbar">
-      <div className="md-toolbar-group">
-        <button
-          type="button"
-          title={t("toolbar.undo")}
-          aria-label={t("toolbar.undo")}
-          disabled={!history.canUndo}
-          onClick={history.undo}
-        >
-          <Icon name="undo" size={13} />
-        </button>
-        <button
-          type="button"
-          title={t("toolbar.redo")}
-          aria-label={t("toolbar.redo")}
-          disabled={!history.canRedo}
-          onClick={history.redo}
-        >
-          <Icon name="redo" size={13} />
-        </button>
-      </div>
+      {showHistory ? <HistoryBar /> : null}
 
       <div className="md-toolbar-group md-segmented">
         <button type="button" aria-pressed={view === "edit"} onClick={() => onViewChange("edit")}>
