@@ -34,6 +34,7 @@ import { Canvas } from "./editor/Canvas.js";
 import { Palette } from "./editor/Palette.js";
 import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
+import { DEVICES } from "./editor/devices.js";
 import { ConfirmDialog } from "./editor/ConfirmDialog.js";
 import type { ConfirmRequest } from "./editor/ConfirmDialog.js";
 import { ShortcutsPanel } from "./editor/ShortcutsPanel.js";
@@ -49,12 +50,7 @@ import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
 
-/**
- * Widths the viewports render at, in CSS pixels — the numbers a real client would report.
- * 375 is the narrow end of current phones, 768 a tablet in portrait. Desktop is the mail's own
- * width, because there is nothing wider for it to render at.
- */
-const VIEWPORT_WIDTH = { tablet: 768, phone: 375 } as const;
+
 
 /** 1 / 2 / 3 switch viewport, left to right, in the same order as the toolbar's own buttons. */
 const VIEWPORT_KEYS: Record<string, Viewport | undefined> = {
@@ -128,6 +124,15 @@ export interface MailDesignerProps {
   /** Fills in a social icon URL from a network name, so users need not paste URLs. */
   resolveSocialIcon?: (network: string) => string;
 
+  /**
+   * Who the device mock says the mail is from, and when.
+   *
+   * Editor chrome only — it is never rendered into the mail, and never sent. Worth setting to
+   * the address the mailing will actually go out from: a sender line is part of what the
+   * recipient reads before deciding to open anything.
+   */
+  previewIdentity?: { name?: string; email?: string; date?: string };
+
   /** Replaces the built-in starting points. */
   presets?: MailPreset[];
   /** Rendered at the right end of the toolbar — where a template menu belongs. */
@@ -184,6 +189,7 @@ export function MailDesigner({
   resetTo,
   onUploadImage,
   resolveSocialIcon,
+  previewIdentity,
   toolbarExtra,
   onHistoryChange,
   showHistory = true,
@@ -225,11 +231,23 @@ export function MailDesigner({
 
   // Derived, not stored: keeping a width in state meant it went stale the moment the user
   // changed the email's own width in the inspector.
+  // Real device widths (see devices.ts), so the mail's own media queries fire exactly as they
+  // would on the device. Desktop without a frame is the mail's own width, because a bare
+  // preview has no client around it to be a fraction of.
   const viewportWidth =
-    viewport === "desktop" ? value.settings.width : VIEWPORT_WIDTH[viewport];
+    viewport === "desktop" && !mockup ? value.settings.width : DEVICES[viewport].content;
 
   // One i18next instance per locale/overrides pair, never the global singleton.
   const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
+
+  const identity = useMemo(
+    () => ({
+      name: previewIdentity?.name ?? t("client.sender"),
+      email: previewIdentity?.email ?? t("client.senderEmail"),
+      date: previewIdentity?.date ?? t("client.date"),
+    }),
+    [previewIdentity, t],
+  );
 
   const history = useHistory(value, onChange, {
     limit: historyLimit,
@@ -591,6 +609,7 @@ export function MailDesigner({
               data={data}
               viewport={viewport}
               mockup={mockup}
+              identity={identity}
             />
           )}
           {view === "edit" && permissions.structure ? null : null}

@@ -8,9 +8,9 @@ import type { Viewport } from "./Toolbar.js";
 /**
  * The byte-exact truth: the renderer's actual output in an iframe.
  *
- * The frame grows to the height of the mail rather than scrolling internally. Nested
- * scrollbars — a scroll box inside a scroll box — make a long email genuinely hard to read
- * through, which defeats the point of a preview.
+ * On its own the frame grows to the height of the mail and the pane scrolls it, because
+ * nested scrollbars make a long email hard to read through. Inside a device frame it is the
+ * screen that scrolls instead — there, the height of the screen is the thing being shown.
  *
  * `sandbox="allow-same-origin"` is deliberate and is *not* the dangerous combination:
  * scripts are still blocked because `allow-scripts` is absent, so a raw-HTML block cannot
@@ -22,6 +22,7 @@ export function PreviewFrame({
   data,
   viewport = "desktop",
   mockup = false,
+  identity,
 }: {
   doc: MailDocument;
   width: number;
@@ -29,6 +30,8 @@ export function PreviewFrame({
   data?: Record<string, string>;
   viewport?: Viewport;
   mockup?: boolean;
+  /** Who the mock says the mail is from, and when. Editor chrome only — never rendered. */
+  identity: { name: string; email: string; date: string };
 }) {
   const rendered = useMemo(() => toHtml(doc, data ? { data } : {}), [doc, data]);
   const html = rendered.html;
@@ -63,22 +66,21 @@ export function PreviewFrame({
   return (
     <div className="md-preview">
       <WarningStrip doc={doc} result={rendered} />
-      <DeviceFrame
-        viewport={viewport}
-        enabled={mockup}
-        background={doc.settings.backgroundColor}
-      >
-        <iframe
-          ref={ref}
-          title="preview"
-          // srcDoc rather than a blob URL: this re-renders on every edit, and blob URLs would
-          // leak one object per keystroke.
-          srcDoc={html}
-          sandbox="allow-same-origin"
-          onLoad={measure}
-          style={{ width, height }}
-        />
-      </DeviceFrame>
+      {/* The stage is what the device frame measures itself against. */}
+      <div className={mockup ? "md-preview-stage md-preview-stage--framed" : "md-preview-stage"}>
+        <DeviceFrame viewport={viewport} enabled={mockup} doc={doc} identity={identity}>
+          <iframe
+            ref={ref}
+            title="preview"
+            // srcDoc rather than a blob URL: this re-renders on every edit, and blob URLs
+            // would leak one object per keystroke.
+            srcDoc={html}
+            sandbox="allow-same-origin"
+            onLoad={measure}
+            style={{ width, height }}
+          />
+        </DeviceFrame>
+      </div>
     </div>
   );
 }

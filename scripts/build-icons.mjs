@@ -73,6 +73,26 @@ const ICONS = {
   alignRight: ["align-right", "solid"],
   lock: ["lock", "solid"],
   unlock: ["lock-open", "solid"],
+
+  // The mail-client mock around the preview. Chrome, not editor controls: these only ever
+  // appear inside the device frame.
+  inbox: ["inbox", "solid"],
+  sent: ["paper-plane", "solid"],
+  drafts: ["file-lines", "regular"],
+  archive: ["box-archive", "solid"],
+  flag: ["flag", "solid"],
+  star: ["star", "regular"],
+  reply: ["reply", "solid"],
+  replyAll: ["reply-all", "solid"],
+  forward: ["share", "solid"],
+  folder: ["folder", "regular"],
+  search: ["magnifying-glass", "solid"],
+  wifi: ["wifi", "solid"],
+  battery: ["battery-full", "solid"],
+  signal: ["signal", "solid"],
+  ellipsis: ["ellipsis", "solid"],
+  compose: ["pen-to-square", "solid"],
+  sidebar: ["bars", "solid"],
 };
 
 function resolveFontAwesomeDir() {

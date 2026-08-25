@@ -159,6 +159,8 @@ export function App() {
             })
           }
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
+          // Shown only in the device mock's sender line — never rendered into the mail.
+          previewIdentity={{ name: "Nyhetsbrevet", email: "utskick@exempel.se" }}
           onHistoryChange={(h) => setDepth(h.depth)}
           // Handing the editor a store turns on the document session: name bar, autosave,
           // switcher, and the prompts that go with them. Here it is localStorage; in Utskick

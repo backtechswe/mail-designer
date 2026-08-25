@@ -20,6 +20,7 @@ const [doc, setDoc] = useState(emptyDocument());
   theme={{ accent: "#2f54eb", radius: 8 }}
   dataFields={["Namn", "Ort"]}
   onUploadImage={uploadToStorage}
+  previewIdentity={{ name: "Klubben", email: "utskick@klubben.se" }}
   locale="sv"
 />;
 
@@ -320,20 +321,42 @@ of where you click:
 
 `ancestorsOf(doc, id)` and `parentOf(doc, id)` expose the same chain to a host app.
 
-### Three viewports, and an optional device frame
+### Three viewports, and the client around them
 
-`Desktop`, `Tablet` and `Phone` — 640 (the mail's own width), 768 and 375 CSS pixels — and
-they work while editing, not only while previewing. The canvas stacks columns on the same rule
-the emitted CSS uses (`viewportWidth < settings.width - 20`) rather than on the name of the
-viewport, so what you see while editing and what the media query actually does cannot drift
-apart.
+`Desktop`, `Tablet` and `Phone`, and they work while editing, not only while previewing. The
+canvas stacks columns on the same rule the emitted CSS uses (`viewportWidth <
+settings.width - 20`) rather than on the name of the viewport, so what you see while editing
+and what the media query actually does cannot drift apart.
 
-The frame toggle draws the preview inside a generic phone, tablet or window, in CSS, with no
-images. The screen has a real device's height and the mail scrolls inside it — a frame that
-grew to the height of the mail would be a 4000px-tall "phone", which answers the one question
-the mockup exists to answer, *how much of this is above the fold*, wrongly. The phone's status
-strip and home area take the mail's own page colour, so nothing about the frame can be
-mistaken for a seam in the mail.
+The frame toggle puts the preview inside a device running a mail client — drawn in CSS, no
+images, no dependency, no manufacturer's product, but at real geometry:
+
+| | Screen | The mail gets | Taken by the client |
+|---|---|---|---|
+| Desktop | 1180 × 720 window | 672 | folder list 212, message list 296 |
+| Tablet | 820 × 1180 (iPad Air 11" portrait) | 820 | status bar, nav bar |
+| Phone | 393 × 852 (iPhone 16 portrait) | 393 | status bar 54, nav bar 44, toolbar 68 |
+
+Three things follow from doing it properly rather than drawing a rounded rectangle:
+
+**The mail is never full-screen, because it never is.** About 180 of a phone's 852 points are
+gone before the body starts, and on a desktop the reading pane is little more than half the
+window. That is the difference between a preview that shows the mail and one that shows what
+the recipient sees.
+
+**The frame is scaled, not resized.** The mail inside still renders at the device's true
+content width, so its media queries fire exactly as they would on the device. Rendering a
+phone at whatever width happened to fit would quietly change which breakpoints apply, and the
+preview would be lying about the one thing it exists to be right about.
+
+**The message list shows the preheader.** It is the only place an editor can show what a
+preheader is *for* — and when there is none, the mock shows the fallback the client would use
+instead, marked, which is very often "View this email in your browser". `messageSummary(doc)`
+is the pure function behind it.
+
+The sender line comes from `previewIdentity`; it is editor chrome and is never rendered into
+the mail. The client's own colours are `--md-client-*` and stay light whatever the editor's
+colour scheme, because a reference that changes with its surroundings is not one.
 
 | | |
 |---|---|

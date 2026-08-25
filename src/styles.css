@@ -1067,11 +1067,30 @@
 .md-preview {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: calc(var(--md-space) * 4) calc(var(--md-space) * 3);
-  overflow: auto;
+  align-items: stretch;
+  padding: calc(var(--md-space) * 3);
+  gap: calc(var(--md-space) * 2);
+  overflow: hidden;
   background: var(--md-bg-sunken);
+}
+
+/*
+ * The space the preview gets after the warning strip has taken its share. Its own box is what
+ * the device frame measures itself against, and it is the thing that scrolls when there is no
+ * frame — one scroll container either way, never two.
+ */
+.md-preview-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+}
+
+.md-preview-stage--framed {
+  justify-content: center;
+  overflow: hidden;
 }
 
 .md-preview iframe {
@@ -1873,48 +1892,40 @@
   white-space: nowrap;
 }
 
-/* ------------------------------------------------------------ device frames */
+
+/* ------------------------------------------------- device frames and the client mock */
 
 /*
- * Generic hardware outlines, drawn in CSS — no images and no dependency, and deliberately not
- * any manufacturer's product.
- *
- * They are not decoration. A 600px mail looks fine floating in a white void and then arrives
- * on a phone with the text running to both edges; seeing it inside a screen the size of a real
- * one is what makes that obvious before it is sent.
+ * Hardware, drawn in CSS: no images, no dependency, and no manufacturer's product — but at
+ * real geometry (see devices.ts). The frame is scaled to fit rather than resized, so the mail
+ * inside keeps the device's true content width and its media queries fire as they would on
+ * the device.
  */
-.md-device {
+.md-device-fit {
   flex: none;
   position: relative;
-  box-sizing: border-box;
-  /*
-   * The frame must fit the pane whatever device it is drawing — a mockup you have to scroll to
-   * see is worse than no mockup. The screens below give their ideal height and shrink from
-   * here, so this one rule keeps all three honest. Against the pane, not the viewport: the
-   * host app owns everything above us and we cannot know how tall its own chrome is.
-   */
-  max-height: 100%;
+}
+
+.md-device {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   background: #1b1b20;
   box-shadow: var(--md-lift);
 }
 
 .md-device-screen {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  /* Lets max-height on .md-device shrink the screen instead of overflowing the frame. */
-  min-height: 0;
   overflow: hidden;
   background: #ffffff;
 }
 
-/*
- * The scrolling part of the screen. Separate from .md-device-screen so the phone's status bar
- * and home area stay put while the mail moves under them, as they do on a real device.
- */
+/* The scrolling part of the screen: the mail, and whatever header scrolls with it. */
 .md-device-viewport {
   flex: 1;
   min-height: 0;
@@ -1922,141 +1933,438 @@
   overscroll-behavior: contain;
 }
 
-.md-device-viewport::-webkit-scrollbar {
-  width: 6px;
-}
-
-.md-device-viewport::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.md-device-screen iframe {
-  box-shadow: none !important;
+.md-device-viewport iframe {
   border-radius: 0 !important;
-}
-
-/* Phone: the pill and the home bar are what stop a rounded rectangle reading as a card. */
-.md-device--phone {
-  padding: 12px;
-  border-radius: 44px;
-}
-
-.md-device--phone .md-device-screen {
-  /*
-   * A real handset's screen, so "above the fold" means what it means on a phone — but never
-   * taller than the window, or the frame itself would need scrolling to be seen.
-   */
-  height: 812px;
-  border-radius: 32px;
+  box-shadow: none !important;
+  margin: 0 auto;
 }
 
 /*
- * Reserved strips at the top and bottom of the screen. Without them the island covers the
- * first line of the mail — which is a lie about the layout, since a real client renders below
- * the notch. They carry the mail's own page colour (set inline from doc.settings).
+ * No scrollbar inside the screen. Both the clients being imitated use overlay scrollbars that
+ * appear only while scrolling, and a classic one here would take real width away from the mail
+ * — enough to give a 672px reading pane a horizontal scrollbar for a mail that fits.
  */
-.md-device-status,
-.md-device-chin {
-  position: relative;
-  flex: none;
-  align-self: stretch;
-  background: #ffffff;
+.md-device-viewport {
+  scrollbar-width: none;
 }
 
-.md-device-status {
-  height: 46px;
-}
-
-.md-device-chin {
-  height: 26px;
+.md-device-viewport::-webkit-scrollbar {
+  display: none;
 }
 
 .md-device-island {
   position: absolute;
-  top: 10px;
+  top: 24px;
   left: 50%;
   transform: translateX(-50%);
-  width: 78px;
-  height: 22px;
+  width: 125px;
+  height: 37px;
   border-radius: 999px;
-  background: #1b1b20;
+  background: #000000;
 }
 
 .md-device-home {
   position: absolute;
-  bottom: 8px;
+  bottom: 22px;
   left: 50%;
   transform: translateX(-50%);
-  width: 110px;
-  height: 4px;
+  width: 140px;
+  height: 5px;
   border-radius: 999px;
-  /*
-   * Inverted against whatever the mail's page colour is, so the indicator stays visible on a
-   * white mail and on a black one without us having to know which it is.
-   */
-  background: #ffffff;
-  mix-blend-mode: difference;
-  opacity: 0.5;
-}
-
-/* Tablet: a thicker even bezel and a single camera dot. */
-.md-device--tablet {
-  padding: 18px;
-  border-radius: 26px;
-}
-
-.md-device--tablet .md-device-screen {
-  height: 1024px;
-  border-radius: 6px;
+  background: #000000;
+  opacity: 0.85;
 }
 
 .md-device-camera {
   position: absolute;
-  top: 7px;
+  top: 9px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #43434f;
+  background: #3a3a44;
+}
+
+/* The desktop frame is a window, so it has no bezel to draw — the title bar is its frame. */
+.md-device--desktop {
+  background: transparent;
+  box-shadow: var(--md-lift);
+  border-radius: 10px;
 }
 
 /*
- * Desktop: a window bar, not a whole laptop. The mail is read inside a mail client, and a
- * title bar is the honest amount of chrome to imply.
+ * The client mock.
+ *
+ * Held in a light palette whatever the editor's colour scheme, on purpose: it is a reference
+ * against which the mail's own colours are judged, and a reference that changes with the
+ * surroundings is not one. Override --md-client-* to match a specific product.
  */
-.md-device--desktop {
-  padding: 0;
-  border-radius: 10px 10px 0 0;
-  background: #2a2a31;
+.md-client {
+  --md-client-bg: #ffffff;
+  --md-client-chrome: #f6f6f8;
+  --md-client-chrome-strong: #ebebef;
+  --md-client-line: #d8d8de;
+  --md-client-text: #17171b;
+  --md-client-muted: #86868f;
+  --md-client-tint: #0a72f5;
+
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--md-client-text);
+  background: var(--md-client-bg);
+  font-family: var(--md-font);
+  text-align: left;
 }
 
-.md-device-bar {
+/* --- the message header, which scrolls with the mail because the recipient scrolls past it */
+
+.md-msg {
+  flex: none;
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--md-client-line);
+}
+
+.md-msg--compact {
+  padding: 12px 16px;
+  gap: 10px;
+}
+
+.md-msg-avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--md-client-chrome-strong);
+  color: var(--md-client-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.md-msg--compact .md-msg-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+
+.md-msg-lines {
+  flex: 1;
+  min-width: 0;
+}
+
+.md-msg-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.md-msg-subject {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-msg--compact .md-msg-subject {
+  font-size: 14px;
+}
+
+.md-msg-from {
+  margin-top: 2px;
+  display: flex;
+  gap: 6px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-msg-email,
+.md-msg-date,
+.md-msg-to {
+  flex: none;
+  color: var(--md-client-muted);
+  font-size: 12px;
+}
+
+/* --- desktop: window, folder list, message list, reading pane */
+
+.md-client--desktop {
+  border-radius: 10px;
+}
+
+.md-client-titlebar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 14px;
+  background: var(--md-client-chrome-strong);
+  border-bottom: 1px solid var(--md-client-line);
+}
+
+.md-client-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #cfcfd6;
+}
+
+.md-client-search {
   display: flex;
   align-items: center;
   gap: 6px;
-  align-self: stretch;
-  padding: 10px 12px;
+  width: 220px;
+  height: 22px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--md-client-muted);
+  font-size: 11px;
 }
 
-.md-device-bar span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.22);
+.md-client-columns {
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
-.md-device--desktop .md-device-screen {
-  align-self: stretch;
-  /* A window, not a monitor: roughly what a mail client shows above the fold. */
-  height: 680px;
+.md-client-folders {
+  flex: none;
+  width: 212px;
+  padding: 12px 8px;
+  background: var(--md-client-chrome);
+  border-right: 1px solid var(--md-client-line);
 }
 
-/* A short foot so the window does not look severed at the bottom of the scroll. */
-.md-device-stand {
-  align-self: stretch;
-  height: 10px;
-  background: #2a2a31;
-  border-radius: 0 0 10px 10px;
+.md-client-folder {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: var(--md-client-text);
+  font-size: 12.5px;
+}
+
+.md-client-folder svg {
+  color: var(--md-client-tint);
+}
+
+.md-client-folder.is-current {
+  background: var(--md-client-chrome-strong);
+  font-weight: 600;
+}
+
+.md-client-folder em {
+  margin-left: auto;
+  color: var(--md-client-muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.md-client-list {
+  flex: none;
+  width: 296px;
+  border-right: 1px solid var(--md-client-line);
+  background: var(--md-client-bg);
+  overflow: hidden;
+}
+
+.md-client-list-head {
+  height: 34px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-client-muted);
+  border-bottom: 1px solid var(--md-client-line);
+}
+
+.md-client-row {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--md-client-line);
+}
+
+.md-client-row.is-current {
+  background: var(--md-client-tint);
+  color: #ffffff;
+}
+
+.md-client-row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.md-client-row-date {
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.md-client-row-subject,
+.md-client-row-snippet {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-client-row-subject {
+  margin-top: 2px;
+}
+
+/*
+ * The snippet the inbox shows. Marked when it is body text standing in for a preheader that
+ * was never set — the one thing about the mail you cannot see by previewing the mail alone.
+ */
+.md-client-row-snippet {
+  margin-top: 1px;
+  opacity: 0.8;
+}
+
+.md-client-row-snippet.is-fallback {
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.md-client-row.is-blank {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 13px 14px;
+}
+
+.md-client-row.is-blank span {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--md-client-chrome-strong);
+}
+
+.md-client-reading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-client-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 34px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--md-client-line);
+  background: var(--md-client-bg);
+}
+
+.md-client-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 5px;
+  color: var(--md-client-muted);
+}
+
+.md-client-action--end {
+  margin-left: auto;
+}
+
+/* --- phone and tablet: status bar, nav bar, toolbar */
+
+.md-ios-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  background: var(--md-client-chrome);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-client--phone .md-ios-status {
+  /* Tall enough to clear the island, which is what pushes the mail down on a real phone. */
+  height: 54px;
+  align-items: flex-end;
+  padding-bottom: 6px;
+}
+
+.md-client--tablet .md-ios-status {
+  height: 26px;
+  padding: 0 22px;
+  font-size: 12px;
+}
+
+.md-ios-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--md-client-text);
+}
+
+.md-ios-nav {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 12px;
+  background: var(--md-client-chrome);
+  border-bottom: 1px solid var(--md-client-line);
+  color: var(--md-client-tint);
+  font-size: 14px;
+}
+
+.md-client--tablet .md-ios-nav {
+  height: 50px;
+  padding: 0 20px;
+}
+
+.md-ios-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.md-ios-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.md-ios-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 48px;
+  padding-bottom: 20px;
+  box-sizing: content-box;
+  background: var(--md-client-chrome);
+  border-top: 1px solid var(--md-client-line);
+  color: var(--md-client-tint);
 }
