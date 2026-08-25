@@ -424,6 +424,65 @@ function reassignIds(block: Block): void {
   }
 }
 
+/** Text properties a block may override, all of which otherwise follow MailSettings. */
+export type InheritableProperty = "fontFamily" | "fontSize" | "color" | "lineHeight";
+
+const OVERRIDABLE_TYPES = new Set(["heading", "text", "button"]);
+
+function hasOwn(block: Block, property: InheritableProperty): boolean {
+  if (!OVERRIDABLE_TYPES.has(block.type)) return false;
+  // A button carries textColor, not color; it has no line height of its own.
+  if (block.type === "button" && property !== "fontFamily" && property !== "fontSize") {
+    return false;
+  }
+  return (block as unknown as Record<string, unknown>)[property] !== undefined;
+}
+
+/**
+ * How many blocks are ignoring the email's setting for this property.
+ *
+ * This is what makes a two-level settings model usable: without the count, changing a
+ * global font and seeing half the mail stay put reads as a bug rather than as blocks doing
+ * exactly what they were told.
+ */
+export function countOverrides(doc: MailDocument, property: InheritableProperty): number {
+  let count = 0;
+  walkBlocks(doc, (block) => {
+    if (hasOwn(block, property)) count += 1;
+  });
+  return count;
+}
+
+/** Drop every block-level value for this property, so the whole mail follows the setting. */
+export function clearOverrides(
+  doc: MailDocument,
+  property: InheritableProperty,
+): MailDocument {
+  const strip = <T extends Block>(block: T): T => {
+    if (!hasOwn(block, property)) return block;
+    const copy = { ...block } as Record<string, unknown>;
+    delete copy[property];
+    return copy as T;
+  };
+
+  return {
+    ...doc,
+    blocks: doc.blocks.map((section) => ({
+      ...section,
+      children: section.children.map((child) => {
+        if (child.type !== "columns") return strip(child);
+        return {
+          ...child,
+          columns: child.columns.map((col) => ({
+            ...col,
+            children: col.children.map(strip),
+          })),
+        };
+      }),
+    })),
+  };
+}
+
 export function duplicateBlock(doc: MailDocument, id: string): MailDocument {
   const found = findBlock(doc, id);
   if (!found) return doc;

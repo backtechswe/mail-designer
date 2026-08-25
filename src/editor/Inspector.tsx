@@ -14,7 +14,9 @@ import type {
   SpacerBlock,
   TextBlock,
 } from "../types.js";
-import { createBlock, createColumn, findBlock } from "../document.js";
+import { clearOverrides, countOverrides, createBlock, createColumn, findBlock } from "../document.js";
+import type { InheritableProperty } from "../document.js";
+import { HEADING_SIZE } from "../blocks/canvasStyle.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import {
@@ -30,6 +32,8 @@ import {
   TextAreaField,
   TextField,
 } from "./fields/index.js";
+import type { Inherit } from "./fields/index.js";
+import type { Translate } from "../i18n.js";
 
 /**
  * The right-hand panel. Two tabs, because there are genuinely two subjects: the email as a
@@ -64,6 +68,9 @@ export function Inspector() {
       </div>
 
       <div className="md-inspector-body">
+        <p className="md-inspector-hint">
+          {active === "mail" ? t("inspector.mailHint") : t("inspector.blockHint")}
+        </p>
         {active === "mail" ? (
           <MailSettingsPanel />
         ) : found ? (
@@ -79,6 +86,10 @@ export function Inspector() {
   );
 }
 
+/**
+ * Web-safe stacks only. A webfont needs a <link> that Outlook ignores and Gmail strips, so
+ * offering one would promise something the renderer cannot deliver.
+ */
 const FONT_STACKS = [
   "Helvetica, Arial, sans-serif",
   "Arial, Helvetica, sans-serif",
@@ -87,6 +98,72 @@ const FONT_STACKS = [
   "Verdana, Geneva, sans-serif",
   "'Courier New', Courier, monospace",
 ];
+
+const fontLabel = (stack: string): string => stack.split(",")[0]!.replace(/'/g, "");
+
+/** Builds the marker that tells a field whether it is inheriting or overriding. */
+function inherit(t: Translate, isSet: boolean, onClear: () => void): Inherit {
+  return {
+    isSet,
+    onClear,
+    labels: {
+      inherited: t("field.inherited"),
+      overridden: t("field.overridden"),
+      reset: t("field.resetToInherited"),
+    },
+  };
+}
+
+/**
+ * Font picker for a single block. The first option clears the override rather than setting
+ * a font — that is the only way back to following the email once you have left it.
+ */
+function BlockFontField({
+  value,
+  inheritedFrom,
+  onChange,
+}: {
+  value: string | undefined;
+  inheritedFrom: string;
+  onChange: (value: string | undefined) => void;
+}) {
+  const { t } = useEditor();
+  return (
+    <SelectField
+      label={t("field.fontFamily")}
+      value={value ?? ""}
+      inherit={inherit(t, value !== undefined, () => onChange(undefined))}
+      options={[
+        { value: "", label: `${t("field.inheritFont")} (${fontLabel(inheritedFrom)})` },
+        ...FONT_STACKS.map((stack) => ({ value: stack, label: fontLabel(stack) })),
+      ]}
+      onChange={(next) => onChange(next === "" ? undefined : next)}
+    />
+  );
+}
+
+/**
+ * The way out when a global change appears to do nothing: name how many blocks are ignoring
+ * this setting, and offer to make them stop. Without it the only route is selecting every
+ * block that happens to carry an override and clearing them one at a time.
+ */
+function OverrideEscape({ property }: { property: InheritableProperty }) {
+  const { doc, replaceDocument, t } = useEditor();
+  const count = countOverrides(doc, property);
+  if (count === 0) return null;
+  return (
+    <p className="md-override-escape">
+      <span>
+        {count === 1
+          ? t("field.overrideCount_one")
+          : t("field.overrideCount_other", { count })}
+      </span>
+      <button type="button" onClick={() => replaceDocument(clearOverrides(doc, property))}>
+        {t("field.clearOverrides")}
+      </button>
+    </p>
+  );
+}
 
 function MailSettingsPanel() {
   const { doc, updateSettings, t } = useEditor();
@@ -114,19 +191,14 @@ function MailSettingsPanel() {
             onChange={(fontSize) => patch({ fontSize: fontSize ?? 16 })}
           />
         </FieldRow>
-        {/*
-          Only web-safe stacks. A webfont needs a <link> that Outlook ignores and Gmail
-          strips, so offering one would promise something the renderer cannot deliver.
-        */}
+        <OverrideEscape property="fontSize" />
         <SelectField
           label={t("field.fontFamily")}
           value={s.fontFamily}
-          options={FONT_STACKS.map((stack) => ({
-            value: stack,
-            label: stack.split(",")[0]!.replace(/'/g, ""),
-          }))}
+          options={FONT_STACKS.map((stack) => ({ value: stack, label: fontLabel(stack) }))}
           onChange={(fontFamily) => patch({ fontFamily })}
         />
+        <OverrideEscape property="fontFamily" />
         <NumberField
           label={t("field.lineHeight")}
           value={s.lineHeight}
@@ -151,6 +223,7 @@ function MailSettingsPanel() {
           value={s.textColor}
           onChange={(textColor) => patch({ textColor: textColor ?? "#000000" })}
         />
+        <OverrideEscape property="color" />
         <ColorField
           label={t("field.linkColor")}
           value={s.linkColor}
@@ -215,6 +288,9 @@ function SectionFields({ block }: { block: SectionBlock }) {
         value={block.backgroundColor}
         allowEmpty
         fallback={doc.settings.contentBackgroundColor}
+        inherit={inherit(t, block.backgroundColor !== undefined, () =>
+          update(block.id, { backgroundColor: undefined }),
+        )}
         onChange={(backgroundColor) => update(block.id, { backgroundColor })}
       />
       <CheckboxField
@@ -284,11 +360,21 @@ function HeadingFields({
         labels={labels}
         onChange={(align) => update(block.id, { align })}
       />
+      <BlockFontField
+        value={block.fontFamily}
+        inheritedFrom={doc.settings.fontFamily}
+        onChange={(fontFamily) => update(block.id, { fontFamily })}
+      />
       <FieldRow>
         <NumberField
           label={t("field.fontSize")}
           value={block.fontSize}
-          autoLabel={t("field.auto")}
+          // The placeholder is the size this level actually renders at, so an empty field
+          // still tells you what you are going to get.
+          autoLabel={String(HEADING_SIZE[block.level])}
+          inherit={inherit(t, block.fontSize !== undefined, () =>
+            update(block.id, { fontSize: undefined }),
+          )}
           min={10}
           max={64}
           onChange={(fontSize) => update(block.id, { fontSize })}
@@ -298,6 +384,9 @@ function HeadingFields({
           value={block.color}
           allowEmpty
           fallback={doc.settings.textColor}
+          inherit={inherit(t, block.color !== undefined, () =>
+            update(block.id, { color: undefined }),
+          )}
           onChange={(color) => update(block.id, { color })}
         />
       </FieldRow>
@@ -315,11 +404,19 @@ function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align,
         labels={labels}
         onChange={(align) => update(block.id, { align })}
       />
+      <BlockFontField
+        value={block.fontFamily}
+        inheritedFrom={doc.settings.fontFamily}
+        onChange={(fontFamily) => update(block.id, { fontFamily })}
+      />
       <FieldRow>
         <NumberField
           label={t("field.fontSize")}
           value={block.fontSize}
-          autoLabel={t("field.auto")}
+          autoLabel={String(doc.settings.fontSize)}
+          inherit={inherit(t, block.fontSize !== undefined, () =>
+            update(block.id, { fontSize: undefined }),
+          )}
           min={10}
           max={48}
           onChange={(fontSize) => update(block.id, { fontSize })}
@@ -329,13 +426,19 @@ function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align,
           value={block.color}
           allowEmpty
           fallback={doc.settings.textColor}
+          inherit={inherit(t, block.color !== undefined, () =>
+            update(block.id, { color: undefined }),
+          )}
           onChange={(color) => update(block.id, { color })}
         />
       </FieldRow>
       <NumberField
         label={t("field.lineHeight")}
         value={block.lineHeight}
-        autoLabel={t("field.auto")}
+        autoLabel={String(doc.settings.lineHeight)}
+        inherit={inherit(t, block.lineHeight !== undefined, () =>
+          update(block.id, { lineHeight: undefined }),
+        )}
         min={1}
         max={2.5}
         step={0.05}
@@ -427,7 +530,7 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
 }
 
 function ButtonFields({ block, labels }: { block: ButtonBlock; labels: Record<Align, string> }) {
-  const { update, t } = useEditor();
+  const { doc, update, t } = useEditor();
   return (
     <>
       <TextField
@@ -471,6 +574,11 @@ function ButtonFields({ block, labels }: { block: ButtonBlock; labels: Record<Al
           onChange={(fontSize) => update(block.id, { fontSize: fontSize ?? 16 })}
         />
       </FieldRow>
+      <BlockFontField
+        value={block.fontFamily}
+        inheritedFrom={doc.settings.fontFamily}
+        onChange={(fontFamily) => update(block.id, { fontFamily })}
+      />
       <SpacingField
         label={t("field.innerPadding")}
         lockLabel={t("field.paddingLinked")}

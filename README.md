@@ -85,6 +85,20 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
 
+### Two levels of settings
+
+The inspector has two tabs, and the relationship between them is the thing to understand:
+
+- **Mejlet / Email** — defaults for the whole message: width, font, sizes, colours, preheader.
+- **Block** — the selected block's own values, which override the defaults.
+
+Every overridable field says which state it is in — a quiet *Inherited*, or a *Custom* chip
+that clears the override when clicked — and an empty field shows the inherited value as its
+placeholder rather than the word "Auto". Where blocks are ignoring a global setting, the
+Email tab names how many and offers to make them all follow it again. Without that, changing
+a global font and watching half the mail stay put reads as a bug rather than as blocks doing
+exactly what they were told.
+
 ### Moving blocks
 
 Drag by the grip that appears on hover, or drop a new block straight from the palette.

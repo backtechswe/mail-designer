@@ -11,22 +11,55 @@ import { Icon } from "../icons.js";
  * reimplement all three, less well.
  */
 
+/**
+ * Marks a field that falls back to the email's own setting.
+ *
+ * Inheritance is the part of a two-level settings model people get lost in: without a
+ * visible marker, changing a global font appears to do nothing on the blocks that happen to
+ * carry their own, and there is no way to tell which those are. So every inheritable field
+ * says which state it is in, and an overridden one offers a way back.
+ */
+export interface Inherit {
+  isSet: boolean;
+  onClear: () => void;
+  labels: { inherited: string; overridden: string; reset: string };
+}
+
 export function Field({
   label,
   hint,
   htmlFor,
+  inherit,
   children,
 }: {
   label: string;
   hint?: string;
   htmlFor?: string;
+  inherit?: Inherit;
   children: ReactNode;
 }) {
   return (
     <div className="md-field">
-      <label className="md-field-label" htmlFor={htmlFor}>
-        {label}
-      </label>
+      <div className="md-field-head">
+        <label className="md-field-label" htmlFor={htmlFor}>
+          {label}
+        </label>
+        {inherit ? (
+          inherit.isSet ? (
+            <button
+              type="button"
+              className="md-inherit md-inherit--set"
+              title={inherit.labels.reset}
+              onClick={inherit.onClear}
+            >
+              {inherit.labels.overridden}
+              <Icon name="close" size={9} />
+            </button>
+          ) : (
+            <span className="md-inherit">{inherit.labels.inherited}</span>
+          )
+        ) : null}
+      </div>
       <div className="md-field-control">{children}</div>
       {hint ? <p className="md-field-hint">{hint}</p> : null}
     </div>
@@ -113,8 +146,12 @@ export function NumberField({
   max,
   step = 1,
   suffix = "px",
-  /** Label for the empty state when the value is optional, e.g. "Auto". */
+  /**
+   * Shown as the placeholder when no value is set. Pass the *inherited number* rather than
+   * a word like "Auto" — seeing 16 there tells the user what they will get; "Auto" does not.
+   */
   autoLabel,
+  inherit,
   onChange,
 }: {
   label: string;
@@ -125,11 +162,12 @@ export function NumberField({
   step?: number;
   suffix?: string;
   autoLabel?: string;
+  inherit?: Inherit;
   onChange: (value: number | undefined) => void;
 }) {
   const id = useId();
   return (
-    <Field label={label} hint={hint} htmlFor={id}>
+    <Field label={label} hint={hint} htmlFor={id} inherit={inherit}>
       <span className="md-number">
         <input
           id={id}
@@ -155,17 +193,20 @@ export function ColorField({
   value,
   allowEmpty,
   fallback = "#000000",
+  inherit,
   onChange,
 }: {
   label: string;
   value: string | undefined;
   allowEmpty?: boolean;
+  /** Swatch shown when nothing is set — pass the inherited colour, not black. */
   fallback?: string;
+  inherit?: Inherit;
   onChange: (value: string | undefined) => void;
 }) {
   const id = useId();
   return (
-    <Field label={label} htmlFor={id}>
+    <Field label={label} htmlFor={id} inherit={inherit}>
       <span className="md-color">
         <input
           id={id}
@@ -181,11 +222,7 @@ export function ColorField({
           placeholder={allowEmpty ? "—" : fallback}
           onChange={(e) => onChange(e.target.value || undefined)}
         />
-        {allowEmpty && value ? (
-          <button type="button" className="md-icon-button" onClick={() => onChange(undefined)}>
-            <Icon name="close" size={11} />
-          </button>
-        ) : null}
+
       </span>
     </Field>
   );
@@ -207,17 +244,19 @@ export function SelectField<T extends string | number>({
   hint,
   value,
   options,
+  inherit,
   onChange,
 }: {
   label: string;
   hint?: string;
   value: T;
   options: { value: T; label: string }[];
+  inherit?: Inherit;
   onChange: (value: T) => void;
 }) {
   const id = useId();
   return (
-    <Field label={label} hint={hint} htmlFor={id}>
+    <Field label={label} hint={hint} htmlFor={id} inherit={inherit}>
       <select
         id={id}
         value={String(value)}

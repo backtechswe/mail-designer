@@ -190,3 +190,51 @@ test("duplicateBlock inserts the copy directly after the original", () => {
   assert.notEqual(children[2].id, trailing.id);
   assert.equal(findBlock(next, section.id).block.children.length, 3);
 });
+
+test("countOverrides sees only blocks that carry the property themselves", async () => {
+  const { countOverrides } = await import("../dist/document.js");
+  const doc = emptyDocument();
+  const a = Object.assign(createBlock("text"), { fontFamily: "Georgia, serif" });
+  const b = createBlock("text");
+  const c = Object.assign(createBlock("heading"), { fontFamily: "Arial, sans-serif", color: "#f00" });
+  const inColumn = Object.assign(createBlock("text"), { fontFamily: "Verdana, sans-serif" });
+  const cols = Object.assign(createBlock("columns"), {
+    columns: [createColumn([inColumn]), createColumn([createBlock("text")])],
+  });
+  doc.blocks = [createSection([a, b, c, cols])];
+
+  assert.equal(countOverrides(doc, "fontFamily"), 3, "including the one nested in a column");
+  assert.equal(countOverrides(doc, "color"), 1);
+  assert.equal(countOverrides(doc, "lineHeight"), 0);
+});
+
+test("countOverrides ignores properties a block type does not have", async () => {
+  const { countOverrides } = await import("../dist/document.js");
+  const doc = emptyDocument();
+  // A button has textColor, not color, and no line height of its own.
+  const btn = Object.assign(createBlock("button"), { fontFamily: "Arial, sans-serif" });
+  doc.blocks = [createSection([btn, createBlock("divider"), createBlock("image")])];
+
+  assert.equal(countOverrides(doc, "fontFamily"), 1);
+  assert.equal(countOverrides(doc, "color"), 0);
+  assert.equal(countOverrides(doc, "lineHeight"), 0);
+});
+
+test("clearOverrides drops the property everywhere and leaves the rest alone", async () => {
+  const { clearOverrides, countOverrides } = await import("../dist/document.js");
+  const doc = emptyDocument();
+  const a = Object.assign(createBlock("text"), { fontFamily: "Georgia, serif", color: "#123456" });
+  const nested = Object.assign(createBlock("text"), { fontFamily: "Verdana, sans-serif" });
+  const cols = Object.assign(createBlock("columns"), {
+    columns: [createColumn([nested]), createColumn([])],
+  });
+  doc.blocks = [createSection([a, cols])];
+
+  const next = clearOverrides(doc, "fontFamily");
+
+  assert.equal(countOverrides(next, "fontFamily"), 0);
+  assert.equal(countOverrides(next, "color"), 1, "an unrelated override survives");
+  assert.equal(next.blocks[0].children[0].color, "#123456");
+  assert.equal("fontFamily" in next.blocks[0].children[0], false, "the key is removed, not set to undefined");
+  assert.equal(doc.blocks[0].children[0].fontFamily, "Georgia, serif", "the input is untouched");
+});

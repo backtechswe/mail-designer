@@ -704,10 +704,62 @@
   margin-bottom: 0;
 }
 
+.md-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  min-height: 16px;
+}
+
 .md-field-label {
   display: block;
-  margin-bottom: 4px;
   font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+/*
+ * The inheritance marker. Quiet when a field is following the email, and a real button when
+ * it is not — the state people need to see is "this block has its own value", because that
+ * is the one that makes a global change look broken.
+ */
+.md-inherit {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 1px 5px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--md-text-muted);
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
+
+.md-inherit--set {
+  border-color: var(--md-accent);
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+  cursor: pointer;
+  opacity: 1;
+}
+
+.md-inherit--set:hover {
+  background: var(--md-accent);
+  color: var(--md-accent-contrast);
+}
+
+.md-inspector-hint {
+  margin: 0;
+  padding: 10px calc(var(--md-space) * 1.5);
+  border-bottom: 1px solid var(--md-border);
+  background: var(--md-bg-subtle);
+  font-size: 11px;
+  line-height: 1.45;
   color: var(--md-text-muted);
 }
 
@@ -1102,4 +1154,27 @@
 .md-menu-save .md-secondary-button {
   margin: 0;
   justify-content: center;
+}
+
+.md-override-escape {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -8px 0 calc(var(--md-space) * 1.5);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--md-text-muted);
+}
+
+.md-override-escape button {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-accent);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
 }
