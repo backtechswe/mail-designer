@@ -6,6 +6,12 @@
  * is free of React and of the DOM.
  */
 
+/* the editor */
+export { MailDesigner } from "./MailDesigner.js";
+export type { MailDesignerProps } from "./MailDesigner.js";
+export { sv, en, createI18n, createTranslate } from "./i18n.js";
+export type { Strings, StringKey, Translate } from "./i18n.js";
+
 /* document model + tree operations */
 export {
   canInsert,

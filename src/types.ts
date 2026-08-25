@@ -205,9 +205,17 @@ export interface RenderResult {
 export interface DesignerTheme {
   accent?: string;
   accentContrast?: string;
+  /** Tinted accent used for selected and hovered states. */
+  accentSoft?: string;
+  /** Panel surfaces. */
   bg?: string;
+  /** Secondary surfaces: hovered rows, the add-section bar. */
   bgSubtle?: string;
+  /** The canvas well the email floats in. */
+  bgSunken?: string;
   border?: string;
+  /** Hairlines that need to read as an edge rather than a whisper. */
+  borderStrong?: string;
   text?: string;
   textMuted?: string;
   danger?: string;
@@ -215,6 +223,8 @@ export interface DesignerTheme {
   space?: number;
   fontFamily?: string;
   fontFamilyMono?: string;
+  /** Shadow on the email itself — the one elevated object in the editor. */
+  lift?: string;
 }
 
 export type ColorScheme = "light" | "dark" | "system";

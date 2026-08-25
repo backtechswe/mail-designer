@@ -1,56 +1,935 @@
 /**
- * Editor chrome. Every colour, radius and spacing step is a custom property, so a host app
- * restyles the editor by setting variables — never by overriding a class name. The
- * MailDesigner component writes the `theme` prop onto .md-root as inline custom properties,
- * which is why these defaults can stay plain CSS.
+ * Editor chrome for @backtech/mail-designer.
  *
- * Note the separation: nothing in this file affects the rendered email. The recipient's
- * view is governed entirely by MailDocument.settings.
+ * Design brief: recede so the email is the focus, and be themeable without touching a
+ * class name. Two decisions follow from that and are worth not undoing:
+ *
+ *  1. The email is the only elevated object in the interface. The panels are the same paper
+ *     as the page and are separated by hairlines; the canvas is a sunken well. Tool chrome
+ *     conventionally floats above flat content — here it is inverted, so the one thing that
+ *     casts a shadow is the thing being made.
+ *  2. Numbers are monospaced and tabular everywhere. In a design tool a dimension is data;
+ *     px values that shift width as you type them are genuinely harder to read.
+ *
+ * Every colour, radius and spacing step is a custom property. The `theme` prop writes them
+ * onto .md-root inline, which is why the defaults can live here as plain CSS.
+ *
+ * Nothing in this file affects the rendered email — that is governed entirely by
+ * MailDocument.settings.
  */
 
 .md-root {
+  /* Neutrals carry a faint blue-violet cast so they sit with the accent rather than
+     fighting it. Pure grey next to a blue accent reads as slightly warm and cheap. */
   --md-accent: #2f54eb;
   --md-accent-contrast: #ffffff;
   --md-accent-soft: #eef1fe;
   --md-bg: #ffffff;
-  --md-bg-subtle: #f5f5f7;
-  --md-bg-sunken: #ebebef;
-  --md-border: #d9d9d9;
-  --md-border-strong: #bfbfbf;
-  --md-text: #1f1f1f;
-  --md-text-muted: #8c8c8c;
-  --md-danger: #ff4d4f;
+  --md-bg-subtle: #f4f4f7;
+  --md-bg-sunken: #e8e8ee;
+  --md-border: #e2e2e8;
+  --md-border-strong: #c9c9d2;
+  --md-text: #16161a;
+  --md-text-muted: #8a8a96;
+  --md-danger: #d93636;
   --md-radius: 8px;
-  --md-radius-sm: 4px;
+  --md-radius-sm: 5px;
   --md-space: 8px;
   --md-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   --md-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --md-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --md-lift: 0 1px 2px rgba(22, 22, 26, 0.06), 0 8px 24px rgba(22, 22, 26, 0.08);
 
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 480px;
   color: var(--md-text);
+  background: var(--md-bg);
   font-family: var(--md-font);
-  background: var(--md-bg-subtle);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
-/* Dark is a redefinition of the same tokens — no component knows which scheme is active. */
 .md-root[data-color-scheme="dark"] {
-  --md-accent: #597ef7;
-  --md-accent-contrast: #0b0b0f;
-  --md-accent-soft: #1c2340;
-  --md-bg: #1a1a1f;
+  --md-accent: #6a8bff;
+  --md-accent-contrast: #0c0c11;
+  --md-accent-soft: #1d2340;
+  --md-bg: #17171c;
   --md-bg-subtle: #121216;
-  --md-bg-sunken: #0c0c10;
-  --md-border: #34343d;
-  --md-border-strong: #4a4a55;
-  --md-text: #f0f0f2;
-  --md-text-muted: #9a9aa6;
-  --md-danger: #ff7875;
-  --md-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --md-bg-sunken: #0d0d11;
+  --md-border: #2c2c35;
+  --md-border-strong: #43434f;
+  --md-text: #f2f2f5;
+  --md-text-muted: #9494a1;
+  --md-danger: #ff6b6b;
+  --md-lift: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  .md-root:not([data-color-scheme="light"]) {
+    --md-accent: #6a8bff;
+    --md-accent-contrast: #0c0c11;
+    --md-accent-soft: #1d2340;
+    --md-bg: #17171c;
+    --md-bg-subtle: #121216;
+    --md-bg-sunken: #0d0d11;
+    --md-border: #2c2c35;
+    --md-border-strong: #43434f;
+    --md-text: #f2f2f5;
+    --md-text-muted: #9494a1;
+    --md-danger: #ff6b6b;
+    --md-lift: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
 }
 
 .md-root *,
 .md-root *::before,
 .md-root *::after {
   box-sizing: border-box;
+}
+
+.md-root :focus-visible {
+  outline: 2px solid var(--md-accent);
+  outline-offset: 1px;
+  border-radius: var(--md-radius-sm);
+}
+
+/* Numbers are data. Tabular figures keep columns of px values from dancing. */
+.md-root input[type="number"],
+.md-root .md-mono,
+.md-root .md-suffix {
+  font-family: var(--md-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ toolbar */
+
+.md-toolbar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--md-space) * 2);
+  padding: 0 calc(var(--md-space) * 1.5);
+  height: 46px;
+  border-bottom: 1px solid var(--md-border);
+  background: var(--md-bg);
+}
+
+.md-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.md-toolbar-spacer {
+  flex: 1;
+}
+
+.md-toolbar > .md-toolbar-group > button:not([aria-pressed]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  color: var(--md-text);
+  cursor: pointer;
+}
+
+.md-toolbar > .md-toolbar-group > button:not([aria-pressed]):hover:not(:disabled) {
+  background: var(--md-bg-subtle);
+}
+
+.md-toolbar button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* Segmented control: one hairline box, no gaps, active segment filled. */
+.md-segmented {
+  display: inline-flex;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  overflow: hidden;
+}
+
+.md-segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-left: 1px solid var(--md-border);
+  background: var(--md-bg);
+  color: var(--md-text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-segmented button:first-child {
+  border-left: 0;
+}
+
+.md-segmented button:hover {
+  color: var(--md-text);
+}
+
+.md-segmented button[aria-pressed="true"] {
+  background: var(--md-accent);
+  border-left-color: var(--md-accent);
+  color: var(--md-accent-contrast);
+}
+
+/* ------------------------------------------------------------------- layout */
+
+.md-layout {
+  display: grid;
+  grid-template-columns: 176px minmax(0, 1fr) 296px;
+  min-height: 0;
+}
+
+/* Below this the three panels cannot all be useful at once, so the side panels
+   become full-width rows above and below the canvas. */
+@media (max-width: 900px) {
+  .md-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(320px, 1fr) auto;
+  }
+}
+
+/* ------------------------------------------------------------------ palette */
+
+.md-palette {
+  padding: calc(var(--md-space) * 1.5);
+  border-right: 1px solid var(--md-border);
+  overflow: auto;
+}
+
+.md-palette h3,
+.md-inspector-section h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+}
+
+.md-palette-hint {
+  margin: 0 0 calc(var(--md-space) * 1.5);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--md-text-muted);
+}
+
+.md-palette-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  color: var(--md-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: grab;
+}
+
+.md-palette-item:hover {
+  background: var(--md-bg-subtle);
+}
+
+.md-palette-item svg {
+  color: var(--md-text-muted);
+}
+
+.md-palette-item:hover svg {
+  color: var(--md-accent);
+}
+
+/* ------------------------------------------------------------------- canvas */
+
+.md-canvas {
+  padding: calc(var(--md-space) * 4) calc(var(--md-space) * 3);
+  overflow: auto;
+  background: var(--md-bg-sunken);
+}
+
+.md-canvas:focus {
+  outline: none;
+}
+
+/*
+ * The one elevated object in the interface. Everything else is hairlines and type; the
+ * email gets the shadow, so the eye goes to it first without being told.
+ */
+.md-page {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  border-radius: var(--md-radius);
+  box-shadow: var(--md-lift);
+  /* Not hidden: block tabs sit above their block and would be clipped at a section edge. */
+  overflow: clip visible;
+}
+
+/* -------------------------------------------------------------- block shell */
+
+.md-block {
+  position: relative;
+}
+
+/* Hairline on hover, accent on selection. Selection is instant — no transition — because
+   a click must feel like it landed. */
+.md-block::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+}
+
+.md-block:hover::after {
+  outline-color: var(--md-border-strong);
+}
+
+.md-block.is-selected::after {
+  outline: 2px solid var(--md-accent);
+  outline-offset: -2px;
+}
+
+/*
+ * The block name rides on a tab that sits *above* the block, like a tab on a folder. Above
+ * rather than inside: a label overlapping the first line of a heading is worse than no
+ * label at all, and this is chrome that must never obscure the thing being edited.
+ * It appears only on hover or selection, so a finished design carries no permanent furniture.
+ */
+.md-block-label {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  z-index: 2;
+  padding: 2px 6px;
+  border-radius: var(--md-radius-sm) var(--md-radius-sm) 0 0;
+  background: var(--md-border-strong);
+  color: var(--md-bg);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+  pointer-events: none;
+}
+
+.md-block:hover > .md-block-label,
+.md-block.is-selected > .md-block-label {
+  opacity: 1;
+  transform: none;
+}
+
+.md-block.is-selected > .md-block-label {
+  background: var(--md-accent);
+  color: var(--md-accent-contrast);
+}
+
+/* Nested blocks would otherwise all light up at once on a single hover. */
+.md-block:hover .md-block:hover ~ .md-block-label {
+  opacity: 0;
+}
+
+.md-block-actions {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border-radius: var(--md-radius-sm) var(--md-radius-sm) 0 0;
+  background: var(--md-accent);
+}
+
+.md-block-actions button,
+.md-block-actions .md-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--md-accent-contrast);
+  cursor: pointer;
+}
+
+.md-block-actions .md-grip {
+  cursor: grab;
+  opacity: 0.7;
+}
+
+.md-block-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.md-block-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.md-block-actions button.md-danger:hover {
+  background: var(--md-danger);
+}
+
+.md-column {
+  min-height: 24px;
+}
+
+/* --------------------------------------------------------- canvas placeholders */
+
+.md-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--md-space) * 5) calc(var(--md-space) * 2);
+  color: var(--md-text-muted);
+  text-align: center;
+}
+
+.md-empty strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-text);
+}
+
+.md-empty span {
+  font-size: 12px;
+  max-width: 22em;
+}
+
+.md-empty--inline {
+  padding: calc(var(--md-space) * 2);
+  border: 1px dashed var(--md-border-strong);
+  border-radius: var(--md-radius-sm);
+  font-size: 12px;
+}
+
+.md-empty--panel {
+  padding: calc(var(--md-space) * 4) calc(var(--md-space) * 2);
+}
+
+.md-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: calc(var(--md-space) * 3);
+  border: 1px dashed var(--md-border-strong);
+  border-radius: var(--md-radius-sm);
+  color: var(--md-text-muted);
+  font-size: 12px;
+}
+
+/* Reserved space, drawn only so it can be found and clicked. */
+.md-spacer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--md-bg-subtle) 0 5px,
+    transparent 5px 10px
+  );
+}
+
+.md-spacer span {
+  font-family: var(--md-font-mono);
+  font-size: 10px;
+  color: var(--md-text-muted);
+}
+
+.md-social-missing {
+  padding: 2px 6px;
+  border: 1px dashed var(--md-border-strong);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+.md-add-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-top: 1px solid var(--md-border);
+  background: var(--md-bg-subtle);
+  color: var(--md-text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-add-section:hover {
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+}
+
+/* -------------------------------------------------------------- inline text */
+
+.md-editable {
+  outline: none;
+  min-height: 1.2em;
+  cursor: text;
+}
+
+.md-editable[data-placeholder]::before {
+  content: attr(data-placeholder);
+  color: var(--md-text-muted);
+  opacity: 0.7;
+}
+
+/* Mirrors what prepareInline() injects into the email, so the canvas matches the output. */
+.md-editable p {
+  margin: 0 0 var(--md-p-gap, 0);
+}
+
+.md-editable ul,
+.md-editable ol {
+  margin: 0 0 var(--md-p-gap, 0);
+  padding-left: 24px;
+}
+
+.md-editable a {
+  color: var(--md-link, inherit);
+  text-decoration: underline;
+}
+
+.md-floating-toolbar {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border-radius: var(--md-radius-sm);
+  background: var(--md-text);
+  box-shadow: var(--md-lift);
+}
+
+.md-floating-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--md-bg);
+  cursor: pointer;
+}
+
+.md-floating-toolbar button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.md-toolbar-color {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 26px;
+  height: 24px;
+  border-radius: 3px;
+  color: var(--md-bg);
+  cursor: pointer;
+}
+
+.md-toolbar-color:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.md-toolbar-color input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.md-toolbar-select {
+  height: 24px;
+  border: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--md-bg);
+  font: inherit;
+  font-size: 11px;
+}
+
+.md-toolbar-link {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.md-toolbar-link input {
+  width: 200px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--md-bg);
+  font: inherit;
+  font-size: 12px;
+}
+
+.md-rawhtml {
+  font-size: inherit;
+}
+
+/* ---------------------------------------------------------------- inspector */
+
+.md-inspector {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-left: 1px solid var(--md-border);
+  min-height: 0;
+}
+
+.md-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--md-border);
+}
+
+.md-tabs button {
+  flex: 1;
+  padding: 10px 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--md-text-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.md-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--md-accent);
+  color: var(--md-text);
+}
+
+.md-inspector-body {
+  overflow: auto;
+}
+
+.md-inspector-section {
+  padding: calc(var(--md-space) * 1.5);
+  border-bottom: 1px solid var(--md-border);
+}
+
+.md-inspector-section:last-child {
+  border-bottom: 0;
+}
+
+.md-inspector-section h3 {
+  margin-bottom: calc(var(--md-space) * 1.5);
+}
+
+/* -------------------------------------------------------------------- fields */
+
+.md-field {
+  margin-bottom: calc(var(--md-space) * 1.5);
+}
+
+.md-field:last-child {
+  margin-bottom: 0;
+}
+
+.md-field-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+.md-field-hint {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--md-text-muted);
+}
+
+.md-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--md-space);
+}
+
+.md-field-row > .md-field {
+  min-width: 0;
+}
+
+.md-field--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.md-field--checkbox label {
+  cursor: pointer;
+}
+
+.md-root input[type="text"],
+.md-root input[type="number"],
+.md-root input[type="file"],
+.md-root textarea,
+.md-root select {
+  width: 100%;
+  padding: 5px 7px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.md-root input[type="file"] {
+  padding: 4px;
+  font-size: 11px;
+}
+
+.md-root textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.md-root textarea.md-mono {
+  font-size: 12px;
+}
+
+.md-root input:hover:not(:disabled),
+.md-root select:hover,
+.md-root textarea:hover {
+  border-color: var(--md-border-strong);
+}
+
+.md-number {
+  position: relative;
+  display: block;
+}
+
+.md-number input {
+  padding-right: 30px;
+  /* The spinners are 20px of chrome for a value people mostly type. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.md-number input::-webkit-outer-spin-button,
+.md-number input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.md-suffix {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--md-text-muted);
+  pointer-events: none;
+}
+
+.md-color {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md-color input[type="color"] {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.md-color input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.md-color input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 3px;
+}
+
+.md-color input[type="text"] {
+  min-width: 0;
+  font-size: 12px;
+}
+
+.md-spacing {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 4px;
+}
+
+.md-spacing input {
+  padding: 5px 4px;
+  text-align: center;
+  font-size: 12px;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.md-spacing input::-webkit-outer-spin-button,
+.md-spacing input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.md-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-text-muted);
+  cursor: pointer;
+}
+
+.md-icon-button:hover {
+  color: var(--md-text);
+  border-color: var(--md-border-strong);
+}
+
+.md-icon-button[aria-pressed="true"] {
+  border-color: var(--md-accent);
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+}
+
+.md-icon-button.md-danger:hover {
+  border-color: var(--md-danger);
+  color: var(--md-danger);
+}
+
+.md-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: calc(var(--md-space) * 1.5);
+  padding: 5px 9px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-secondary-button:hover {
+  border-color: var(--md-accent);
+  color: var(--md-accent);
+}
+
+.md-field .md-segmented {
+  width: 100%;
+}
+
+.md-field .md-segmented button {
+  flex: 1;
+  justify-content: center;
+}
+
+.md-social-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--md-space);
+}
+
+.md-social-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 28px;
+  gap: 4px;
+}
+
+.md-social-item input {
+  font-size: 11px;
+  padding: 4px 5px;
+}
+
+.md-social-item .md-icon-button {
+  width: 28px;
+  height: auto;
+}
+
+/* ------------------------------------------------------------------ preview */
+
+.md-preview {
+  display: flex;
+  justify-content: center;
+  padding: calc(var(--md-space) * 4) calc(var(--md-space) * 3);
+  overflow: auto;
+  background: var(--md-bg-sunken);
+}
+
+.md-preview iframe {
+  flex: none;
+  height: 100%;
+  min-height: 480px;
+  border: 0;
+  border-radius: var(--md-radius);
+  background: #ffffff;
+  box-shadow: var(--md-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .md-root *,
+  .md-root *::before,
+  .md-root *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

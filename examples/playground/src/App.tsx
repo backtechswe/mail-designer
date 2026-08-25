@@ -1,38 +1,82 @@
 import { useMemo, useState } from "react";
-import { toHtml, builtInPresets, extractMergeFields } from "@backtech/mail-designer";
-import type { MailDocument } from "@backtech/mail-designer";
+import {
+  MailDesigner,
+  builtInPresets,
+  createLocalStorageTemplateStore,
+  extractMergeFields,
+} from "@backtech/mail-designer";
+import type { ColorScheme, DesignerTheme, Locale, MailDocument } from "@backtech/mail-designer";
 
 /**
- * Part 1 milestone: prove the renderer end to end before any editor exists. Pick a preset,
- * see the real compiled HTML in an iframe next to its source, and switch between desktop
- * and mobile width to check that columns stack.
- *
- * The editor replaces the left pane in part 2a; this view stays as the preview.
+ * Playground. Not part of the package — it exists to exercise the editor and, in
+ * particular, to prove the theming claim: switching the preset below must restyle the whole
+ * editor without a single hard-coded colour leaking through.
  */
+
+const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorScheme }[] = [
+  { id: "default", label: "Standard", scheme: "light" },
+  {
+    id: "plum",
+    label: "Plommon",
+    scheme: "light",
+    theme: {
+      accent: "#7b2fbe",
+      accentContrast: "#fff",
+      accentSoft: "#f2e9fa",
+      radius: 0,
+      bgSubtle: "#f7f3fb",
+      bgSunken: "#e6dcef",
+      borderStrong: "#b79ccd",
+    },
+  },
+  {
+    id: "forest",
+    label: "Skog",
+    scheme: "light",
+    theme: {
+      accent: "#1f7a4d",
+      accentContrast: "#fff",
+      accentSoft: "#e6f2eb",
+      radius: 16,
+      bgSunken: "#dde9e1",
+      fontFamily: "Georgia, 'Times New Roman', serif",
+    },
+  },
+  { id: "dark", label: "Mörkt", scheme: "dark" },
+  { id: "system", label: "System", scheme: "system" },
+];
+
+const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" });
+
 export function App() {
-  const [presetId, setPresetId] = useState(builtInPresets[1]!.id);
-  const [width, setWidth] = useState(600);
-  const [view, setView] = useState<"html" | "text">("html");
-  const [name, setName] = useState("Anna & Co");
+  const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[1]!.document);
+  const [themeId, setThemeId] = useState("default");
+  const [locale, setLocale] = useState<Locale>("sv");
+  const [savedAt, setSavedAt] = useState<string | null>(null);
 
-  const doc: MailDocument = useMemo(
-    () => builtInPresets.find((p) => p.id === presetId)!.document,
-    [presetId],
-  );
-
-  const fields = useMemo(() => extractMergeFields(doc), [doc]);
-  const rendered = useMemo(
-    () => toHtml(doc, { title: "Playground", mergeValues: { Namn: name } }),
-    [doc, name],
-  );
+  const active = THEMES.find((t) => t.id === themeId) ?? THEMES[0]!;
+  const mergeFields = useMemo(() => {
+    // Union of what the document already uses and a fixed demo list, so the insert menu
+    // has something to offer on a blank document too.
+    const used = extractMergeFields(doc);
+    return [...new Set([...used, "Namn", "Ort", "Datum"])];
+  }, [doc]);
 
   return (
     <div className="pg">
       <div className="pg-bar">
         <strong>mail-designer</strong>
+
         <label>
           Mall
-          <select value={presetId} onChange={(e) => setPresetId(e.target.value)}>
+          <select
+            value=""
+            onChange={(e) => {
+              const preset = builtInPresets.find((p) => p.id === e.target.value);
+              if (preset) setDoc(preset.document);
+            }}
+          >
+            <option value="">Välj …</option>
             {builtInPresets.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -40,50 +84,62 @@ export function App() {
             ))}
           </select>
         </label>
-        <span className="pg-toggle">
-          {[
-            { w: 600, label: "Desktop" },
-            { w: 375, label: "Mobil" },
-          ].map(({ w, label }) => (
-            <button
-              key={w}
-              type="button"
-              aria-pressed={width === w}
-              onClick={() => setWidth(w)}
-            >
-              {label} {w}
-            </button>
-          ))}
-        </span>
+
         <label>
-          [Namn]
-          <input value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label>
-          Visa
-          <select value={view} onChange={(e) => setView(e.target.value as "html" | "text")}>
-            <option value="html">HTML</option>
-            <option value="text">Text</option>
+          Tema
+          <select value={themeId} onChange={(e) => setThemeId(e.target.value)}>
+            {THEMES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
           </select>
         </label>
-        <span style={{ fontSize: 12, color: "#8c8c8c" }}>
-          Merge-fält: {fields.length ? fields.join(", ") : "inga"}
-        </span>
+
+        <label>
+          Språk
+          <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+
+        <span className="pg-note">Merge-fält: {mergeFields.join(", ")}</span>
+        {savedAt ? <span className="pg-note">Sparad {savedAt}</span> : null}
       </div>
 
-      <div className="pg-split">
-        <div className="pg-pane">
-          <h2>Förhandsvisning ({width} px)</h2>
-          <div className="pg-preview">
-            {/* srcDoc, not a blob URL: the iframe reloads on every keystroke and a blob
-                would leak one object URL per render. */}
-            <iframe title="Förhandsvisning" srcDoc={rendered.html} style={{ width }} />
-          </div>
-        </div>
-        <div className="pg-pane">
-          <h2>{view === "html" ? "Genererad HTML" : "Textversion"}</h2>
-          <pre className="pg-source">{view === "html" ? rendered.html : rendered.text}</pre>
-        </div>
+      <div className="pg-editor">
+        <MailDesigner
+          value={doc}
+          onChange={setDoc}
+          theme={active.theme}
+          colorScheme={active.scheme}
+          locale={locale}
+          mergeFields={mergeFields}
+          // Demonstrates the upload contract without needing a backend: the file becomes a
+          // data: URI. Real hosts return a hosted URL — Gmail blocks data: images.
+          onUploadImage={async (file) =>
+            await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result));
+              reader.onerror = () => reject(new Error("Kunde inte läsa filen."));
+              reader.readAsDataURL(file);
+            })
+          }
+          resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
+          toolbarExtra={
+            <button
+              type="button"
+              className="pg-save"
+              onClick={async () => {
+                await store.save({ id: "playground", name: "Playground", document: doc });
+                setSavedAt(new Date().toLocaleTimeString("sv-SE"));
+              }}
+            >
+              Spara mall
+            </button>
+          }
+        />
       </div>
     </div>
   );

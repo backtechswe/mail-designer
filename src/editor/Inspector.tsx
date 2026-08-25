@@ -1,0 +1,667 @@
+import { useRef, useState } from "react";
+import type {
+  Align,
+  Block,
+  ButtonBlock,
+  ColumnsBlock,
+  DividerBlock,
+  HeadingBlock,
+  HtmlBlock,
+  ImageBlock,
+  MailSettings,
+  SectionBlock,
+  SocialBlock,
+  SpacerBlock,
+  TextBlock,
+} from "../types.js";
+import { createBlock, createColumn, findBlock } from "../document.js";
+import { useEditor } from "./EditorContext.js";
+import { Icon } from "./icons.js";
+import {
+  AlignField,
+  CheckboxField,
+  ColorField,
+  Field,
+  FieldRow,
+  NumberField,
+  Section,
+  SelectField,
+  SpacingField,
+  TextAreaField,
+  TextField,
+} from "./fields/index.js";
+
+/**
+ * The right-hand panel. Two tabs, because there are genuinely two subjects: the email as a
+ * whole (what every block inherits) and the selected block. Mixing them into one scroll is
+ * how these panels become unreadable.
+ */
+export function Inspector() {
+  const { doc, selectedId, t } = useEditor();
+  const [tab, setTab] = useState<"mail" | "block">("block");
+  const found = selectedId ? findBlock(doc, selectedId) : undefined;
+  const active = found && tab === "block" ? "block" : tab === "mail" ? "mail" : "block";
+
+  return (
+    <aside className="md-inspector">
+      <div className="md-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={active === "block"}
+          onClick={() => setTab("block")}
+        >
+          {t("inspector.block")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={active === "mail"}
+          onClick={() => setTab("mail")}
+        >
+          {t("inspector.mail")}
+        </button>
+      </div>
+
+      <div className="md-inspector-body">
+        {active === "mail" ? (
+          <MailSettingsPanel />
+        ) : found ? (
+          <BlockPanel block={found.block} />
+        ) : (
+          <div className="md-empty md-empty--panel">
+            <strong>{t("inspector.nothing")}</strong>
+            <span>{t("inspector.nothingHint")}</span>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+const FONT_STACKS = [
+  "Helvetica, Arial, sans-serif",
+  "Arial, Helvetica, sans-serif",
+  "Georgia, 'Times New Roman', serif",
+  "'Trebuchet MS', Tahoma, sans-serif",
+  "Verdana, Geneva, sans-serif",
+  "'Courier New', Courier, monospace",
+];
+
+function MailSettingsPanel() {
+  const { doc, updateSettings, t } = useEditor();
+  const s = doc.settings;
+  const patch = (next: Partial<MailSettings>, coalesce = false): void =>
+    updateSettings(next, coalesce);
+
+  return (
+    <>
+      <Section title={t("toolbar.mailSettings")}>
+        <FieldRow>
+          <NumberField
+            label={t("field.width")}
+            value={s.width}
+            min={320}
+            max={900}
+            step={20}
+            onChange={(width) => patch({ width: width ?? 600 })}
+          />
+          <NumberField
+            label={t("field.fontSize")}
+            value={s.fontSize}
+            min={10}
+            max={32}
+            onChange={(fontSize) => patch({ fontSize: fontSize ?? 16 })}
+          />
+        </FieldRow>
+        {/*
+          Only web-safe stacks. A webfont needs a <link> that Outlook ignores and Gmail
+          strips, so offering one would promise something the renderer cannot deliver.
+        */}
+        <SelectField
+          label={t("field.fontFamily")}
+          value={s.fontFamily}
+          options={FONT_STACKS.map((stack) => ({
+            value: stack,
+            label: stack.split(",")[0]!.replace(/'/g, ""),
+          }))}
+          onChange={(fontFamily) => patch({ fontFamily })}
+        />
+        <NumberField
+          label={t("field.lineHeight")}
+          value={s.lineHeight}
+          min={1}
+          max={2.5}
+          step={0.05}
+          suffix="×"
+          onChange={(lineHeight) => patch({ lineHeight: lineHeight ?? 1.5 })}
+        />
+        <ColorField
+          label={t("field.backgroundColor")}
+          value={s.backgroundColor}
+          onChange={(backgroundColor) => patch({ backgroundColor: backgroundColor ?? "#ffffff" })}
+        />
+        <ColorField
+          label={t("field.contentBackgroundColor")}
+          value={s.contentBackgroundColor}
+          onChange={(v) => patch({ contentBackgroundColor: v ?? "#ffffff" })}
+        />
+        <ColorField
+          label={t("field.textColor")}
+          value={s.textColor}
+          onChange={(textColor) => patch({ textColor: textColor ?? "#000000" })}
+        />
+        <ColorField
+          label={t("field.linkColor")}
+          value={s.linkColor}
+          onChange={(linkColor) => patch({ linkColor: linkColor ?? "#0000ee" })}
+        />
+        <TextAreaField
+          label={t("field.preheader")}
+          hint={t("field.preheaderHint")}
+          rows={2}
+          value={s.preheader ?? ""}
+          onChange={(preheader, coalesce) => patch({ preheader }, coalesce)}
+        />
+      </Section>
+    </>
+  );
+}
+
+function BlockPanel({ block }: { block: Block }) {
+  const { update, t } = useEditor();
+  const alignLabels: Record<Align, string> = {
+    left: t("align.left"),
+    center: t("align.center"),
+    right: t("align.right"),
+  };
+  const set = (patch: Partial<Block>, coalesce = false): void => update(block.id, patch, coalesce);
+
+  return (
+    <>
+      <Section title={t(`block.${block.type}` as "block.text")}>
+        {block.type === "section" ? <SectionFields block={block} /> : null}
+        {block.type === "columns" ? <ColumnsFields block={block} /> : null}
+        {block.type === "heading" ? <HeadingFields block={block} labels={alignLabels} /> : null}
+        {block.type === "text" ? <TextFields block={block} labels={alignLabels} /> : null}
+        {block.type === "image" ? <ImageFields block={block} labels={alignLabels} /> : null}
+        {block.type === "button" ? <ButtonFields block={block} labels={alignLabels} /> : null}
+        {block.type === "social" ? <SocialFields block={block} labels={alignLabels} /> : null}
+        {block.type === "divider" ? <DividerFields block={block} labels={alignLabels} /> : null}
+        {block.type === "spacer" ? <SpacerFields block={block} /> : null}
+        {block.type === "html" ? <HtmlFields block={block} /> : null}
+      </Section>
+
+      {block.type === "spacer" ? null : (
+        <Section title={t("field.padding")}>
+          <SpacingField
+            label={t("field.padding")}
+            lockLabel={t("field.paddingLinked")}
+            value={block.padding}
+            onChange={(padding) => set({ padding })}
+          />
+        </Section>
+      )}
+    </>
+  );
+}
+
+function SectionFields({ block }: { block: SectionBlock }) {
+  const { doc, update, t } = useEditor();
+  return (
+    <>
+      <ColorField
+        label={t("field.backgroundColor")}
+        value={block.backgroundColor}
+        allowEmpty
+        fallback={doc.settings.contentBackgroundColor}
+        onChange={(backgroundColor) => update(block.id, { backgroundColor })}
+      />
+      <CheckboxField
+        label={t("field.fullWidthSection")}
+        checked={block.fullWidth ?? false}
+        onChange={(fullWidth) => update(block.id, { fullWidth })}
+      />
+    </>
+  );
+}
+
+function ColumnsFields({ block }: { block: ColumnsBlock }) {
+  const { update, t } = useEditor();
+  return (
+    <>
+      <SelectField
+        label={t("field.columnCount")}
+        value={block.columns.length}
+        options={[2, 3].map((n) => ({ value: n, label: String(n) }))}
+        onChange={(count) => {
+          const columns = [...block.columns];
+          // Growing adds an empty column; shrinking drops trailing ones. Widths are
+          // cleared so computeWidths shares the row evenly again.
+          while (columns.length < count) columns.push(createColumn([createBlock("text") as TextBlock]));
+          while (columns.length > count) columns.pop();
+          update(block.id, {
+            columns: columns.map(({ width: _width, ...rest }) => rest),
+          } as Partial<ColumnsBlock>);
+        }}
+      />
+      <NumberField
+        label={t("field.gap")}
+        value={block.gap}
+        min={0}
+        max={64}
+        step={4}
+        onChange={(gap) => update(block.id, { gap: gap ?? 0 })}
+      />
+      <CheckboxField
+        label={t("field.stackOnMobile")}
+        checked={block.stackOnMobile}
+        onChange={(stackOnMobile) => update(block.id, { stackOnMobile })}
+      />
+    </>
+  );
+}
+
+function HeadingFields({
+  block,
+  labels,
+}: {
+  block: HeadingBlock;
+  labels: Record<Align, string>;
+}) {
+  const { doc, update, t } = useEditor();
+  return (
+    <>
+      <SelectField
+        label={t("field.level")}
+        value={block.level}
+        options={[1, 2, 3].map((n) => ({ value: n as 1 | 2 | 3, label: `H${n}` }))}
+        onChange={(level) => update(block.id, { level })}
+      />
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+      <FieldRow>
+        <NumberField
+          label={t("field.fontSize")}
+          value={block.fontSize}
+          autoLabel={t("field.auto")}
+          min={10}
+          max={64}
+          onChange={(fontSize) => update(block.id, { fontSize })}
+        />
+        <ColorField
+          label={t("field.color")}
+          value={block.color}
+          allowEmpty
+          fallback={doc.settings.textColor}
+          onChange={(color) => update(block.id, { color })}
+        />
+      </FieldRow>
+    </>
+  );
+}
+
+function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align, string> }) {
+  const { doc, update, t } = useEditor();
+  return (
+    <>
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+      <FieldRow>
+        <NumberField
+          label={t("field.fontSize")}
+          value={block.fontSize}
+          autoLabel={t("field.auto")}
+          min={10}
+          max={48}
+          onChange={(fontSize) => update(block.id, { fontSize })}
+        />
+        <ColorField
+          label={t("field.color")}
+          value={block.color}
+          allowEmpty
+          fallback={doc.settings.textColor}
+          onChange={(color) => update(block.id, { color })}
+        />
+      </FieldRow>
+      <NumberField
+        label={t("field.lineHeight")}
+        value={block.lineHeight}
+        autoLabel={t("field.auto")}
+        min={1}
+        max={2.5}
+        step={0.05}
+        suffix="×"
+        onChange={(lineHeight) => update(block.id, { lineHeight })}
+      />
+    </>
+  );
+}
+
+function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Align, string> }) {
+  const { update, onUploadImage, t } = useEditor();
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <>
+      <TextField
+        label={t("field.src")}
+        value={block.src}
+        placeholder="https://"
+        onChange={(src, coalesce) => update(block.id, { src }, coalesce)}
+      />
+      {onUploadImage ? (
+        <Field label={t("field.upload")} hint={error ?? undefined}>
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/*"
+            disabled={uploading}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploading(true);
+              setError(null);
+              try {
+                const url = await onUploadImage(file);
+                update(block.id, { src: url });
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              } finally {
+                setUploading(false);
+                if (fileInput.current) fileInput.current.value = "";
+              }
+            }}
+          />
+          {uploading ? <span className="md-field-hint">{t("field.uploading")}</span> : null}
+        </Field>
+      ) : null}
+      <TextField
+        label={t("field.alt")}
+        hint={t("field.altHint")}
+        value={block.alt}
+        onChange={(alt, coalesce) => update(block.id, { alt }, coalesce)}
+      />
+      <TextField
+        label={t("field.href")}
+        value={block.href ?? ""}
+        placeholder="https://"
+        onChange={(href, coalesce) => update(block.id, { href: href || undefined }, coalesce)}
+      />
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+      <FieldRow>
+        <NumberField
+          label={t("field.width")}
+          value={block.width}
+          autoLabel={t("field.auto")}
+          min={16}
+          max={900}
+          onChange={(width) => update(block.id, { width })}
+        />
+        <NumberField
+          label={t("field.borderRadius")}
+          value={block.borderRadius}
+          autoLabel="0"
+          min={0}
+          max={64}
+          onChange={(borderRadius) => update(block.id, { borderRadius })}
+        />
+      </FieldRow>
+    </>
+  );
+}
+
+function ButtonFields({ block, labels }: { block: ButtonBlock; labels: Record<Align, string> }) {
+  const { update, t } = useEditor();
+  return (
+    <>
+      <TextField
+        label={t("field.label")}
+        value={block.label}
+        onChange={(label, coalesce) => update(block.id, { label }, coalesce)}
+      />
+      <TextField
+        label={t("field.href")}
+        value={block.href}
+        placeholder="https://"
+        onChange={(href, coalesce) => update(block.id, { href }, coalesce)}
+      />
+      <FieldRow>
+        <ColorField
+          label={t("field.backgroundColor")}
+          value={block.backgroundColor}
+          onChange={(backgroundColor) =>
+            update(block.id, { backgroundColor: backgroundColor ?? "#2f54eb" })
+          }
+        />
+        <ColorField
+          label={t("field.color")}
+          value={block.textColor}
+          onChange={(textColor) => update(block.id, { textColor: textColor ?? "#ffffff" })}
+        />
+      </FieldRow>
+      <FieldRow>
+        <NumberField
+          label={t("field.borderRadius")}
+          value={block.borderRadius}
+          min={0}
+          max={48}
+          onChange={(borderRadius) => update(block.id, { borderRadius: borderRadius ?? 0 })}
+        />
+        <NumberField
+          label={t("field.fontSize")}
+          value={block.fontSize}
+          min={10}
+          max={32}
+          onChange={(fontSize) => update(block.id, { fontSize: fontSize ?? 16 })}
+        />
+      </FieldRow>
+      <SpacingField
+        label={t("field.innerPadding")}
+        lockLabel={t("field.paddingLinked")}
+        value={block.innerPadding}
+        onChange={(innerPadding) => update(block.id, { innerPadding })}
+      />
+      <NumberField
+        label={t("field.buttonWidth")}
+        hint={t("field.buttonWidthHint")}
+        value={block.width}
+        autoLabel={t("field.auto")}
+        min={40}
+        max={600}
+        onChange={(width) => update(block.id, { width })}
+      />
+      <CheckboxField
+        label={t("field.fullWidth")}
+        checked={block.fullWidth ?? false}
+        onChange={(fullWidth) => update(block.id, { fullWidth })}
+      />
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+    </>
+  );
+}
+
+function SocialFields({ block, labels }: { block: SocialBlock; labels: Record<Align, string> }) {
+  const { update, resolveSocialIcon, t } = useEditor();
+  return (
+    <>
+      <div className="md-social-items">
+        {block.items.map((item, index) => (
+          <div className="md-social-item" key={`${item.network}-${index}`}>
+            <input
+              type="text"
+              value={item.network}
+              placeholder="facebook"
+              onChange={(e) => {
+                const network = e.target.value;
+                const items = [...block.items];
+                items[index] = {
+                  ...item,
+                  network,
+                  // Re-resolve the icon only while the host owns it, so a URL the user
+                  // typed by hand is never overwritten.
+                  ...(resolveSocialIcon ? { iconUrl: resolveSocialIcon(network) } : {}),
+                };
+                update(block.id, { items }, true);
+              }}
+            />
+            <input
+              type="text"
+              value={item.href}
+              placeholder="https://"
+              onChange={(e) => {
+                const items = [...block.items];
+                items[index] = { ...item, href: e.target.value };
+                update(block.id, { items }, true);
+              }}
+            />
+            <input
+              type="text"
+              value={item.iconUrl}
+              placeholder="https://…/icon.png"
+              onChange={(e) => {
+                const items = [...block.items];
+                items[index] = { ...item, iconUrl: e.target.value };
+                update(block.id, { items }, true);
+              }}
+            />
+            <button
+              type="button"
+              className="md-icon-button md-danger"
+              title={t("action.delete")}
+              onClick={() =>
+                update(block.id, { items: block.items.filter((_, i) => i !== index) })
+              }
+            >
+              <Icon name="trash" size={11} />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="md-secondary-button"
+        onClick={() =>
+          update(block.id, {
+            items: [
+              ...block.items,
+              {
+                network: "facebook",
+                href: "https://",
+                iconUrl: resolveSocialIcon ? resolveSocialIcon("facebook") : "",
+              },
+            ],
+          })
+        }
+      >
+        <Icon name="plus" size={11} />
+        {t("action.add")}
+      </button>
+      <FieldRow>
+        <NumberField
+          label={t("field.height")}
+          value={block.iconSize}
+          min={12}
+          max={64}
+          onChange={(iconSize) => update(block.id, { iconSize: iconSize ?? 24 })}
+        />
+        <NumberField
+          label={t("field.gap")}
+          value={block.spacing}
+          min={0}
+          max={40}
+          onChange={(spacing) => update(block.id, { spacing: spacing ?? 8 })}
+        />
+      </FieldRow>
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+    </>
+  );
+}
+
+function DividerFields({ block, labels }: { block: DividerBlock; labels: Record<Align, string> }) {
+  const { update, t } = useEditor();
+  return (
+    <>
+      <ColorField
+        label={t("field.color")}
+        value={block.color}
+        onChange={(color) => update(block.id, { color: color ?? "#e5e5e5" })}
+      />
+      <FieldRow>
+        <NumberField
+          label={t("field.thickness")}
+          value={block.thickness}
+          min={1}
+          max={12}
+          onChange={(thickness) => update(block.id, { thickness: thickness ?? 1 })}
+        />
+        <NumberField
+          label={t("field.width")}
+          value={block.width}
+          min={10}
+          max={100}
+          suffix="%"
+          onChange={(width) => update(block.id, { width: width ?? 100 })}
+        />
+      </FieldRow>
+      <AlignField
+        label={t("field.align")}
+        value={block.align}
+        labels={labels}
+        onChange={(align) => update(block.id, { align })}
+      />
+    </>
+  );
+}
+
+function SpacerFields({ block }: { block: SpacerBlock }) {
+  const { update, t } = useEditor();
+  return (
+    <NumberField
+      label={t("field.height")}
+      value={block.height}
+      min={1}
+      max={200}
+      step={4}
+      onChange={(height) => update(block.id, { height: height ?? 24 })}
+    />
+  );
+}
+
+function HtmlFields({ block }: { block: HtmlBlock }) {
+  const { update, t } = useEditor();
+  return (
+    <TextAreaField
+      label={t("field.html")}
+      rows={10}
+      mono
+      value={block.html}
+      onChange={(html, coalesce) => update(block.id, { html }, coalesce)}
+    />
+  );
+}
