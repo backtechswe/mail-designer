@@ -9,6 +9,7 @@ import {
   DEFAULT_RUN_TIMEOUT_MS,
   historyReducer,
   initialHistory,
+  recentSteps,
   redoLabel,
   redoTarget,
   undoLabel,
@@ -180,4 +181,139 @@ test("clear empties both stacks", () => {
   s = historyReducer(s, { type: "undo", current: doc(2) });
   s = historyReducer(s, { type: "clear" });
   assert.deepEqual(s, initialHistory);
+});
+
+
+/* ---------------------------------------------------- jumping several steps at once */
+
+/** Five edits: doc(1) -> doc(2) -> ... -> doc(6) on screen, labelled A..E. */
+function fiveEdits() {
+  let s = initialHistory;
+  ["A", "B", "C", "D", "E"].forEach((label, i) => {
+    s = commit(s, doc(i + 1), label, { at: i * 100_000 });
+  });
+  return s;
+}
+
+test("undoing several steps lands where undoing one at a time would", () => {
+  const state = fiveEdits();
+  const jumped = historyReducer(state, { type: "undo", current: doc(6), count: 3 });
+
+  let stepwise = state;
+  let current = doc(6);
+  for (let i = 0; i < 3; i += 1) {
+    const target = undoTarget(stepwise);
+    stepwise = historyReducer(stepwise, { type: "undo", current });
+    current = target;
+  }
+
+  assert.equal(undoTarget(state, 3).marker, 3);
+  assert.deepEqual(
+    jumped.past.map((e) => e.label),
+    stepwise.past.map((e) => e.label),
+  );
+  assert.deepEqual(
+    jumped.future.map((e) => [e.label, e.document.marker]),
+    stepwise.future.map((e) => [e.label, e.document.marker]),
+  );
+});
+
+test("the documents on the future stack are the ones redo has to restore", () => {
+  const state = fiveEdits();
+  const back = historyReducer(state, { type: "undo", current: doc(6), count: 3 });
+
+  // Redoing one at a time must walk back up through 4, 5, 6 — the states that were on
+  // screen, not the states that preceded them.
+  assert.deepEqual(
+    back.future.map((e) => e.document.marker),
+    [4, 5, 6],
+  );
+  assert.equal(redoTarget(back).marker, 4);
+  assert.equal(redoTarget(back, 3).marker, 6);
+});
+
+test("a multi-step undo and a multi-step redo return the document unchanged", () => {
+  const state = fiveEdits();
+  const back = historyReducer(state, { type: "undo", current: doc(6), count: 4 });
+  const forward = historyReducer(back, { type: "redo", current: doc(2), count: 4 });
+
+  assert.equal(redoTarget(back, 4).marker, 6);
+  assert.deepEqual(
+    forward.past.map((e) => [e.label, e.document.marker]),
+    state.past.map((e) => [e.label, e.document.marker]),
+  );
+  assert.equal(forward.future.length, 0);
+});
+
+test("a count past the end of the stack takes everything and stops", () => {
+  const state = fiveEdits();
+  const back = historyReducer(state, { type: "undo", current: doc(6), count: 99 });
+  assert.equal(back.past.length, 0);
+  assert.equal(back.future.length, 5);
+  assert.equal(undoTarget(state, 5).marker, 1);
+  assert.equal(undoTarget(state, 6), null, "nothing to land on beyond the oldest step");
+});
+
+test("a count below one is treated as one step", () => {
+  const state = fiveEdits();
+  for (const count of [0, -3]) {
+    const back = historyReducer(state, { type: "undo", current: doc(6), count });
+    assert.equal(back.past.length, 4, `count ${count}`);
+  }
+});
+
+test("stepping several at once still closes the merge window", () => {
+  let s = commit(initialHistory, doc(1), "A", { key: "size", at: 0 });
+  s = commit(s, doc(2), "B", { key: "other", at: 1 });
+  const back = historyReducer(s, { type: "undo", current: doc(3), count: 2 });
+  assert.equal(back.openKey, undefined);
+  assert.equal(back.openAt, 0);
+});
+
+test("the menu lists the nearest steps first, in both directions", () => {
+  const state = fiveEdits();
+  assert.deepEqual(
+    recentSteps(state, "undo").map((s) => [s.label, s.steps]),
+    [
+      ["E", 1],
+      ["D", 2],
+      ["C", 3],
+      ["B", 4],
+      ["A", 5],
+    ],
+  );
+
+  const back = historyReducer(state, { type: "undo", current: doc(6), count: 5 });
+  assert.deepEqual(
+    recentSteps(back, "redo").map((s) => [s.label, s.steps]),
+    [
+      ["A", 1],
+      ["B", 2],
+      ["C", 3],
+      ["D", 4],
+      ["E", 5],
+    ],
+  );
+});
+
+test("the menu is capped, and shows the nearest steps rather than the oldest", () => {
+  let s = initialHistory;
+  for (let i = 1; i <= 25; i += 1) s = commit(s, doc(i), `step ${i}`, { at: i * 100_000 });
+  const listed = recentSteps(s, "undo");
+  assert.equal(listed.length, 10);
+  assert.equal(listed[0].label, "step 25");
+  assert.equal(listed[9].label, "step 16");
+  assert.equal(recentSteps(s, "undo", 3).length, 3);
+});
+
+test("a step listed at position N is the one N undos land on", () => {
+  const state = fiveEdits();
+  for (const step of recentSteps(state, "undo")) {
+    const landed = historyReducer(state, { type: "undo", current: doc(6), count: step.steps });
+    assert.equal(
+      undoLabel(landed),
+      recentSteps(state, "undo")[step.steps]?.label ?? null,
+      `after taking ${step.steps} steps the next undo is the one below it in the menu`,
+    );
+  }
 });

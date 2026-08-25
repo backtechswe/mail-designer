@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   Block,
+  BlockType,
   ColorScheme,
   DesignerTheme,
   Locale,
@@ -24,7 +25,7 @@ import {
   updateSettings as updateSettingsIn,
 } from "./document.js";
 import { createI18n, createTranslate } from "./i18n.js";
-import type { Strings } from "./i18n.js";
+import type { StringKey, Strings } from "./i18n.js";
 import { EditorProvider } from "./editor/EditorContext.js";
 import type { EditorApi } from "./editor/EditorContext.js";
 import { useHistory } from "./editor/useHistory.js";
@@ -363,7 +364,9 @@ export function MailDesigner({
       if (key === "d" && selectedId && permissions.structure) {
         event.preventDefault();
         event.stopPropagation();
-        commit(duplicateFor(value, selectedId), { label: t("history.duplicate") });
+        commit(duplicateFor(value, selectedId), {
+          label: stepLabel("history.duplicate", findBlock(value, selectedId)?.block),
+        });
         return;
       }
       if (key === "e") {
@@ -386,6 +389,20 @@ export function MailDesigner({
     confirmRequest,
     permissions.structure,
   ]);
+
+  /**
+   * Names the block a step acted on, so the history menu is a list of distinguishable
+   * changes rather than six lines of "Added a block". Read before the change is applied,
+   * because after a removal there is nothing left to name.
+   */
+  const stepLabel = useCallback(
+    (key: "history.insert" | "history.remove" | "history.duplicate" | "history.move",
+     block: Block | BlockType | undefined) => {
+      const type = typeof block === "string" ? block : block?.type;
+      return t(key, { block: type ? t(`block.${type}` as StringKey) : t("block.section") });
+    },
+    [t],
+  );
 
   /**
    * Warn before leaving with work the store has not accepted. The browser shows its own
@@ -413,9 +430,13 @@ export function MailDesigner({
       return block;
     },
     onMove: (id, container, index) =>
-      commit(moveBlock(value, id, { container, index }), { label: t("history.move") }),
+      commit(moveBlock(value, id, { container, index }), {
+        label: stepLabel("history.move", findBlock(value, id)?.block),
+      }),
     onCreate: (block, container, index) => {
-      commit(insertBlock(value, block, { container, index }), { label: t("history.insert") });
+      commit(insertBlock(value, block, { container, index }), {
+        label: stepLabel("history.insert", block),
+      });
       setSelectedId(block.id);
     },
   });
@@ -487,10 +508,16 @@ export function MailDesigner({
           `column:${columnId}:${Object.keys(patch).sort().join(",")}`,
         ),
       insert: (block: Block, position: Position) =>
-        apply(insertBlock(value, block, position), t("history.insert")),
-      remove: (id) => apply(removeBlock(value, id), t("history.remove")),
-      duplicate: (id) => apply(duplicateBlockIn(value, id), t("history.duplicate")),
-      move: (id, position) => apply(moveBlock(value, id, position), t("history.move")),
+        apply(insertBlock(value, block, position), stepLabel("history.insert", block)),
+      remove: (id) =>
+        apply(removeBlock(value, id), stepLabel("history.remove", findBlock(value, id)?.block)),
+      duplicate: (id) =>
+        apply(
+          duplicateBlockIn(value, id),
+          stepLabel("history.duplicate", findBlock(value, id)?.block),
+        ),
+      move: (id, position) =>
+        apply(moveBlock(value, id, position), stepLabel("history.move", findBlock(value, id)?.block)),
       replaceDocument: (next) => apply(next, t("history.replace")),
       endEdit: history.breakRun,
       confirm: setConfirmRequest,

@@ -4,11 +4,13 @@ import {
   DEFAULT_RUN_TIMEOUT_MS,
   historyReducer,
   initialHistory,
+  recentSteps,
   redoLabel,
   redoTarget,
   undoLabel,
   undoTarget,
 } from "./history.js";
+import type { HistoryStep } from "./history.js";
 
 export interface CommitOptions {
   /** Names the change for the undo button. */
@@ -25,8 +27,12 @@ export interface HistoryControls {
   redoLabel: string | null;
   /** How many steps are stored, so a host can show the depth if it wants to. */
   depth: number;
-  undo: () => void;
-  redo: () => void;
+  /** The recent steps in each direction, nearest first — what the history menus list. */
+  undoSteps: HistoryStep[];
+  redoSteps: HistoryStep[];
+  /** `count` steps at once, for jumping to a point in the menu. Defaults to one. */
+  undo: (count?: number) => void;
+  redo: (count?: number) => void;
   commit: (next: MailDocument, options: CommitOptions) => void;
   /**
    * End the current merge run. The next change becomes its own step even if it shares a
@@ -125,10 +131,17 @@ export function useHistory(
   );
 
   const step = useCallback(
-    (direction: "undo" | "redo") => {
-      const target = direction === "undo" ? undoTarget(state) : redoTarget(state);
+    (direction: "undo" | "redo", requested: unknown) => {
+      // `onClick={history.undo}` is the obvious thing for a host to write, and it would hand
+      // us a MouseEvent. Anything that is not a sensible count means one step.
+      const count =
+        typeof requested === "number" && Number.isFinite(requested) && requested >= 1
+          ? Math.floor(requested)
+          : 1;
+      const target =
+        direction === "undo" ? undoTarget(state, count) : redoTarget(state, count);
       if (!target) return;
-      dispatch({ type: direction, current: value });
+      dispatch({ type: direction, current: value, count });
       emitted.current = target;
       previous.current = target;
       onChange(target);
@@ -143,8 +156,10 @@ export function useHistory(
       undoLabel: undoLabel(state),
       redoLabel: redoLabel(state),
       depth: state.past.length,
-      undo: () => step("undo"),
-      redo: () => step("redo"),
+      undoSteps: recentSteps(state, "undo"),
+      redoSteps: recentSteps(state, "redo"),
+      undo: (count) => step("undo", count),
+      redo: (count) => step("redo", count),
       commit,
       breakRun,
       load,

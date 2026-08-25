@@ -45,6 +45,11 @@ export interface StepAction {
   type: "undo" | "redo";
   /** The document currently on screen, which moves to the opposite stack. */
   current: MailDocument;
+  /**
+   * How many steps to take. More than one when the user picks a point out of the history
+   * menu rather than clicking the button repeatedly. Clamped to what the stack holds.
+   */
+  count?: number;
 }
 
 export type HistoryAction =
@@ -96,28 +101,22 @@ export function historyReducer(state: HistoryState, action: HistoryAction): Hist
       };
     }
 
-    case "undo": {
-      const entry = state.past[state.past.length - 1];
-      if (!entry) return state;
-      return {
-        past: state.past.slice(0, -1),
-        future: [{ ...entry, document: action.current }, ...state.future],
-        // Stepping breaks the merge window: the next keystroke must start a fresh step
-        // rather than fold into whatever the undo landed on.
-        openKey: undefined,
-        openAt: 0,
-      };
-    }
-
+    // Both directions take N steps by repeating the single step, rather than by slicing the
+    // stacks in one go. Each hop has to know the document it is leaving behind, since that is
+    // what the opposite stack records — and getting that right once beats getting it right
+    // twice.
+    case "undo":
     case "redo": {
-      const entry = state.future[0];
-      if (!entry) return state;
-      return {
-        past: [...state.past, { ...entry, document: action.current }],
-        future: state.future.slice(1),
-        openKey: undefined,
-        openAt: 0,
-      };
+      let next = state;
+      let current = action.current;
+      const count = Math.max(1, Math.min(action.count ?? 1, stackFor(state, action.type).length));
+      for (let i = 0; i < count; i += 1) {
+        const stepped = stepOnce(next, action.type, current);
+        if (!stepped) break;
+        next = stepped.state;
+        current = stepped.landedOn;
+      }
+      return next;
     }
 
     case "break":
@@ -130,6 +129,73 @@ export function historyReducer(state: HistoryState, action: HistoryAction): Hist
   }
 }
 
+function stackFor(state: HistoryState, direction: "undo" | "redo"): HistoryEntry[] {
+  return direction === "undo" ? state.past : state.future;
+}
+
+/** One hop, and the document it lands on — which the next hop leaves behind in its turn. */
+function stepOnce(
+  state: HistoryState,
+  direction: "undo" | "redo",
+  current: MailDocument,
+): { state: HistoryState; landedOn: MailDocument } | null {
+  if (direction === "undo") {
+    const entry = state.past[state.past.length - 1];
+    if (!entry) return null;
+    return {
+      state: {
+        past: state.past.slice(0, -1),
+        future: [{ ...entry, document: current }, ...state.future],
+        // Stepping breaks the merge window: the next keystroke must start a fresh step
+        // rather than fold into whatever the undo landed on.
+        openKey: undefined,
+        openAt: 0,
+      },
+      landedOn: entry.document,
+    };
+  }
+
+  const entry = state.future[0];
+  if (!entry) return null;
+  return {
+    state: {
+      past: [...state.past, { ...entry, document: current }],
+      future: state.future.slice(1),
+      openKey: undefined,
+      openAt: 0,
+    },
+    landedOn: entry.document,
+  };
+}
+
+/** One line in the history menu: what the step was, and how far back it is. */
+export interface HistoryStep {
+  label: string;
+  /** Steps to take to land here — 1 is what the button alone would do. */
+  steps: number;
+  at: number;
+}
+
+/**
+ * The most recent steps in either direction, nearest first.
+ *
+ * Nearest first because the menu is read from the button downwards: the first line is what
+ * one click would do, and every line below it is that plus more.
+ */
+export function recentSteps(
+  state: HistoryState,
+  direction: "undo" | "redo",
+  max = 10,
+): HistoryStep[] {
+  const stack = stackFor(state, direction);
+  const ordered = direction === "undo" ? [...stack].reverse() : stack;
+  return ordered.slice(0, max).map((entry, index) => ({
+    label: entry.label,
+    steps: index + 1,
+    at: entry.at,
+  }));
+}
+
 export function undoLabel(state: HistoryState): string | null {
   return state.past[state.past.length - 1]?.label ?? null;
 }
@@ -138,10 +204,12 @@ export function redoLabel(state: HistoryState): string | null {
   return state.future[0]?.label ?? null;
 }
 
-export function undoTarget(state: HistoryState): MailDocument | null {
-  return state.past[state.past.length - 1]?.document ?? null;
+/** The document `count` undos would land on. */
+export function undoTarget(state: HistoryState, count = 1): MailDocument | null {
+  return state.past[state.past.length - count]?.document ?? null;
 }
 
-export function redoTarget(state: HistoryState): MailDocument | null {
-  return state.future[0]?.document ?? null;
+/** The document `count` redos would land on. */
+export function redoTarget(state: HistoryState, count = 1): MailDocument | null {
+  return state.future[count - 1]?.document ?? null;
 }

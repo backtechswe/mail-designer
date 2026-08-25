@@ -253,8 +253,15 @@ in from its own chrome, which are recorded as a step rather than discarding what
 
 The controls sit in their own recessed cluster, set apart from the view and viewport toggles,
 because history acts on the whole document and a button grouped with the preview toggle reads
-as belonging to the preview. Each step is named, so the button says *Undo: Moved a block*
-rather than just *Undo*.
+as belonging to the preview. Two plain icon buttons, not a segmented control — a segmented
+control means "one of these is the current state", and neither undo nor redo is a state.
+
+**Resting on either button opens the last ten steps.** Picking one takes every step down to
+it, so going back six changes is one gesture rather than six clicks, and hovering a line
+highlights every line above it too — otherwise picking the sixth line looks like it undoes one
+thing. Steps are named after what they touched (*Added Image*, *Moved Button*), which is what
+makes the list worth reading; a menu of six identical "Added a block" lines would not be.
+`ArrowDown` opens the menu from the keyboard, `Escape` closes it.
 
 | | |
 |---|---|
@@ -291,8 +298,9 @@ that consecutive keystrokes arrive a second apart, and every digit became its ow
 />
 ```
 
-`HistoryControls` carries `canUndo`, `canRedo`, `undoLabel`, `redoLabel`, `depth`, `undo()`
-and `redo()`.
+`HistoryControls` carries `canUndo`, `canRedo`, `undoLabel`, `redoLabel`, `depth`,
+`undoSteps`, `redoSteps`, `undo(count?)` and `redo(count?)` — the step lists are what a host
+needs to build its own version of the menu.
 
 ### Two levels of settings
 

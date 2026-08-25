@@ -189,21 +189,97 @@
   cursor: default;
 }
 
-/* Names the step. Capped so a long label cannot push the rest of the toolbar around. */
-.md-history-label {
-  max-width: 15ch;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  padding-left: 4px;
-  font-size: 11px;
+/*
+ * The step menu. Resting on either button opens the last ten changes; picking one takes all
+ * the steps down to it, which is why hovering a line highlights every line above it too.
+ */
+.md-history-slot {
+  position: relative;
+  display: flex;
+}
+
+.md-history-menu {
+  position: absolute;
+  top: 100%;
+  left: -4px;
+  z-index: 30;
+  /* Transparent bridge across the gap, so moving the pointer from the button into the menu
+     never leaves both — which would close it on the way. */
+  padding-top: 6px;
+}
+
+.md-history-panel {
+  width: 236px;
+  padding: calc(var(--md-space) * 1.25);
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius);
+  background: var(--md-bg);
+  box-shadow: var(--md-lift);
+}
+
+.md-history-panel h4 {
+  margin: 0 0 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--md-text-muted);
 }
 
-@media (max-width: 900px) {
-  .md-history-label {
-    display: none;
-  }
+.md-history-panel ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-history-panel li > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 26px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  color: var(--md-text);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The range that would be taken, not just the line under the pointer. */
+.md-history-panel li > button.is-in-range {
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+}
+
+.md-history-step {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.md-history-count {
+  flex: none;
+  color: var(--md-text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.is-in-range .md-history-count {
+  color: inherit;
+}
+
+.md-history-hint {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--md-border);
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--md-text-muted);
 }
 
 .md-toolbar > .md-toolbar-group > button:not([aria-pressed]) {

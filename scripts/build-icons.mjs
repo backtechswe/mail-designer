@@ -45,8 +45,12 @@ const ICONS = {
   down: ["chevron-down", "solid"],
   left: ["chevron-left", "solid"],
   right: ["chevron-right", "solid"],
-  undo: ["rotate-left", "solid"],
-  redo: ["rotate-right", "solid"],
+  // The u-turn arrows read as "step back / step forward" far better than a circular arrow,
+  // which says "reload". arrow-u-turn-up-left and -right are the exact shapes, but Font
+  // Awesome marks both Pro-only, so the generator refuses them and these are the free pair
+  // with the same gesture.
+  undo: ["reply", "solid"],
+  redo: ["share", "solid"],
   close: ["xmark", "solid"],
   check: ["check", "solid"],
 
