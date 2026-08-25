@@ -42,7 +42,7 @@ export function Toolbar({
 
       <div className="md-toolbar-group md-segmented">
         <button type="button" aria-pressed={view === "edit"} onClick={() => onViewChange("edit")}>
-          <Icon name="section" size={12} />
+          <Icon name="edit" size={12} />
           {t("toolbar.edit")}
         </button>
         <button

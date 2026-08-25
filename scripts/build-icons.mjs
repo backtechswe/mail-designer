@@ -23,7 +23,9 @@ const here = dirname(fileURLToPath(import.meta.url));
  */
 const ICONS = {
   // block types, in palette order
-  section: ["square", "regular"],
+  // A section is a band that holds other blocks, so the icon says "a group of things"
+  // rather than "a rectangle".
+  section: ["object-group", "regular"],
   heading: ["heading", "solid"],
   text: ["align-left", "solid"],
   image: ["image", "regular"],
@@ -55,6 +57,7 @@ const ICONS = {
   laptop: ["laptop", "solid"],
   frame: ["crop-simple", "solid"],
   eye: ["eye", "solid"],
+  edit: ["pencil", "solid"],
   gear: ["gear", "solid"],
   templates: ["layer-group", "solid"],
   upload: ["upload", "solid"],
