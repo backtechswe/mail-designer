@@ -323,3 +323,41 @@ test("no mobile padding means no rule and no class", () => {
   const { html } = toHtml(emptyDocument());
   assert.doesNotMatch(html, /md-mp/);
 });
+
+test("a column's vertical alignment reaches both the attribute and the style", () => {
+  const doc = emptyDocument();
+  const section = doc.blocks[0];
+  const columns = {
+    id: "cols",
+    type: "columns",
+    gap: 16,
+    stackOnMobile: true,
+    columns: [
+      { id: "a", verticalAlign: "middle", children: [{ id: "t1", type: "text", html: "<p>a</p>", align: "left" }] },
+      { id: "b", verticalAlign: "bottom", children: [{ id: "t2", type: "text", html: "<p>b</p>", align: "left" }] },
+    ],
+  };
+  const withCols = { ...doc, blocks: [{ ...section, children: [columns] }] };
+  const { html } = toHtml(withCols);
+
+  // Both, because Outlook's Word engine ignores the CSS property and honours the attribute.
+  assert.match(html, /valign="middle"[^>]*vertical-align:middle/);
+  assert.match(html, /valign="bottom"[^>]*vertical-align:bottom/);
+});
+
+test("columns default to top alignment, which is what an email should do", () => {
+  const doc = emptyDocument();
+  const section = doc.blocks[0];
+  const columns = {
+    id: "cols",
+    type: "columns",
+    gap: 16,
+    stackOnMobile: true,
+    columns: [
+      { id: "a", children: [{ id: "t1", type: "text", html: "<p>a</p>", align: "left" }] },
+      { id: "b", children: [{ id: "t2", type: "text", html: "<p>b</p>", align: "left" }] },
+    ],
+  };
+  const { html } = toHtml({ ...doc, blocks: [{ ...section, children: [columns] }] });
+  assert.equal((html.match(/valign="top"/g) ?? []).length, 2);
+});

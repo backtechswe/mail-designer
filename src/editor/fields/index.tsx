@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
-import type { Align, Spacing } from "../../types.js";
+import type { Align, Spacing, VerticalAlign } from "../../types.js";
 import { Icon } from "../icons.js";
 import { useEditor } from "../EditorContext.js";
 
@@ -306,6 +306,45 @@ export function CheckboxField({
       <label htmlFor={id}>{label}</label>
       {hint ? <p className="md-field-hint">{hint}</p> : null}
     </div>
+  );
+}
+
+/**
+ * Vertical alignment, in words rather than icons.
+ *
+ * Font Awesome's free set has no vertical-align glyphs — they are all Pro — and three short
+ * words beat three improvised arrows for something this easy to misread. `value` may be
+ * undefined, which is how a row whose columns disagree shows itself: nothing is pressed, and
+ * choosing one sets them all.
+ */
+export function VerticalAlignField({
+  label,
+  value,
+  labels,
+  hint,
+  onChange,
+}: {
+  label: string;
+  value: VerticalAlign | undefined;
+  labels: Record<VerticalAlign, string>;
+  hint?: string;
+  onChange: (value: VerticalAlign) => void;
+}) {
+  return (
+    <Field label={label} {...(hint ? { hint } : {})}>
+      <span className="md-segmented md-segmented--text">
+        {(["top", "middle", "bottom"] as VerticalAlign[]).map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={value === option}
+            onClick={() => onChange(option)}
+          >
+            {labels[option]}
+          </button>
+        ))}
+      </span>
+    </Field>
   );
 }
 

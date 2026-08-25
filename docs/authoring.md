@@ -56,6 +56,9 @@ and `locked`.
   "columns": [ { "id": "c1a", "children": [ … ], "width": 60 },
                { "id": "c1b", "children": [ … ], "width": 40 } ] }
 ```
+Each column also takes `verticalAlign: "top" | "middle" | "bottom"` (default `top`) and its
+own `backgroundColor` and `padding`.
+
 `width` is a percentage and is optional — omit it on every column for equal ones. The gap is
 taken out of the columns, not added around them, so the widths still total 100.
 

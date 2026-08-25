@@ -14,6 +14,7 @@ import type {
   SocialBlock,
   SpacerBlock,
   TextBlock,
+  VerticalAlign,
 } from "../types.js";
 import { clearOverrides, countOverrides, createBlock, createColumn, findBlock } from "../document.js";
 import type { InheritableProperty } from "../document.js";
@@ -24,6 +25,7 @@ import { Icon } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
 import {
   AlignField,
+  VerticalAlignField,
   CheckboxField,
   ColorField,
   Field,
@@ -345,6 +347,12 @@ function SectionFields({ block }: { block: SectionBlock }) {
 /** Two is a pair, six is an icon row. Beyond that a 600px email has nothing left to give. */
 const MAX_COLUMNS = 6;
 
+/** The row's alignment, or undefined when its columns disagree. */
+function sharedVerticalAlign(block: ColumnsBlock): VerticalAlign | undefined {
+  const first = block.columns[0]?.verticalAlign ?? "top";
+  return block.columns.every((c) => (c.verticalAlign ?? "top") === first) ? first : undefined;
+}
+
 function ColumnsFields({ block }: { block: ColumnsBlock }) {
   const { doc, update, updateColumn, t } = useEditor();
   const count = block.columns.length;
@@ -371,6 +379,29 @@ function ColumnsFields({ block }: { block: ColumnsBlock }) {
 
   return (
     <>
+      {/*
+        Vertical alignment belongs to the column, not to the blocks inside it: a cell is the
+        only thing in an email that can be taller than its content, so it is the only thing
+        there is anything to align *within*. Set for the whole row, because "all three
+        middle" is what people mean nine times out of ten — a document written by hand can
+        still give each column its own.
+      */}
+      <VerticalAlignField
+        label={t("field.verticalAlign")}
+        value={sharedVerticalAlign(block)}
+        labels={{
+          top: t("align.top"),
+          middle: t("align.middle"),
+          bottom: t("align.bottom"),
+        }}
+        hint={t("field.verticalAlignHint")}
+        onChange={(verticalAlign) =>
+          update(block.id, {
+            columns: block.columns.map((column) => ({ ...column, verticalAlign })),
+          } as Partial<ColumnsBlock>)
+        }
+      />
+
       <SelectField
         label={t("field.columnCount")}
         value={count}

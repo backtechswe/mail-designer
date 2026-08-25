@@ -118,6 +118,18 @@ Outlook would push an over-wide column out of the mail rather than wrapping it.
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
 
+### Vertical alignment
+
+A cell is the only thing in an email that can be taller than its content, so a column is the
+only place there is anything to align *within* — which is why vertical alignment lives on the
+columns row rather than on the blocks inside it. The control sets the whole row, because "all
+of them middle" is what is meant nine times out of ten; a document written by hand can still
+give each column its own `verticalAlign`.
+
+It reaches the output twice, as `valign="middle"` and as `vertical-align:middle`: Outlook's
+Word engine ignores the CSS property and honours the attribute, and modern clients do the
+opposite.
+
 ### Data fields
 
 Text can carry `[Bracketed]` tokens — a **data field** — replaced per recipient at send time.
