@@ -5,8 +5,9 @@ import type {
   RenderResult,
   Spacing,
 } from "../types.js";
-import { walkBlocks } from "../document.js";
+import { defaultSettings, walkBlocks } from "../document.js";
 import { applyDataValues } from "./dataFields.js";
+import { neutraliseUrls } from "./esc.js";
 import { renderSection } from "./html/section.js";
 import { mobilePaddingClass } from "./html/css.js";
 import { spacing } from "./style.js";
@@ -22,7 +23,13 @@ import { toPlainText } from "./toPlainText.js";
  * recipient list.
  */
 export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderResult {
-  const { settings } = doc;
+  /*
+   * Defaults merged here, not assumed. A document is JSON from a database, an API or a hand
+   * written file, and `validateDocument` requires a settings *object* rather than every field
+   * in it — so a partial one used to render `font-size:undefinedpx` and `margin:0 0 NaNpx`
+   * into the mail. Partial settings are the normal shape of a machine-written document.
+   */
+  const settings = { ...defaultSettings, ...doc.settings };
   const stackGaps = collectStackGaps(doc);
   const mobilePaddings = collectMobilePaddings(doc);
 
@@ -49,7 +56,10 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
   const onMissing = options.onMissingField ?? "keep";
 
   return {
-    html: applyDataValues(html, options.data, { escape: "html", onMissing }),
+    // neutraliseUrls runs *after* substitution, and that order is the point: a token in an
+    // href passes safeUrl at render time as the harmless string it is, and only becomes a
+    // URL once a recipient row is applied. Recipient data comes from outside.
+    html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing })),
     text: applyDataValues(text, options.data, { escape: "none", onMissing }),
   };
 }

@@ -3,6 +3,7 @@ import type { RenderContext } from "./context.js";
 import { escAttr } from "../esc.js";
 import { TABLE_RESET, css, pct, spacing } from "../style.js";
 import { STACK_CLASS, gapClass } from "./css.js";
+import { verticalAlign } from "../values.js";
 
 export interface WidthOptions {
   /** Row width in px. Required to make the gap come out of the right columns. */
@@ -105,12 +106,12 @@ export function renderColumns(
         width: pct(width),
         padding: spacing(padding),
         "background-color": column.backgroundColor,
-        "vertical-align": column.verticalAlign ?? "top",
+        "vertical-align": verticalAlign(column.verticalAlign),
       });
 
       const inner = renderChildren(column, { ...ctx, width: innerWidth });
       return (
-        `<td${classes} width="${pct(width)}" valign="${column.verticalAlign ?? "top"}"` +
+        `<td${classes} width="${pct(width)}" valign="${verticalAlign(column.verticalAlign)}"` +
         // bgcolor as well as the CSS: older Outlook and a few gateways drop background-color
         // from a cell but honour the attribute.
         (column.backgroundColor ? ` bgcolor="${escAttr(column.backgroundColor)}"` : "") +

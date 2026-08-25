@@ -9,6 +9,8 @@
  * they are not, sanitise again server-side with a real parser before storing.
  */
 
+import { escAttr, safeCssValue, safeImageUrl, safeUrl } from "./esc.js";
+
 type AllowMap = Record<string, string[]>;
 
 /** Text and heading blocks: only what an email client renders reliably inline. */
@@ -48,12 +50,10 @@ export const BLOCK_TAGS: AllowMap = {
 };
 
 const DROP_WITH_CONTENT = /<(script|style|iframe|object|embed|form|noscript)\b[\s\S]*?<\/\1\s*>/gi;
-const DROP_UNCLOSED = /<(script|style|iframe|object|embed|form|noscript)\b[^>]*>/gi;
 const COMMENTS = /<!--[\s\S]*?-->/g;
-const TAG = /<\/?([a-zA-Z][a-zA-Z0-9]*)((?:[^<>"']|"[^"]*"|'[^']*')*)\/?>/g;
-const ATTRIBUTE = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'<>`]+))/g;
-const UNSAFE_VALUE = /(javascript|vbscript)\s*:/i;
+const ATTRIBUTE = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'<>`]+)))?/g;
 const VOID_TAGS = new Set(["br", "img", "hr"]);
+const URL_ATTRIBUTES = new Set(["href", "src", "background", "action", "formaction"]);
 
 function cleanAttributes(raw: string, allowed: string[]): string {
   if (allowed.length === 0) return "";
@@ -64,31 +64,113 @@ function cleanAttributes(raw: string, allowed: string[]): string {
     // Every on* attribute goes, allowed or not — this is the one rule with no exceptions.
     if (name.startsWith("on")) continue;
     if (!allowed.includes(name)) continue;
-    if (UNSAFE_VALUE.test(value)) continue;
-    // expression() and url(javascript:) in a style attribute are the old IE vectors.
-    if (name === "style" && /expression\s*\(|url\s*\(\s*['"]?\s*(javascript|vbscript):/i.test(value)) {
+    // The scheme test sees what a browser would: entities decoded, control characters gone.
+    if (URL_ATTRIBUTES.has(name)) {
+      const safe = name === "src" || name === "background" ? safeImageUrl(value) : safeUrl(value);
+      if (!safe || safe === "#") continue;
+      out.push(`${name}="${escAttr(safe)}"`);
       continue;
     }
-    out.push(`${name}="${value.replace(/"/g, "&quot;")}"`);
+    if (name === "style") {
+      const safe = safeCssValue(value);
+      if (!safe) continue;
+      out.push(`style="${escAttr(safe)}"`);
+      continue;
+    }
+    // Full attribute escaping, not just the quote. A raw `>` here would end the tag as far
+    // as the next transform is concerned, and this output is fed to more of them.
+    out.push(`${name}="${escAttr(value)}"`);
   }
   return out.length ? " " + out.join(" ") : "";
 }
 
+/**
+ * The index just past the tag that starts at `from`, or -1 when the input ends first.
+ *
+ * Quote-aware, and deliberately tolerant: an unterminated quote ends at the end of input
+ * rather than making the tag "not a tag". That is the difference between dropping
+ * `<img src=x onerror=alert(1) title=">` and emitting it verbatim, which is what the old
+ * regex did — it required a balanced pair, so a tag with an odd quote matched nothing at all
+ * and `String.replace` passed it straight through.
+ */
+function endOfTag(html: string, from: number): number {
+  let quote: string | null = null;
+  for (let i = from; i < html.length; i += 1) {
+    const char = html[i] as string;
+    if (quote) {
+      if (char === quote) quote = null;
+      continue;
+    }
+    if (char === '"' || char === "'") quote = char;
+    else if (char === ">") return i + 1;
+  }
+  return -1;
+}
+
+const TAG_START = /^<(\/?)([a-zA-Z][a-zA-Z0-9]*)/;
+
 export function sanitize(html: string, allowed: AllowMap = INLINE_TAGS): string {
   if (!html) return "";
-  let out = html.replace(DROP_WITH_CONTENT, "").replace(DROP_UNCLOSED, "").replace(COMMENTS, "");
+  const input = html.replace(DROP_WITH_CONTENT, "").replace(COMMENTS, "");
 
-  out = out.replace(TAG, (whole, rawName: string, rawAttrs: string) => {
-    const name = rawName.toLowerCase();
+  let out = "";
+  let cursor = 0;
+  /* Tags opened and not yet closed, so a stray `</td>` cannot escape into the document. */
+  const open: string[] = [];
+
+  while (cursor < input.length) {
+    const next = input.indexOf("<", cursor);
+    if (next === -1) {
+      out += input.slice(cursor);
+      break;
+    }
+    out += input.slice(cursor, next);
+
+    const head = TAG_START.exec(input.slice(next, next + 32));
+    if (!head) {
+      // Not a tag at all — a literal `<` in prose. Escape it; it must never reach the output
+      // as something a parser could pick up.
+      out += "&lt;";
+      cursor = next + 1;
+      continue;
+    }
+
+    const end = endOfTag(input, next);
+    // No closing `>` before the end of input: whatever follows is an unfinished tag, and
+    // dropping it is the only safe reading.
+    if (end === -1) break;
+
+    const name = (head[2] ?? "").toLowerCase();
+    const closing = head[1] === "/";
     const permitted = allowed[name];
-    // Unknown tag: drop the tag, keep whatever text it wrapped.
-    if (!permitted) return "";
-    if (whole.startsWith("</")) return `</${name}>`;
-    const attributes = cleanAttributes(rawAttrs ?? "", permitted);
-    if (VOID_TAGS.has(name)) return `<${name}${attributes} />`;
-    return `<${name}${attributes}>`;
-  });
+    cursor = end;
 
+    // Unknown tag: drop the tag, keep whatever text it wrapped.
+    if (!permitted) continue;
+
+    if (closing) {
+      // A closing tag with nothing open to close would land in the renderer's own table.
+      const at = open.lastIndexOf(name);
+      if (at === -1) continue;
+      // Close anything left dangling inside it, so the nesting stays well-formed.
+      for (let i = open.length - 1; i > at; i -= 1) out += `</${open[i]}>`;
+      open.length = at;
+      out += `</${name}>`;
+      continue;
+    }
+
+    const attributes = cleanAttributes(input.slice(next + head[0].length, end - 1), permitted);
+    if (VOID_TAGS.has(name)) {
+      out += `<${name}${attributes} />`;
+      continue;
+    }
+    out += `<${name}${attributes}>`;
+    open.push(name);
+  }
+
+  // Whatever the author left open, we close. An unbalanced fragment would otherwise swallow
+  // the rest of the email.
+  for (let i = open.length - 1; i >= 0; i -= 1) out += `</${open[i]}>`;
   return out;
 }
 

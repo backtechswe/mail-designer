@@ -3,6 +3,8 @@
  * golden-file tests readable and stable — reorder a property here and the diff shows it.
  */
 
+import { isColour, safeCssValue } from "./esc.js";
+
 export type StyleMap = Record<string, string | number | false | null | undefined>;
 
 export function px(value: number): string {
@@ -18,24 +20,26 @@ export function spacing(value: readonly [number, number, number, number]): strin
   return value.map(px).join(" ");
 }
 
-/** Drops undefined/null/false entries so callers can build maps conditionally. */
+/**
+ * Drops undefined/null/false entries so callers can build maps conditionally.
+ *
+ * Every value passes through `safeCssValue`, and this is the single choke point that makes
+ * that worth doing: every colour, font stack and background URL in the document reaches the
+ * output through here. Without it `textColor: "red;background:url(http://tracker/x)"` is a
+ * working beacon in every mail sent, and the document model lets a user type exactly that.
+ */
 export function css(style: StyleMap): string {
   const parts: string[] = [];
   for (const [key, value] of Object.entries(style)) {
     if (value === undefined || value === null || value === false || value === "") continue;
-    parts.push(`${key}:${value}`);
+    const safe = typeof value === "number" ? String(value) : safeCssValue(value);
+    if (safe === "") continue;
+    // A colour field is free text in the editor, so it is where an injected declaration
+    // would arrive. Anything that is not a colour is dropped rather than emitted.
+    if (/color$/i.test(key) && !isColour(safe)) continue;
+    parts.push(`${key}:${safe}`);
   }
   return parts.join(";");
-}
-
-/** name="value" pairs, skipping empties. Values are assumed pre-escaped. */
-export function attrs(map: Record<string, string | number | false | null | undefined>): string {
-  const parts: string[] = [];
-  for (const [key, value] of Object.entries(map)) {
-    if (value === undefined || value === null || value === false || value === "") continue;
-    parts.push(`${key}="${value}"`);
-  }
-  return parts.length ? " " + parts.join(" ") : "";
 }
 
 /**

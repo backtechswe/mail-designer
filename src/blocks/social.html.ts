@@ -1,6 +1,7 @@
 import type { SocialBlock } from "../types.js";
 import { escAttr, safeImageUrl, safeUrl } from "../render/esc.js";
 import { TABLE_RESET, css, px } from "../render/style.js";
+import { align } from "../render/values.js";
 
 /**
  * Icons sit in one row of table cells rather than inline-blocks, because Outlook collapses
@@ -41,5 +42,5 @@ export function renderSocial(block: SocialBlock): string {
     })
     .join("");
 
-  return `<table${TABLE_RESET} align="${block.align}"><tr>${cells}</tr></table>`;
+  return `<table${TABLE_RESET} align="${align(block.align, "center")}"><tr>${cells}</tr></table>`;
 }

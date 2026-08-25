@@ -2,6 +2,7 @@ import type { ButtonBlock } from "../types.js";
 import type { RenderContext } from "../render/html/context.js";
 import { escAttr, escText, safeUrl } from "../render/esc.js";
 import { TABLE_RESET, css, px, spacing } from "../render/style.js";
+import { align, num } from "../render/values.js";
 
 /**
  * A bulletproof button: a table cell carrying the background and radius, with an <a>
@@ -47,7 +48,7 @@ export function renderButton(block: ButtonBlock, ctx: RenderContext): string {
   });
 
   const table =
-    `<table${TABLE_RESET} align="${block.align}"` +
+    `<table${TABLE_RESET} align="${align(block.align)}"` +
     (block.fullWidth ? ' width="100%"' : "") +
     `><tr><td align="center" bgcolor="${escAttr(block.backgroundColor)}" ` +
     `style="${escAttr(cellStyle)}">` +
@@ -58,7 +59,9 @@ export function renderButton(block: ButtonBlock, ctx: RenderContext): string {
 
   // Height Outlook will use for the VML box, from the same numbers the CSS uses.
   const height = block.innerPadding[0] + block.innerPadding[2] + lineHeight;
-  const arcsize = `${Math.round((block.borderRadius / height) * 100)}%`;
+  // VML's arcsize is a percentage of the shorter side, and 50% is already a full pill —
+  // a borderRadius of 999 used to emit arcsize="2300%", which Word does not understand.
+  const arcsize = `${num(Math.round((block.borderRadius / height) * 100), 0, 0, 50)}%`;
   const centerStyle = css({
     color: block.textColor,
     "font-family": fontFamily,

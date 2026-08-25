@@ -54,6 +54,27 @@ export interface TemplateStore {
 }
 
 /**
+ * Coercion may add what is missing; it may not reinterpret what is present.
+ *
+ * That line is the whole rule. A row with no `blocks` is an empty mail and opening it is
+ * harmless. A row whose `blocks` is a string is damaged, and turning it into `[]` presents
+ * an empty template the user will save over — data loss wearing the costume of a repair. A
+ * `version` we do not know is the same story from the future: coercing it to 1 and saving
+ * back downgrades a document written by a later release.
+ */
+function repairable(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value !== "object") return false;
+  const doc = value as Record<string, unknown>;
+  if (doc.version !== undefined && doc.version !== 1) return false;
+  if (doc.blocks !== undefined && !Array.isArray(doc.blocks)) return false;
+  if (doc.settings !== undefined && (typeof doc.settings !== "object" || doc.settings === null)) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Normalise whatever came out of storage into a MailTemplate the editor can open.
  * Adapters should route every read through this so one malformed row cannot crash the UI.
  */
@@ -63,7 +84,18 @@ export function parseTemplate(raw: unknown): MailTemplate | null {
   const id = typeof row.id === "string" ? row.id : "";
   if (!id) return null;
 
+  /*
+   * Coerce, then validate what coercion produced — and reject if it is still wrong.
+   *
+   * This path used to coerce and stop there, which is the one thing `validate.ts` exists to
+   * prevent: `coerceDocument` fills in missing top-level fields but spreads `blocks` through
+   * untouched, so a row whose blocks were malformed reached the editor by exactly the route
+   * built to stop it. Validating *after* keeps the repair — a row missing `settings` is still
+   * openable — while a structurally broken one is refused.
+   */
+  if (!repairable(row.document)) return null;
   const document = coerceDocument(row.document);
+  if (!validateDocument(document).ok) return null;
   const template: MailTemplate = {
     id,
     name: typeof row.name === "string" && row.name ? row.name : "Namnlös mall",

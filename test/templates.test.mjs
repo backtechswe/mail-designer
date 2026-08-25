@@ -170,3 +170,15 @@ test("coerceDocument always yields something the editor can open", () => {
   assert.deepEqual(fromNothing.blocks, []);
   assert.equal(fromNothing.settings.width, 600);
 });
+
+test("parseTemplate refuses a row whose blocks are malformed", () => {
+  // coerceDocument fills in missing top-level fields but spreads blocks through untouched,
+  // so this is the case that used to reach the editor and the renderer.
+  assert.equal(parseTemplate({ id: "x", document: { version: 1, settings: {}, blocks: "nope" } }), null);
+  assert.equal(
+    parseTemplate({ id: "x", document: { version: 1, settings: {}, blocks: [{ id: "a", type: "text" }] } }),
+    null,
+    "a leaf at the top level is not a section",
+  );
+  assert.equal(parseTemplate({ id: "x", document: { version: 7 } }), null, "wrong version");
+});
