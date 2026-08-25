@@ -43,7 +43,8 @@ export function Canvas({
   canvasRef: RefObject<HTMLDivElement | null>;
   dropTarget: DropTarget | null;
 }) {
-  const { doc, select, selectedId, insert, remove, move, isDragging, t } = useEditor();
+  const { doc, select, selectedId, insert, remove, move, isDragging, viewportWidth, t } =
+    useEditor();
 
   /**
    * Alt+arrows are the keyboard equivalent of dragging. Not a nicety: drag-and-drop is
@@ -98,7 +99,9 @@ export function Canvas({
     >
       <div
         className="md-page"
-        style={{ background: doc.settings.backgroundColor }}
+        // The canvas honours the viewport toggle too, so mobile can be checked without
+        // leaving edit mode.
+        style={{ background: doc.settings.backgroundColor, maxWidth: viewportWidth }}
         data-md-container="document"
       >
         {doc.blocks.length === 0 ? (
@@ -169,7 +172,7 @@ function lateralTarget(
 }
 
 function SectionView({ section }: { section: SectionBlock }) {
-  const { doc, t } = useEditor();
+  const { doc, viewportWidth, t } = useEditor();
   const { settings } = doc;
 
   // Mirrors renderSection: fullWidth puts the colour on the outer band, otherwise it stays
@@ -184,7 +187,7 @@ function SectionView({ section }: { section: SectionBlock }) {
       <div style={{ background: outerBackground }}>
         <div
           style={{
-            maxWidth: settings.width,
+            maxWidth: Math.min(settings.width, viewportWidth),
             margin: "0 auto",
             background: innerBackground,
             padding: spacingToCss(section.padding),
@@ -208,16 +211,28 @@ function ChildView({ child }: { child: SectionChild }) {
 }
 
 function ColumnsView({ block }: { block: ColumnsBlock }) {
+  const { isMobileViewport } = useEditor();
   const widths = computeWidths(block.columns);
+  // Mirrors the media query the renderer emits. Without this the canvas would show columns
+  // side by side at 375px while the actual email stacks them — the one thing the mobile
+  // toggle exists to reveal.
+  const stacked = isMobileViewport && block.stackOnMobile;
+
   return (
     <BlockShell block={block} variant="columns">
-      <div style={{ display: "flex", padding: spacingToCss(block.padding) }}>
+      <div
+        style={{
+          display: stacked ? "block" : "flex",
+          padding: spacingToCss(block.padding),
+        }}
+      >
         {block.columns.map((column, index) => (
           <ColumnView
             key={column.id}
             column={column}
-            width={widths[index] ?? 0}
+            width={stacked ? 100 : (widths[index] ?? 0)}
             gap={block.gap}
+            stacked={stacked}
             isFirst={index === 0}
             isLast={index === block.columns.length - 1}
           />
@@ -231,12 +246,14 @@ function ColumnView({
   column,
   width,
   gap,
+  stacked,
   isFirst,
   isLast,
 }: {
   column: MailColumn;
   width: number;
   gap: number;
+  stacked: boolean;
   isFirst: boolean;
   isLast: boolean;
 }) {
@@ -252,10 +269,12 @@ function ColumnView({
         boxSizing: "border-box",
         background: column.backgroundColor,
         verticalAlign: column.verticalAlign ?? "top",
-        paddingTop: base[0],
-        paddingRight: base[1] + (isLast ? 0 : half),
+        // Stacked, the gap moves from between the columns to above each one but the first
+        // — exactly what the .md-cgN adjacent-sibling rule does in the rendered email.
+        paddingTop: base[0] + (stacked && !isFirst ? gap : 0),
+        paddingRight: base[1] + (stacked || isLast ? 0 : half),
         paddingBottom: base[2],
-        paddingLeft: base[3] + (isFirst ? 0 : half),
+        paddingLeft: base[3] + (stacked || isFirst ? 0 : half),
       }}
     >
       {column.children.length === 0 ? (

@@ -38,6 +38,11 @@ export interface EditorApi {
   /** True while a drag is in flight, so the canvas can suppress hover chrome. */
   isDragging: boolean;
 
+  /** Width the canvas and the preview are currently rendered at. */
+  viewportWidth: number;
+  /** Whether the canvas should behave the way the mobile media query will. */
+  isMobileViewport: boolean;
+
   history: HistoryControls;
 }
 

@@ -286,7 +286,7 @@
  */
 .md-page {
   position: relative;
-  max-width: 900px;
+  /* Width comes from the viewport toggle, applied inline by Canvas. */
   margin: 0 auto;
   border-radius: var(--md-radius);
   box-shadow: var(--md-lift);

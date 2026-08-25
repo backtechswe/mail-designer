@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   Block,
@@ -32,8 +32,11 @@ import { Palette } from "./editor/Palette.js";
 import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
 import { Toolbar } from "./editor/Toolbar.js";
-import type { ViewMode } from "./editor/Toolbar.js";
+import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
+
+/** Width the mobile viewport renders at. Narrow enough to catch real phone problems. */
+const MOBILE_WIDTH = 375;
 
 export interface MailDesignerProps {
   value: MailDocument;
@@ -85,8 +88,12 @@ export function MailDesigner({
 }: MailDesignerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("edit");
-  const [previewWidth, setPreviewWidth] = useState(value.settings.width);
+  const [viewport, setViewport] = useState<Viewport>("desktop");
   const canvasRef = useRef<HTMLDivElement | null>(null);
+
+  // Derived, not stored: keeping a width in state meant it went stale the moment the user
+  // changed the email's own width in the inspector.
+  const viewportWidth = viewport === "mobile" ? MOBILE_WIDTH : value.settings.width;
 
   // One i18next instance per locale/overrides pair, never the global singleton.
   const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
@@ -128,6 +135,8 @@ export function MailDesigner({
       replaceDocument: (next) => apply(next),
       startBlockDrag: startMove,
       isDragging: drag !== null,
+      viewportWidth,
+      isMobileViewport: viewport === "mobile",
       history,
     };
   }, [
@@ -141,12 +150,9 @@ export function MailDesigner({
     history,
     startMove,
     drag,
+    viewportWidth,
+    viewport,
   ]);
-
-  const handleWidth = useCallback((width: number) => {
-    setPreviewWidth(width);
-    setView((current) => (current === "edit" ? "preview" : current));
-  }, []);
 
   return (
     <div
@@ -158,8 +164,8 @@ export function MailDesigner({
         <Toolbar
           view={view}
           onViewChange={setView}
-          width={previewWidth}
-          onWidthChange={handleWidth}
+          viewport={viewport}
+          onViewportChange={setViewport}
           extra={toolbarExtra}
         />
         {/* Preview renders a single child, so the three-column grid has to collapse with it
@@ -169,7 +175,7 @@ export function MailDesigner({
           {view === "edit" ? (
             <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
           ) : (
-            <PreviewFrame doc={value} width={previewWidth} />
+            <PreviewFrame doc={value} width={viewportWidth} />
           )}
           {view === "edit" ? <Inspector /> : null}
         </div>
