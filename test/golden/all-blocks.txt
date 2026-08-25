@@ -1,0 +1,32 @@
+Förhandsvisning för [Namn]
+
+Hej [Namn]!
+
+Underrubrik
+
+Text med fet, kursiv och länk.
+Ett
+Två
+
+[En bild] https://exempel.se
+
+Boka tid: https://exempel.se/boka?ref=[Namn]
+
+Utan bredd: https://exempel.se
+
+————————————————————————
+
+facebook: https://facebook.com/x
+instagram: https://instagram.com/x
+
+Rå HTML med borttaget.
+
+Vänster
+
+Mitten
+
+[H]
+
+A
+
+B

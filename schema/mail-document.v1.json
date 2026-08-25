@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://backtech.se/schema/mail-document.v1.json",
+  "title": "MailDocument v1",
+  "description": "The mail-designer document model. Language-agnostic on purpose: this schema plus test/golden/ is the full specification a non-JavaScript renderer needs.",
+  "type": "object",
+  "required": ["version", "settings", "blocks"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": 1 },
+    "settings": { "$ref": "#/$defs/settings" },
+    "blocks": { "type": "array", "items": { "$ref": "#/$defs/section" } }
+  },
+  "$defs": {
+    "color": { "type": "string", "description": "CSS colour. Hex is safest for email." },
+    "spacing": {
+      "type": "array",
+      "description": "[top, right, bottom, left] in px.",
+      "items": { "type": "number" },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "align": { "enum": ["left", "center", "right"] },
+    "verticalAlign": { "enum": ["top", "middle", "bottom"] },
+    "settings": {
+      "type": "object",
+      "required": [
+        "width",
+        "backgroundColor",
+        "contentBackgroundColor",
+        "fontFamily",
+        "fontSize",
+        "lineHeight",
+        "textColor",
+        "linkColor"
+      ],
+      "properties": {
+        "width": { "type": "number", "minimum": 320, "maximum": 900 },
+        "backgroundColor": { "$ref": "#/$defs/color" },
+        "contentBackgroundColor": { "$ref": "#/$defs/color" },
+        "fontFamily": { "type": "string" },
+        "fontSize": { "type": "number" },
+        "lineHeight": { "type": "number" },
+        "textColor": { "$ref": "#/$defs/color" },
+        "linkColor": { "$ref": "#/$defs/color" },
+        "preheader": { "type": "string" }
+      }
+    },
+    "section": {
+      "type": "object",
+      "required": ["id", "type", "children"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "const": "section" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "backgroundColor": { "$ref": "#/$defs/color" },
+        "backgroundUrl": { "type": "string" },
+        "fullWidth": {
+          "type": "boolean",
+          "description": "true puts the background on the outer full-width table; false keeps it inside the content column."
+        },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/sectionChild" } }
+      }
+    },
+    "sectionChild": {
+      "oneOf": [{ "$ref": "#/$defs/columns" }, { "$ref": "#/$defs/leaf" }]
+    },
+    "columns": {
+      "type": "object",
+      "required": ["id", "type", "gap", "stackOnMobile", "columns"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "columns" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "gap": { "type": "number", "minimum": 0 },
+        "stackOnMobile": { "type": "boolean" },
+        "columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/column" } }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": ["id", "children"],
+      "properties": {
+        "id": { "type": "string" },
+        "width": {
+          "type": "number",
+          "description": "Percent. Columns without a width share the remainder equally.",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "verticalAlign": { "$ref": "#/$defs/verticalAlign" },
+        "backgroundColor": { "$ref": "#/$defs/color" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "children": {
+          "type": "array",
+          "description": "Leaf blocks only. Columns never nest.",
+          "items": { "$ref": "#/$defs/leaf" }
+        }
+      }
+    },
+    "leaf": {
+      "oneOf": [
+        { "$ref": "#/$defs/heading" },
+        { "$ref": "#/$defs/text" },
+        { "$ref": "#/$defs/image" },
+        { "$ref": "#/$defs/button" },
+        { "$ref": "#/$defs/social" },
+        { "$ref": "#/$defs/divider" },
+        { "$ref": "#/$defs/spacer" },
+        { "$ref": "#/$defs/html" }
+      ]
+    },
+    "heading": {
+      "type": "object",
+      "required": ["id", "type", "level", "html", "align"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "heading" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "level": { "enum": [1, 2, 3] },
+        "html": { "type": "string", "description": "Inline HTML only: b i em strong u s span br a." },
+        "align": { "$ref": "#/$defs/align" },
+        "color": { "$ref": "#/$defs/color" },
+        "fontSize": { "type": "number" },
+        "fontFamily": { "type": "string" },
+        "lineHeight": { "type": "number" }
+      }
+    },
+    "text": {
+      "type": "object",
+      "required": ["id", "type", "html", "align"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "text" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "html": { "type": "string" },
+        "align": { "$ref": "#/$defs/align" },
+        "color": { "$ref": "#/$defs/color" },
+        "fontSize": { "type": "number" },
+        "fontFamily": { "type": "string" },
+        "lineHeight": { "type": "number" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "required": ["id", "type", "src", "alt", "align"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "image" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "src": { "type": "string" },
+        "alt": { "type": "string" },
+        "href": { "type": "string" },
+        "width": { "type": "number", "description": "Intrinsic px width. Omitted means full column width." },
+        "align": { "$ref": "#/$defs/align" },
+        "borderRadius": { "type": "number" }
+      }
+    },
+    "button": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "label",
+        "href",
+        "backgroundColor",
+        "textColor",
+        "borderRadius",
+        "fontSize",
+        "innerPadding",
+        "align"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "button" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "label": { "type": "string" },
+        "href": { "type": "string" },
+        "backgroundColor": { "$ref": "#/$defs/color" },
+        "textColor": { "$ref": "#/$defs/color" },
+        "borderRadius": { "type": "number" },
+        "fontSize": { "type": "number" },
+        "fontFamily": { "type": "string" },
+        "innerPadding": { "$ref": "#/$defs/spacing" },
+        "width": {
+          "type": "number",
+          "description": "Explicit px width. Required for the VML fallback that gives Outlook rounded corners."
+        },
+        "fullWidth": { "type": "boolean" },
+        "align": { "$ref": "#/$defs/align" }
+      }
+    },
+    "social": {
+      "type": "object",
+      "required": ["id", "type", "items", "iconSize", "spacing", "align"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "social" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "iconSize": { "type": "number" },
+        "spacing": { "type": "number" },
+        "align": { "$ref": "#/$defs/align" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["network", "href", "iconUrl"],
+            "properties": {
+              "network": { "type": "string" },
+              "href": { "type": "string" },
+              "iconUrl": {
+                "type": "string",
+                "description": "Absolute, publicly reachable URL. Gmail blocks data: URIs in <img>."
+              },
+              "label": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "divider": {
+      "type": "object",
+      "required": ["id", "type", "color", "thickness", "width", "align"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "divider" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "color": { "$ref": "#/$defs/color" },
+        "thickness": { "type": "number" },
+        "width": { "type": "number", "description": "Percent of the container." },
+        "align": { "$ref": "#/$defs/align" }
+      }
+    },
+    "spacer": {
+      "type": "object",
+      "required": ["id", "type", "height"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "spacer" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "height": { "type": "number" }
+      }
+    },
+    "html": {
+      "type": "object",
+      "required": ["id", "type", "html"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "const": "html" },
+        "padding": { "$ref": "#/$defs/spacing" },
+        "html": { "type": "string" }
+      }
+    }
+  }
+}

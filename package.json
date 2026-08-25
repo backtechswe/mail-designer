@@ -1,0 +1,39 @@
+{
+  "name": "@backtech/mail-designer",
+  "version": "0.1.0",
+  "description": "Block-based email designer for React. Zero-dependency table-based email HTML renderer, themeable via CSS variables.",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./render": {
+      "types": "./dist/render/index.d.ts",
+      "default": "./dist/render/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "scripts": {
+    "build": "tsc && cp src/styles.css dist/styles.css",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test 'test/*.test.mjs'",
+    "icons": "node scripts/build-icons.mjs",
+    "dev": "npm --prefix examples/playground run dev",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "i18next": "^25.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.7",
+    "typescript": "^5.7.3"
+  }
+}

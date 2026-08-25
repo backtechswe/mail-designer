@@ -1,0 +1,93 @@
+import type { MailSettings } from "../../types.js";
+import { escAttr, escText } from "../esc.js";
+import { TABLE_RESET, css, px } from "../style.js";
+import { headCss } from "./css.js";
+
+export interface SkeletonOptions {
+  lang: string;
+  title: string;
+  /** Distinct column gaps that need a stacked-mobile rule. Empty means no media query. */
+  stackGaps: readonly number[];
+}
+
+/**
+ * The document frame. Nearly every line here is a workaround for a specific client, so
+ * each one is commented — a future reader must be able to tell a load-bearing hack from
+ * decoration before deleting it.
+ */
+export function wrapDocument(
+  settings: MailSettings,
+  body: string,
+  options: SkeletonOptions,
+): string {
+  const preheader = settings.preheader ? renderPreheader(settings.preheader) : "";
+
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${escAttr(options.lang)}">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- Stops Apple Mail from re-flowing the layout on its own. -->
+<meta name="x-apple-disable-message-reformatting" />
+<!-- Stops iOS from auto-linking phone numbers, dates and addresses. -->
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no" />
+<title>${escText(options.title)}</title>
+<!--[if mso]>
+<xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+<![endif]-->
+<!--[if mso]>
+<style type="text/css">
+/* Outlook cannot use webfonts; force a real font so it does not fall back to Times. */
+body,table,td,a,p,h1,h2,h3,div{font-family:Arial,Helvetica,sans-serif !important}
+</style>
+<![endif]-->
+<style type="text/css">
+${headCss(settings, options.stackGaps)}
+</style>
+</head>
+<body id="body" style="${escAttr(
+    css({
+      margin: 0,
+      padding: 0,
+      "background-color": settings.backgroundColor,
+      "font-family": settings.fontFamily,
+      "font-size": px(settings.fontSize),
+      "line-height": settings.lineHeight,
+      color: settings.textColor,
+    }),
+  )}">
+${preheader}
+<table${TABLE_RESET} width="100%" style="${escAttr(
+    css({ width: "100%", "background-color": settings.backgroundColor }),
+  )}">
+<tr><td align="center" style="padding:0">
+${body}
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+/**
+ * Hidden preview text. Without it the inbox shows the first words of the body, which for
+ * a mail that opens with a logo means showing nothing useful at all.
+ *
+ * The trailing filler is deliberate: it pushes the body copy out of the preview window so
+ * only the intended sentence shows. mso-hide:all is what hides it in Outlook, where
+ * display:none is not enough.
+ */
+function renderPreheader(text: string): string {
+  const filler = "&#847;&zwnj;&nbsp;".repeat(60);
+  return `<div style="${escAttr(
+    css({
+      display: "none",
+      "font-size": "1px",
+      "line-height": "1px",
+      "max-height": 0,
+      "max-width": 0,
+      opacity: 0,
+      overflow: "hidden",
+      "mso-hide": "all",
+    }),
+  )}">${escText(text)}${filler}</div>`;
+}

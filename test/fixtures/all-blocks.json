@@ -1,0 +1,295 @@
+{
+  "version": 1,
+  "settings": {
+    "width": 600,
+    "backgroundColor": "#f5f5f7",
+    "contentBackgroundColor": "#ffffff",
+    "fontFamily": "Helvetica, Arial, sans-serif",
+    "fontSize": 16,
+    "lineHeight": 1.5,
+    "textColor": "#1f1f1f",
+    "linkColor": "#2f54eb",
+    "preheader": "Förhandsvisning för [Namn]"
+  },
+  "blocks": [
+    {
+      "id": "id13",
+      "type": "section",
+      "padding": [
+        24,
+        24,
+        24,
+        24
+      ],
+      "children": [
+        {
+          "id": "id3",
+          "type": "heading",
+          "level": 1,
+          "html": "Hej [Namn]!",
+          "align": "left",
+          "padding": [
+            0,
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "id": "id4",
+          "type": "heading",
+          "level": 3,
+          "html": "Underrubrik",
+          "align": "center",
+          "padding": [
+            0,
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "id": "id5",
+          "type": "text",
+          "html": "<p>Text med <b>fet</b>, <i>kursiv</i> och <a href='https://exempel.se'>länk</a>.</p><ul><li>Ett</li><li>Två</li></ul>",
+          "align": "left",
+          "padding": [
+            0,
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "id": "id6",
+          "type": "image",
+          "src": "https://exempel.se/bild.png",
+          "alt": "En bild",
+          "align": "center",
+          "padding": [
+            0,
+            0,
+            12,
+            0
+          ],
+          "href": "https://exempel.se",
+          "width": 300,
+          "borderRadius": 8
+        },
+        {
+          "id": "id7",
+          "type": "button",
+          "label": "Boka tid",
+          "href": "https://exempel.se/boka?ref=[Namn]",
+          "backgroundColor": "#2f54eb",
+          "textColor": "#ffffff",
+          "borderRadius": 6,
+          "fontSize": 16,
+          "innerPadding": [
+            12,
+            24,
+            12,
+            24
+          ],
+          "align": "left",
+          "padding": [
+            4,
+            0,
+            12,
+            0
+          ],
+          "width": 180
+        },
+        {
+          "id": "id8",
+          "type": "button",
+          "label": "Utan bredd",
+          "href": "https://exempel.se",
+          "backgroundColor": "#2f54eb",
+          "textColor": "#ffffff",
+          "borderRadius": 6,
+          "fontSize": 16,
+          "innerPadding": [
+            12,
+            24,
+            12,
+            24
+          ],
+          "align": "left",
+          "padding": [
+            4,
+            0,
+            12,
+            0
+          ]
+        },
+        {
+          "id": "id9",
+          "type": "divider",
+          "color": "#e5e5e5",
+          "thickness": 1,
+          "width": 100,
+          "align": "center",
+          "padding": [
+            8,
+            0,
+            8,
+            0
+          ]
+        },
+        {
+          "id": "id10",
+          "type": "spacer",
+          "height": 24
+        },
+        {
+          "id": "id11",
+          "type": "social",
+          "items": [
+            {
+              "network": "facebook",
+              "href": "https://facebook.com/x",
+              "iconUrl": "https://cdn.exempel.se/fb.png"
+            },
+            {
+              "network": "instagram",
+              "href": "https://instagram.com/x",
+              "iconUrl": "https://cdn.exempel.se/ig.png"
+            }
+          ],
+          "iconSize": 24,
+          "spacing": 8,
+          "align": "center",
+          "padding": [
+            8,
+            0,
+            8,
+            0
+          ]
+        },
+        {
+          "id": "id12",
+          "type": "html",
+          "html": "<p>Rå <b>HTML</b> med <script>alert(1)</script> borttaget.</p>"
+        }
+      ]
+    },
+    {
+      "id": "id34",
+      "type": "section",
+      "padding": [
+        24,
+        24,
+        24,
+        24
+      ],
+      "children": [
+        {
+          "id": "id14",
+          "type": "columns",
+          "gap": 16,
+          "stackOnMobile": true,
+          "columns": [
+            {
+              "id": "id20",
+              "children": [
+                {
+                  "id": "id19",
+                  "type": "text",
+                  "html": "Vänster",
+                  "align": "left",
+                  "padding": [
+                    0,
+                    0,
+                    12,
+                    0
+                  ]
+                }
+              ],
+              "width": 33.33
+            },
+            {
+              "id": "id22",
+              "children": [
+                {
+                  "id": "id21",
+                  "type": "text",
+                  "html": "Mitten",
+                  "align": "left",
+                  "padding": [
+                    0,
+                    0,
+                    12,
+                    0
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "id24",
+              "children": [
+                {
+                  "id": "id23",
+                  "type": "image",
+                  "src": "https://exempel.se/h.png",
+                  "alt": "H",
+                  "align": "center",
+                  "padding": [
+                    0,
+                    0,
+                    12,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "id25",
+          "type": "columns",
+          "gap": 24,
+          "stackOnMobile": false,
+          "columns": [
+            {
+              "id": "id31",
+              "children": [
+                {
+                  "id": "id30",
+                  "type": "text",
+                  "html": "A",
+                  "align": "left",
+                  "padding": [
+                    0,
+                    0,
+                    12,
+                    0
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "id33",
+              "children": [
+                {
+                  "id": "id32",
+                  "type": "text",
+                  "html": "B",
+                  "align": "left",
+                  "padding": [
+                    0,
+                    0,
+                    12,
+                    0
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "fullWidth": true,
+      "backgroundColor": "#eef2ff"
+    }
+  ]
+}

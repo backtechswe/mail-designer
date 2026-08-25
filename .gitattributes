@@ -1,0 +1,2 @@
+# Golden files are the renderer's specification — keep them byte-exact across platforms.
+test/golden/* -text
