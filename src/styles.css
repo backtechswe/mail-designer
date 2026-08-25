@@ -2505,3 +2505,26 @@
   border-top: 1px solid var(--md-client-line);
   color: var(--md-client-tint);
 }
+
+/*
+ * A data token, in the canvas only. The document keeps `[Namn]` and so does the sent email —
+ * see data/tokens.ts. Shown without its brackets: the pill already says "this is a slot", and
+ * repeating the syntax inside it just makes the word harder to read.
+ */
+.md-token {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+  /* Sized from the surrounding text so a pill in a 32px heading is a 32px pill. */
+  font-size: 0.86em;
+  font-weight: 600;
+  font-family: var(--md-font);
+  line-height: 1.5;
+  white-space: nowrap;
+  vertical-align: baseline;
+  /* It is one thing, not a word you can put a caret inside. */
+  user-select: all;
+  cursor: default;
+}

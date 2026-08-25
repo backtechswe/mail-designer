@@ -4,6 +4,7 @@ import { Icon } from "./icons.js";
 import { useEditor } from "./EditorContext.js";
 import { FieldPicker } from "../data/FieldPicker.js";
 import { findTrigger, rankFields } from "../data/trigger.js";
+import { decorateTokens, pill, stripTokens } from "../data/tokens.js";
 
 /**
  * Inline rich text on a contenteditable, with a floating toolbar.
@@ -66,20 +67,26 @@ export function TextEditable({
     from: number | null;
   } | null>(null);
 
-  // Write props into the DOM only when they did not come from us. Layout effect so the
-  // initial content is present before the browser paints.
+  /*
+   * Write props into the DOM only when they did not come from us. Layout effect so the
+   * initial content is present before the browser paints.
+   *
+   * `domHtml` holds the *model* string, never the decorated one, so every comparison in this
+   * file is in model space and the pills stay an artefact of the DOM.
+   */
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     if (domHtml.current === html) return;
-    el.innerHTML = html;
+    el.innerHTML = decorateTokens(html);
     domHtml.current = html;
   }, [html]);
 
   const emit = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const next = sanitizeInline(el.innerHTML);
+    // Pills off first: sanitising is about the document, and the document never has them.
+    const next = sanitizeInline(stripTokens(el.innerHTML));
     if (next === domHtml.current) return;
     domHtml.current = next;
     onChange(next);
@@ -138,6 +145,10 @@ export function TextEditable({
       setToolbar(null);
       setLinkDraft(null);
       setPicker(null);
+      // Leaving the block is the moment to re-decorate: a token typed by hand becomes a pill,
+      // and there is no caret left to lose by rewriting the DOM.
+      const el = ref.current;
+      if (el && domHtml.current !== null) el.innerHTML = decorateTokens(domHtml.current);
       return;
     }
     const handler = (): void => syncCaret();
@@ -179,7 +190,12 @@ export function TextEditable({
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      document.execCommand("insertText", false, `[${field}]`);
+      // Insert the pill itself rather than the text, so it appears finished the moment it is
+      // chosen. Typing a token by hand gets its pill when the block is left — see below.
+      // A trailing space so the caret has somewhere to land: putting it after an element the
+      // browser treats as atomic, at the end of a paragraph, is otherwise close to impossible.
+      // A real space, not a non-breaking one — it is what the writer would have typed next.
+      document.execCommand("insertHTML", false, `${pill(`[${field}]`)} `);
       setPicker(null);
       emit();
     },
