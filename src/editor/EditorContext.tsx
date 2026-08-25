@@ -33,6 +33,11 @@ export interface EditorApi {
   move: (id: string, position: Position) => void;
   replaceDocument: (next: MailDocument) => void;
 
+  /** Arms a drag from a block's grip. Provided by the drag layer in MailDesigner. */
+  startBlockDrag: (id: string, event: React.PointerEvent) => void;
+  /** True while a drag is in flight, so the canvas can suppress hover chrome. */
+  isDragging: boolean;
+
   history: HistoryControls;
 }
 

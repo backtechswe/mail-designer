@@ -79,12 +79,34 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 `section` › `columns` (2–3, no nesting) › `heading` · `text` · `image` · `button` · `social` ·
 `divider` · `spacer` · `html`
 
+Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
+which drop targets to offer — an illegal arrangement is never reachable through the UI.
+
+### Moving blocks
+
+Drag by the grip that appears on hover, or drop a new block straight from the palette.
+Drag-and-drop is hand-rolled on pointer events — one code path for mouse, pen and touch, and
+no dependency.
+
+Everything is also reachable from the keyboard, because drag-and-drop is not:
+
+| | |
+|---|---|
+| `Alt` + `↑` / `↓` | Reorder within the current container |
+| `Alt` + `→` | Step into the next columns row, then across to the next column |
+| `Alt` + `←` | Step back out of a column |
+| `Delete` | Remove the selected block |
+
 Merge fields are `[Bracketed]` tokens. They survive rendering untouched and are substituted
 afterwards, so one render serves a whole recipient list.
 `extractMergeFields(doc)` reports every token in use — including the ones hiding in a
 button's URL.
 
 ## Templates
+
+Drop `<TemplateMenu store={…} />` into `toolbarExtra` for a ready-made picker. `remove` on
+the store is optional and the delete button follows it, so a read-only catalogue of company
+templates renders correctly rather than showing a button that cannot work.
 
 The package ships **no database**. It defines a `TemplateStore` contract and provides the
 adapters that need no dependencies — memory, `localStorage`, and a REST client that bridges

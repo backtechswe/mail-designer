@@ -140,12 +140,14 @@ export function TextEditable({
   );
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    // Let the shell keep its own shortcuts (delete block, move block) out of the way while
-    // the caret is in text, but do not swallow the editing ones.
     if (event.key === "Escape") {
       (event.target as HTMLElement).blur();
       return;
     }
+    // Alt+arrow moves the *block*, not the caret, so it belongs to the canvas even while
+    // text has focus. Everything else stays here — Backspace must delete a character, not
+    // the block the caret is sitting in.
+    if (event.altKey && event.key.startsWith("Arrow")) return;
     event.stopPropagation();
   }, []);
 

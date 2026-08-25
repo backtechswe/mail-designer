@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   MailDesigner,
+  TemplateMenu,
   builtInPresets,
   createLocalStorageTemplateStore,
   extractMergeFields,
@@ -52,7 +53,6 @@ export function App() {
   const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[1]!.document);
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("sv");
-  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   const active = THEMES.find((t) => t.id === themeId) ?? THEMES[0]!;
   const mergeFields = useMemo(() => {
@@ -66,24 +66,6 @@ export function App() {
     <div className="pg">
       <div className="pg-bar">
         <strong>mail-designer</strong>
-
-        <label>
-          Mall
-          <select
-            value=""
-            onChange={(e) => {
-              const preset = builtInPresets.find((p) => p.id === e.target.value);
-              if (preset) setDoc(preset.document);
-            }}
-          >
-            <option value="">Välj …</option>
-            {builtInPresets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
 
         <label>
           Tema
@@ -105,7 +87,6 @@ export function App() {
         </label>
 
         <span className="pg-note">Merge-fält: {mergeFields.join(", ")}</span>
-        {savedAt ? <span className="pg-note">Sparad {savedAt}</span> : null}
       </div>
 
       <div className="pg-editor">
@@ -127,18 +108,9 @@ export function App() {
             })
           }
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
-          toolbarExtra={
-            <button
-              type="button"
-              className="pg-save"
-              onClick={async () => {
-                await store.save({ id: "playground", name: "Playground", document: doc });
-                setSavedAt(new Date().toLocaleTimeString("sv-SE"));
-              }}
-            >
-              Spara mall
-            </button>
-          }
+          // The menu is part of the package and speaks only the TemplateStore contract —
+          // here backed by localStorage, in Utskick it will be Firestore.
+          toolbarExtra={<TemplateMenu store={store} />}
         />
       </div>
     </div>

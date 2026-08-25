@@ -9,6 +9,9 @@
 /* the editor */
 export { MailDesigner } from "./MailDesigner.js";
 export type { MailDesignerProps } from "./MailDesigner.js";
+export { TemplateMenu } from "./editor/TemplateMenu.js";
+export { Icon, iconPaths } from "./editor/icons.js";
+export type { IconName, IconProps } from "./editor/icons.js";
 export { sv, en, createI18n, createTranslate } from "./i18n.js";
 export type { Strings, StringKey, Translate } from "./i18n.js";
 

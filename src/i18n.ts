@@ -238,7 +238,19 @@ export type Translate = (key: StringKey, vars?: Record<string, string | number>)
 
 const NAMESPACE = "mailDesigner";
 
+/**
+ * i18next prints a promotional line about Locize to the console on first init in a
+ * development build. That is the vendor's choice to make in an application; it is not ours
+ * to make in someone else's console, on their behalf, because they installed a mail editor.
+ * The flag is i18next's own documented opt-out.
+ */
+function silenceVendorNotice(): void {
+  const scope = globalThis as Record<string, unknown>;
+  scope["__i18next_supportNoticeShown"] = true;
+}
+
 export function createI18n(locale: Locale, overrides?: Strings): I18nInstance {
+  silenceVendorNotice();
   const instance = i18next.createInstance();
   // initImmediate: false keeps init synchronous, so the first render already has strings
   // and nothing flashes an untranslated key.

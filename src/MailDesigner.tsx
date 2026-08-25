@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
   Block,
@@ -13,6 +13,7 @@ import type {
 import type { Position } from "./document.js";
 import {
   duplicateBlock as duplicateBlockIn,
+  findBlock,
   insertBlock,
   moveBlock,
   removeBlock,
@@ -32,6 +33,7 @@ import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
 import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode } from "./editor/Toolbar.js";
+import { useDragSort } from "./editor/dnd/useDragSort.js";
 
 export interface MailDesignerProps {
   value: MailDocument;
@@ -84,12 +86,25 @@ export function MailDesigner({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("edit");
   const [previewWidth, setPreviewWidth] = useState(value.settings.width);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // One i18next instance per locale/overrides pair, never the global singleton.
   const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
 
   const history = useHistory(value, onChange);
   const { commit } = history;
+
+  // The drag layer sits between history and the canvas: it decides *where* a block lands,
+  // and the same commit path applies it, so a drag is one undo step like any other edit.
+  const { drag, startMove, startCreate } = useDragSort({
+    canvasRef,
+    getBlock: (id) => findBlock(value, id)?.block,
+    onMove: (id, container, index) => commit(moveBlock(value, id, { container, index })),
+    onCreate: (block, container, index) => {
+      commit(insertBlock(value, block, { container, index }));
+      setSelectedId(block.id);
+    },
+  });
 
   const api = useMemo<EditorApi>(() => {
     const apply = (next: MailDocument, coalesce = false): void => commit(next, coalesce);
@@ -111,9 +126,22 @@ export function MailDesigner({
       duplicate: (id) => apply(duplicateBlockIn(value, id)),
       move: (id, position) => apply(moveBlock(value, id, position)),
       replaceDocument: (next) => apply(next),
+      startBlockDrag: startMove,
+      isDragging: drag !== null,
       history,
     };
-  }, [value, selectedId, t, mergeFields, onUploadImage, resolveSocialIcon, commit, history]);
+  }, [
+    value,
+    selectedId,
+    t,
+    mergeFields,
+    onUploadImage,
+    resolveSocialIcon,
+    commit,
+    history,
+    startMove,
+    drag,
+  ]);
 
   const handleWidth = useCallback((width: number) => {
     setPreviewWidth(width);
@@ -135,8 +163,12 @@ export function MailDesigner({
           extra={toolbarExtra}
         />
         <div className="md-layout">
-          {view === "edit" ? <Palette /> : null}
-          {view === "edit" ? <Canvas /> : <PreviewFrame doc={value} width={previewWidth} />}
+          {view === "edit" ? <Palette onDragStart={startCreate} /> : null}
+          {view === "edit" ? (
+            <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
+          ) : (
+            <PreviewFrame doc={value} width={previewWidth} />
+          )}
           {view === "edit" ? <Inspector /> : null}
         </div>
       </EditorProvider>

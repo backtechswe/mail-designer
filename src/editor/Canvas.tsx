@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useCallback } from "react";
 import type {
   Block,
@@ -10,9 +10,12 @@ import type {
 } from "../types.js";
 import { computeWidths } from "../render/html/columns.js";
 import { createBlock, findBlock } from "../document.js";
+import type { Container } from "../document.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import { spacingToCss } from "../blocks/canvasStyle.js";
+import { DropIndicator } from "./dnd/DropIndicator.js";
+import type { DropTarget } from "./dnd/findDropTarget.js";
 import { HeadingView } from "../blocks/heading.js";
 import { TextView } from "../blocks/text.js";
 import { ImageView } from "../blocks/image.js";
@@ -33,9 +36,24 @@ import { HtmlView } from "../blocks/html.js";
  * Every block carries data-md-id and every container data-md-container. Those attributes
  * are how drag-and-drop measures drop targets without the tree having to register anything.
  */
-export function Canvas() {
-  const { doc, select, selectedId, insert, remove, move, t } = useEditor();
+export function Canvas({
+  canvasRef,
+  dropTarget,
+}: {
+  canvasRef: RefObject<HTMLDivElement | null>;
+  dropTarget: DropTarget | null;
+}) {
+  const { doc, select, selectedId, insert, remove, move, isDragging, t } = useEditor();
 
+  /**
+   * Alt+arrows are the keyboard equivalent of dragging. Not a nicety: drag-and-drop is
+   * unusable with a keyboard, and an editor that can only be operated with a pointer
+   * excludes people outright.
+   *
+   *   Alt+Up/Down    reorder within the current container
+   *   Alt+Right      step into the next columns row, or across to the next column
+   *   Alt+Left       step back out of a column, landing after the row it was in
+   */
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (!selectedId) return;
@@ -48,20 +66,30 @@ export function Canvas() {
         select(null);
         return;
       }
-      // Alt+arrows are the keyboard equivalent of dragging, so the editor is usable
-      // without a pointer at all.
-      if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+      if (!event.altKey) return;
+
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault();
-        const delta = event.key === "ArrowUp" ? -1 : 1;
-        move(selectedId, { container: found.container, index: found.index + delta + (delta > 0 ? 1 : 0) });
+        // Moving down needs +2: moveBlock subtracts one for the block's own removal.
+        const index = event.key === "ArrowUp" ? found.index - 1 : found.index + 2;
+        move(selectedId, { container: found.container, index });
+        return;
+      }
+
+      if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+        const target = lateralTarget(doc, found, event.key === "ArrowRight" ? 1 : -1);
+        if (!target) return;
+        event.preventDefault();
+        move(selectedId, target);
       }
     },
-    [doc, selectedId, remove, select, move, t],
+    [doc, selectedId, remove, select, move],
   );
 
   return (
     <div
-      className="md-canvas"
+      ref={canvasRef}
+      className={`md-canvas${isDragging ? " is-dragging" : ""}`}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onClick={(e) => {
@@ -93,8 +121,51 @@ export function Canvas() {
           {t("canvas.addSection")}
         </button>
       </div>
+
+      <DropIndicator target={dropTarget} />
     </div>
   );
+}
+
+/**
+ * Where Alt+Left / Alt+Right sends a block. Returns null when the move has no meaning —
+ * a section has nowhere sideways to go — so the arrow key keeps its normal behaviour.
+ */
+function lateralTarget(
+  doc: ReturnType<typeof useEditor>["doc"],
+  found: NonNullable<ReturnType<typeof findBlock>>,
+  direction: 1 | -1,
+): { container: Container; index: number } | null {
+  if (found.block.type === "section" || found.block.type === "columns") return null;
+
+  for (const section of doc.blocks) {
+    for (const [index, child] of section.children.entries()) {
+      if (child.type !== "columns") continue;
+
+      const columnIndex = child.columns.findIndex((c) => c.id === (found.container as { id?: string }).id);
+
+      if (columnIndex === -1) {
+        // Sitting in the section: stepping right enters the columns row that follows.
+        if (
+          direction === 1 &&
+          found.container.kind === "section" &&
+          found.container.id === section.id &&
+          index === found.index + 1
+        ) {
+          const first = child.columns[0];
+          return first ? { container: { kind: "column", id: first.id }, index: 0 } : null;
+        }
+        continue;
+      }
+
+      // Sitting in a column: step across, or out to the section after the row.
+      const next = child.columns[columnIndex + direction];
+      if (next) return { container: { kind: "column", id: next.id }, index: next.children.length };
+      if (direction === -1) return { container: { kind: "section", id: section.id }, index: index + 1 };
+      return null;
+    }
+  }
+  return null;
 }
 
 function SectionView({ section }: { section: SectionBlock }) {
@@ -243,7 +314,7 @@ function BlockShell({
   variant: "section" | "columns" | "leaf";
   children: ReactNode;
 }) {
-  const { doc, selectedId, select, remove, duplicate, move, t } = useEditor();
+  const { doc, selectedId, select, remove, duplicate, move, startBlockDrag, t } = useEditor();
   const active = selectedId === block.id;
   const found = findBlock(doc, block.id);
 
@@ -259,9 +330,13 @@ function BlockShell({
     >
       <span className="md-block-label">{t(`block.${block.type}` as "block.text")}</span>
 
-      {active && found ? (
+      {found ? (
         <div className="md-block-actions" onClick={(e) => e.stopPropagation()}>
-          <span className="md-grip" title={t("action.moveUp")} data-md-grip={block.id}>
+          <span
+            className="md-grip"
+            title={t("palette.hint")}
+            onPointerDown={(e) => startBlockDrag(block.id, e)}
+          >
             <Icon name="grip" size={12} />
           </span>
           <button
