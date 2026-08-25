@@ -238,3 +238,48 @@ test("clearOverrides drops the property everywhere and leaves the rest alone", a
   assert.equal("fontFamily" in next.blocks[0].children[0], false, "the key is removed, not set to undefined");
   assert.equal(doc.blocks[0].children[0].fontFamily, "Georgia, serif", "the input is untouched");
 });
+
+test("ancestorsOf gives the chain from the outside in", async () => {
+  const { ancestorsOf, parentOf } = await import("../dist/document.js");
+  const { doc, colA, section, columns } = twoColumnDoc();
+  const leaf = colA.children[0];
+
+  assert.deepEqual(ancestorsOf(doc, section.id).map((b) => b.id), [section.id]);
+  assert.deepEqual(
+    ancestorsOf(doc, columns.id).map((b) => b.id),
+    [section.id, columns.id],
+  );
+  // The column is not a block, so it is not in the chain — the columns row that owns it is.
+  assert.deepEqual(
+    ancestorsOf(doc, leaf.id).map((b) => b.id),
+    [section.id, columns.id, leaf.id],
+  );
+
+  assert.equal(parentOf(doc, leaf.id).id, columns.id);
+  assert.equal(parentOf(doc, columns.id).id, section.id);
+  assert.equal(parentOf(doc, section.id), null, "a section is already at the top");
+});
+
+test("ancestry is empty for an id that is not in the document", async () => {
+  const { ancestorsOf, parentOf } = await import("../dist/document.js");
+  const { doc } = twoColumnDoc();
+  assert.deepEqual(ancestorsOf(doc, "nope"), []);
+  assert.equal(parentOf(doc, "nope"), null);
+});
+
+test("a block that fills its parent completely is still reachable by stepping out", async () => {
+  const { ancestorsOf, parentOf } = await import("../dist/document.js");
+  // The reported case: the newsletter's hero section has zero padding and one edge-to-edge
+  // image, so no pixel belongs to the section rather than the image.
+  const doc = emptyDocument();
+  const hero = Object.assign(createBlock("image"), { src: "https://x.se/a.png", alt: "Hero" });
+  const heroSection = Object.assign(createSection([hero]), { padding: [0, 0, 0, 0] });
+  doc.blocks = [heroSection];
+
+  assert.deepEqual(
+    ancestorsOf(doc, hero.id).map((b) => b.type),
+    ["section", "image"],
+    "the breadcrumb has something to offer even here",
+  );
+  assert.equal(parentOf(doc, hero.id).id, heroSection.id, "Escape reaches the section");
+});

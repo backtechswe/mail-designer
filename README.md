@@ -246,7 +246,7 @@ rather than just *Undo*.
 | `Cmd`/`Ctrl` + `D` | Duplicate the selected block |
 | `Cmd`/`Ctrl` + `E` | Toggle preview |
 | `Delete` | Delete the selected block |
-| `Esc` | Deselect |
+| `Esc` | Select what surrounds the block; again to deselect |
 | `Alt` + `↑` `↓` | Move the block |
 | `Alt` + `←` `→` | Move into or out of a column |
 | `?` | Show this list |
@@ -289,6 +289,19 @@ placeholder rather than the word "Auto". Where blocks are ignoring a global sett
 Email tab names how many and offers to make them all follow it again. Without that, changing
 a global font and watching half the mail stay put reads as a bug rather than as blocks doing
 exactly what they were told.
+
+### Reaching a block another block covers
+
+A section whose only child is an edge-to-edge image has no pixel that belongs to the section
+rather than the image — no amount of careful aiming reaches it. Two ways out, both independent
+of where you click:
+
+- The **breadcrumb** at the top of the Block tab shows the chain around the selection —
+  *Section › Columns › Text* — and every step in it is clickable.
+- **`Esc`** steps out one level, and again to deselect. "Zoom out" is more often what is wanted
+  than "clear the selection".
+
+`ancestorsOf(doc, id)` and `parentOf(doc, id)` expose the same chain to a host app.
 
 ### Moving blocks
 

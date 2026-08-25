@@ -35,6 +35,9 @@ export const sv = {
   "canvas.imagePlaceholder": "Ingen bild vald",
   "canvas.addSection": "Lägg till sektion",
 
+  "inspector.selection": "Markerat",
+  "inspector.selectParent": "Markera det som omger blocket",
+  "shortcuts.selectParent": "Markera det som omger blocket, sedan avmarkera",
   "inspector.title": "Egenskaper",
   "inspector.nothing": "Inget markerat",
   "inspector.nothingHint": "Klicka på ett block i mejlet för att ändra det.",
@@ -247,6 +250,9 @@ export const en: Record<keyof typeof sv, string> = {
   "canvas.imagePlaceholder": "No image selected",
   "canvas.addSection": "Add section",
 
+  "inspector.selection": "Selected",
+  "inspector.selectParent": "Select what surrounds this block",
+  "shortcuts.selectParent": "Select what surrounds the block, then deselect",
   "inspector.title": "Properties",
   "inspector.nothing": "Nothing selected",
   "inspector.nothingHint": "Click a block in the email to edit it.",

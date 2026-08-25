@@ -21,6 +21,7 @@ import { HEADING_SIZE } from "../blocks/canvasStyle.js";
 import { computeWidths } from "../render/html/columns.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
+import { Breadcrumb } from "./Breadcrumb.js";
 import {
   AlignField,
   CheckboxField,
@@ -73,6 +74,7 @@ export function Inspector() {
       </div>
 
       <div className="md-inspector-body">
+        {active === "block" ? <Breadcrumb /> : null}
         <p className="md-inspector-hint">
           {active === "mail" ? t("inspector.mailHint") : t("inspector.blockHint")}
         </p>

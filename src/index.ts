@@ -42,6 +42,7 @@ export type { Strings, StringKey, Translate } from "./i18n.js";
 
 /* document model + tree operations */
 export {
+  ancestorsOf,
   canInsert,
   cloneBlock,
   createBlock,
@@ -56,6 +57,7 @@ export {
   listContainers,
   moveBlock,
   newId,
+  parentOf,
   removeBlock,
   sameContainer,
   setIdFactory,

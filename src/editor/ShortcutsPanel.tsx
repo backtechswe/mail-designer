@@ -15,7 +15,7 @@ const SHORTCUTS: { keys: string[]; label: StringKey }[] = [
   { keys: [MOD, "D"], label: "shortcuts.duplicate" },
   { keys: [MOD, "E"], label: "shortcuts.preview" },
   { keys: ["Delete"], label: "shortcuts.delete" },
-  { keys: ["Esc"], label: "shortcuts.deselect" },
+  { keys: ["Esc"], label: "shortcuts.selectParent" },
   { keys: ["Alt", "↑", "↓"], label: "shortcuts.move" },
   { keys: ["Alt", "←", "→"], label: "shortcuts.moveAcross" },
   { keys: ["?"], label: "shortcuts.help" },

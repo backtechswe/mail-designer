@@ -244,6 +244,37 @@ export function findBlock(doc: MailDocument, id: string): Found | undefined {
   return undefined;
 }
 
+/**
+ * The chain of blocks enclosing this one, outermost first, ending with the block itself.
+ *
+ * The way out of a block that fills its parent completely. A section whose only child is an
+ * edge-to-edge image has no pixel that belongs to the section rather than the image, so
+ * clicking can never reach it — the way up has to be something other than aiming.
+ */
+export function ancestorsOf(doc: MailDocument, id: string): Block[] {
+  for (const section of doc.blocks) {
+    if (section.id === id) return [section];
+    for (const child of section.children) {
+      if (child.id === id) return [section, child];
+      if (child.type !== "columns") continue;
+      for (const column of child.columns) {
+        for (const leaf of column.children) {
+          // The column itself is not a block, so it does not appear in the chain — but the
+          // columns row that owns it does.
+          if (leaf.id === id) return [section, child, leaf];
+        }
+      }
+    }
+  }
+  return [];
+}
+
+/** The block directly enclosing this one, or null at the top. */
+export function parentOf(doc: MailDocument, id: string): Block | null {
+  const chain = ancestorsOf(doc, id);
+  return chain.length > 1 ? (chain[chain.length - 2] as Block) : null;
+}
+
 export function findColumn(doc: MailDocument, id: string): MailColumn | undefined {
   for (const section of doc.blocks) {
     for (const child of section.children) {

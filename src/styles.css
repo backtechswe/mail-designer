@@ -1711,3 +1711,49 @@
 .md-preview {
   flex-direction: column;
 }
+
+/*
+ * The ancestry of the selected block. The only reliable way to reach a block another block
+ * covers completely — a section whose single child is an edge-to-edge image has no pixel of
+ * its own to click.
+ */
+.md-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px calc(var(--md-space) * 1.5) 0;
+}
+
+.md-breadcrumb span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.md-breadcrumb svg {
+  color: var(--md-text-muted);
+  opacity: 0.6;
+}
+
+.md-breadcrumb button {
+  padding: 2px 5px;
+  border: 0;
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  color: var(--md-accent);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.md-breadcrumb button:hover:not(:disabled) {
+  background: var(--md-accent-soft);
+}
+
+/* The block itself: a label, not a link. */
+.md-breadcrumb button:disabled {
+  color: var(--md-text);
+  font-weight: 600;
+  cursor: default;
+}

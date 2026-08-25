@@ -16,6 +16,7 @@ import {
   emptyDocument,
   findBlock,
   insertBlock,
+  parentOf,
   moveBlock,
   removeBlock,
   updateBlock,
@@ -280,7 +281,10 @@ export function MailDesigner({
       }
 
       if (event.key === "Escape" && !shortcutsOpen && !confirmRequest) {
-        setSelectedId(null);
+        // Steps out one level rather than clearing outright: "zoom out" is more often what is
+        // wanted, and it is the only keyboard route to a block that another block covers.
+        const parent = selectedId ? parentOf(value, selectedId) : null;
+        setSelectedId(parent ? parent.id : null);
         return;
       }
 
