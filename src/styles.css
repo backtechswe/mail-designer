@@ -96,6 +96,19 @@
   border-radius: var(--md-radius-sm);
 }
 
+/*
+ * No focus ring on editable text.
+ *
+ * The block's own selection outline already surrounds it, so the ring drew a second box just
+ * inside the first and read as two nested blocks rather than one being edited. Nothing
+ * accessible is lost: the element is not reachable by Tab, you get there by clicking, and
+ * clicking selects the block — which draws the outline. The caret says the rest.
+ */
+.md-root .md-editable:focus,
+.md-root .md-editable:focus-visible {
+  outline: none;
+}
+
 /* Numbers are data. Tabular figures keep columns of px values from dancing. */
 .md-root input[type="number"],
 .md-root .md-mono,

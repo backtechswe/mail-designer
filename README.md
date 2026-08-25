@@ -129,11 +129,18 @@ in two representations that mirror each other live:
 Neither is a mode you switch into. Add a key on either side and it appears on the other, and
 becomes insertable into the email — so the data and the available fields cannot drift apart.
 
-**Inserting a field**: type `[` while writing and a filtered list appears at the caret, each
-row showing the field's current sample value — arrows and Enter, no mouse. `[` is already the
-first character of the token people type by hand, so the trigger explains itself the first time
-it fires. A labelled **Datafält** button in the text toolbar opens the same list, and exists to
-teach the shortcut rather than to replace it.
+**Inserting a field**: type `@` while writing and a filtered list appears at the caret, each row
+showing the field's current sample value — arrows and Enter, no mouse. `@` because that is the
+gesture people already know from Slack, Notion, Teams and Google Docs; `[` works too, for
+anyone who has learned to type the token by hand. A labelled **Datafält** button opens the same
+list, and exists to teach the gesture rather than to replace it.
+
+Email addresses do not trigger it. The rule every app doing this settles on is that `@` only
+counts **after a word boundary**: in `niklas@ninetech.com` it follows `s`, so nothing opens; in
+`Hej @` it follows a space, so it does. A second `@` inside the query closes it again, and the
+list only opens when something actually matches — so a query that turns out to be prose
+disappears rather than hanging around empty. `findTrigger` is pure and has twelve tests,
+because an off-by-one here pops a menu over someone's address as they type it.
 
 A right-click menu was considered and rejected: nobody discovers a feature by right-clicking,
 and inside a text field the browser's own context menu is where people go for spellcheck and

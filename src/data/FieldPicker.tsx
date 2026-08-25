@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditor } from "../editor/EditorContext.js";
+import { rankFields } from "./trigger.js";
 
 /**
  * The list of data fields, at the caret.
@@ -30,7 +31,7 @@ export function FieldPicker({ top, left, query, onSelect, onClose }: FieldPicker
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLUListElement | null>(null);
 
-  const matches = useMemo(() => rank(dataFields, query), [dataFields, query]);
+  const matches = useMemo(() => rankFields(dataFields, query), [dataFields, query]);
 
   // Reset the highlight whenever the list changes under it, so Enter never picks a row the
   // user cannot see.
@@ -107,16 +108,3 @@ export function FieldPicker({ top, left, query, onSelect, onClose }: FieldPicker
   );
 }
 
-/** Prefix matches first, then substring matches, each alphabetical. Case-insensitive. */
-function rank(fields: readonly string[], query: string): string[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [...fields];
-  const prefix: string[] = [];
-  const contains: string[] = [];
-  for (const field of fields) {
-    const lower = field.toLowerCase();
-    if (lower.startsWith(q)) prefix.push(field);
-    else if (lower.includes(q)) contains.push(field);
-  }
-  return [...prefix, ...contains];
-}

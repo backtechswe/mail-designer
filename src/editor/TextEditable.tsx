@@ -3,6 +3,7 @@ import { sanitizeInline } from "../render/sanitize.js";
 import { Icon } from "./icons.js";
 import { useEditor } from "./EditorContext.js";
 import { FieldPicker } from "../data/FieldPicker.js";
+import { findTrigger, rankFields } from "../data/trigger.js";
 
 /**
  * Inline rich text on a contenteditable, with a floating toolbar.
@@ -53,9 +54,9 @@ export function TextEditable({
   const [toolbar, setToolbar] = useState<{ top: number; left: number } | null>(null);
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
   /**
-   * The field picker. `from` is the offset of the `[` that opened it, so choosing a field
-   * replaces what the user has typed so far rather than leaving a stray bracket behind. Null
-   * `from` means it was opened by the button and there is nothing to replace.
+   * The field picker. `from` is the offset of the trigger character, so choosing a field
+   * replaces what the user has typed so far rather than leaving `@na` behind. Null `from`
+   * means it was opened by the button and there is nothing to replace.
    */
   const [picker, setPicker] = useState<{
     top: number;
@@ -110,27 +111,27 @@ export function TextEditable({
     const left = Math.max(0, rect.left - host.left);
     setToolbar({ top: top - 40, left });
 
-    // An unclosed `[` before the caret opens the picker. `[` is already the first character of
-    // a token people type by hand, so the trigger explains itself the first time it fires.
     const node = range.startContainer;
     if (!selection.isCollapsed || node.nodeType !== Node.TEXT_NODE) {
       setPicker(null);
       return;
     }
-    const text = (node as Text).data.slice(0, range.startOffset);
-    const match = /\[([^[\]\n]{0,40})$/.exec(text);
-    if (!match) {
+    const match = findTrigger((node as Text).data.slice(0, range.startOffset));
+    // Only open when something actually matches. That is the second line of defence against
+    // an email address — and it means a query that turns out to be ordinary prose closes the
+    // menu rather than leaving it hanging with nothing in it.
+    if (!match || rankFields(dataFields, match.query).length === 0) {
       setPicker(null);
       return;
     }
     setPicker({
       top: top + rect.height + 6,
       left,
-      query: match[1] ?? "",
+      query: match.query,
       node: node as Text,
-      from: range.startOffset - match[0].length,
+      from: match.from,
     });
-  }, []);
+  }, [dataFields]);
 
   useEffect(() => {
     if (!active) {
