@@ -4,6 +4,9 @@ Block-based email designer for React. Zero runtime dependencies beyond i18next, 
 table-based email HTML renderer, and themeable entirely through CSS custom properties so it
 drops into any host app.
 
+![The editor: editing a heading, dragging a block, previewing at mobile width, and the whole
+chrome restyled by one theme prop](docs/media/mail-designer-demo.gif)
+
 ```tsx
 import { MailDesigner, emptyDocument } from "@backtech/mail-designer";
 import { toHtml } from "@backtech/mail-designer/render";

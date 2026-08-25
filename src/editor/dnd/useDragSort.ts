@@ -128,6 +128,10 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
   const arm = useCallback(
     (source: DragSource, event: React.PointerEvent) => {
       if (event.button !== 0) return;
+      // Without this the browser starts a text selection under the drag: the CSS that
+      // disables user-select only lands after React re-renders with the dragging class,
+      // which is a frame too late. The caret is already sweeping across the canvas.
+      event.preventDefault();
       // A second drag can only start after the first has torn down.
       detach.current?.();
       pending.current = { source, x: event.clientX, y: event.clientY };
@@ -196,7 +200,14 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
 
       const onPointerUp = (): void => {
         const current = active.current;
+        const dragged = current !== null;
         teardown();
+        if (dragged) {
+          // pointerup is followed by a click, which would land on whatever is under the
+          // pointer and re-select it — so a block dropped onto a section came back with
+          // the *section* selected. Swallow exactly one click.
+          window.addEventListener("click", swallow, { capture: true, once: true });
+        }
         if (!current?.target) return;
         const { container, index } = current.target;
         if (current.source.kind === "move") {
@@ -204,6 +215,11 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
         } else {
           latest.current.onCreate(createBlock(current.source.type), container, index);
         }
+      };
+
+      const swallow = (clickEvent: MouseEvent): void => {
+        clickEvent.stopPropagation();
+        clickEvent.preventDefault();
       };
 
       const onKeyDown = (keyEvent: KeyboardEvent): void => {
@@ -222,6 +238,7 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
       canvas?.addEventListener("scroll", onScroll, { passive: true });
 
       detach.current = () => {
+        window.removeEventListener("click", swallow, { capture: true });
         window.removeEventListener("pointermove", onPointerMove);
         window.removeEventListener("pointerup", onPointerUp);
         window.removeEventListener("pointercancel", teardown);
