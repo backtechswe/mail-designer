@@ -10,6 +10,7 @@ export { toPlainText } from "./toPlainText.js";
 export { applyDataValues, extractDataFields, DATA_TOKEN } from "./dataFields.js";
 export { sanitize, sanitizeInline, sanitizeBlock, stripTags } from "./sanitize.js";
 export { computeWidths } from "./html/columns.js";
+export { formatHtml } from "./format.js";
 export { inspectEmail, emailSize, GMAIL_CLIP_BYTES } from "./inspect.js";
 export type { EmailWarning, WarningId } from "./inspect.js";
 export type { DataOptions } from "./dataFields.js";

@@ -38,12 +38,39 @@ export interface Permissions {
   history?: boolean;
   /** The template picker. */
   templates?: boolean;
+  /**
+   * The code view: the generated HTML, the plain-text alternative and the document JSON, with
+   * copy and download.
+   *
+   * `false` removes it — right where the layout is the user's business and the markup is not,
+   * the Booksmart case, where the application owns everything downstream of the design. The
+   * object form picks the tabs: `{ html: true, json: false }` hands over markup for an ESP
+   * while keeping the document, which is the template itself, out of reach.
+   */
+  code?: boolean | CodePermissions;
 }
 
-export type ResolvedPermissions = Required<Omit<Permissions, "blocks" | "requiredFields">> & {
+/** Which tabs the code view offers. Each defaults to whatever the parent `code` value says. */
+export interface CodePermissions {
+  html?: boolean;
+  text?: boolean;
+  json?: boolean;
+}
+
+export type ResolvedPermissions = Required<
+  Omit<Permissions, "blocks" | "requiredFields" | "code">
+> & {
   blocks: BlockType[] | null;
   requiredFields: string[];
+  code: Required<CodePermissions>;
 };
+
+function resolveCode(code: Permissions["code"]): Required<CodePermissions> {
+  if (code === undefined || code === true) return { html: true, text: true, json: true };
+  if (code === false) return { html: false, text: false, json: false };
+  // An object turns the view on: someone naming tabs means to have the view.
+  return { html: code.html ?? true, text: code.text ?? true, json: code.json ?? true };
+}
 
 export function resolvePermissions(permissions: Permissions = {}): ResolvedPermissions {
   return {
@@ -55,6 +82,7 @@ export function resolvePermissions(permissions: Permissions = {}): ResolvedPermi
     blocks: permissions.blocks ?? null,
     requiredFields: permissions.requiredFields ?? [],
     manageDocuments: permissions.manageDocuments ?? true,
+    code: resolveCode(permissions.code),
     history: permissions.history ?? true,
     templates: permissions.templates ?? true,
   };

@@ -3,12 +3,13 @@ import { Icon } from "./icons.js";
 import { HistoryBar } from "./HistoryBar.js";
 import type { ReactNode } from "react";
 
-export type ViewMode = "edit" | "preview";
+export type ViewMode = "edit" | "preview" | "code";
 export type Viewport = "desktop" | "tablet" | "phone";
 
 export function Toolbar({
   view,
   onViewChange,
+  showCode = true,
   viewport,
   onViewportChange,
   showHistory = true,
@@ -21,6 +22,8 @@ export function Toolbar({
 }: {
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  /** False hides the code view entirely — see permissions.code. */
+  showCode?: boolean;
   viewport: Viewport;
   onViewportChange: (viewport: Viewport) => void;
   showHistory?: boolean;
@@ -53,11 +56,25 @@ export function Toolbar({
           <Icon name="eye" size={12} />
           {t("toolbar.preview")}
         </button>
+        {showCode ? (
+          <button
+            type="button"
+            aria-pressed={view === "code"}
+            onClick={() => onViewChange("code")}
+          >
+            <Icon name="code" size={12} />
+            {t("toolbar.code")}
+          </button>
+        ) : null}
       </div>
 
       {/* Applies to the canvas as well as the preview: checking a design at phone width while
-          editing it must not yank the user out of edit mode. */}
-      <div className="md-toolbar-group md-segmented">
+          editing it must not yank the user out of edit mode. Hidden in the code view, where
+          the output is one string and a width would be a control that does nothing. */}
+      <div
+        className="md-toolbar-group md-segmented"
+        hidden={view === "code"}
+      >
         {(
           [
             ["desktop", "desktop", "toolbar.desktop"],

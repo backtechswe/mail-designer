@@ -391,6 +391,66 @@ afterwards, so one render serves a whole recipient list.
 `extractDataFields(doc)` reports every token in use — including the ones hiding in a
 button's URL.
 
+## Getting the HTML out
+
+**Kod** is the third view, beside Redigera and Förhandsvisa. Three tabs, and the difference
+between them is worth being clear about:
+
+- **HTML** — what the renderer produces. Copy it into an ESP's template field, or download it.
+- **Textversion** — the plain-text alternative that should be sent beside it. Every real
+  mailing has one; spam filters expect it and some people read it.
+- **Dokument** — the `MailDocument` JSON. **This is the template.** The HTML is one of its
+  outputs; the document is the thing you store in Firestore, diff in a pull request, hand to
+  an agent to modify, and render from a .NET backend. A template saved as HTML can only be
+  sent again; a template saved as a document can be edited again.
+
+*Med exempeldata* decides whether `[Namn]` is substituted or left standing — keep the tokens
+if Brevo or SendGrid will substitute them, replace them if you render per recipient yourself.
+*Formatera* indents the HTML for reading; what you see is what you copy. The renderer's own
+output is compact on purpose, because every byte counts against Gmail's 102 kB clipping limit.
+
+The whole view is gated: `permissions={{ code: false }}` removes it, and the object form picks
+the tabs — `{ code: { html: true, json: false } }` hands over markup for an ESP while keeping
+the document out of reach.
+
+## Command line
+
+The CLI ships inside the package, so it needs no separate install:
+
+```bash
+npx @backtech/mail-designer new newsletter --out draft.json
+npx @backtech/mail-designer check draft.json          # structure, size, what will look wrong
+npx @backtech/mail-designer render draft.json --pretty > mail.html
+npx @backtech/mail-designer render draft.json --data anna.json
+npx @backtech/mail-designer text draft.json
+npx @backtech/mail-designer fields draft.json --json
+```
+
+`check` is the one that matters. A document is JSON, so anything can write one — and what a
+writer without a browser cannot do is see the result. It validates the shape, renders it, and
+reports what the editor's inspector would report: size against Gmail's limit, images without
+alt text, content wider than the mail, a missing preheader or text alternative. `--strict`
+turns those warnings into a non-zero exit, which is what a CI step wants.
+
+## Model Context Protocol
+
+The same tools over MCP, so an agent can design mail with no shell and no checkout:
+
+```jsonc
+{ "mcpServers": {
+    "mail-designer": { "command": "npx", "args": ["-y", "@backtech/mail-designer", "mcp"] } } }
+```
+
+`list_presets`, `get_preset`, `get_schema`, `check_document`, `render_document`,
+`extract_fields`. `get_schema` returns the JSON Schema *and* [docs/authoring.md](docs/authoring.md),
+which is what makes the difference: a model that has read the conventions writes a valid
+document first time, and `check_document` catches the rest.
+
+It is hand-rolled JSON-RPC over stdio — the protocol needs three methods, and an SDK would be
+a dependency and a version to track. Tested over the real transport, because what breaks an
+MCP server is transport-level: a stray write to stdout, an answered notification, a tool error
+raised as a protocol error.
+
 ## Starting points
 
 Six built-in presets — **Nyhetsbrev**, **Inbjudan**, **Kampanj**, **Välkomstmejl**,

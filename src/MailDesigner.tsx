@@ -35,6 +35,7 @@ import { Canvas } from "./editor/Canvas.js";
 import { Palette } from "./editor/Palette.js";
 import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
+import { CodeView } from "./editor/CodeView.js";
 import { DEVICES } from "./editor/devices.js";
 import { ConfirmDialog } from "./editor/ConfirmDialog.js";
 import type { ConfirmRequest } from "./editor/ConfirmDialog.js";
@@ -618,6 +619,7 @@ export function MailDesigner({
           {...(permissions.data === "hidden"
             ? {}
             : { dataOpen, onToggleData: () => setDataOpen((v) => !v) })}
+          showCode={permissions.code.html || permissions.code.text || permissions.code.json}
           {...(view === "preview"
             ? { mockup, onToggleMockup: () => setMockup((v) => !v) }
             : {})}
@@ -625,10 +627,12 @@ export function MailDesigner({
         />
         {/* Preview renders a single child, so the three-column grid has to collapse with it
             — otherwise the frame lands in the 176px palette column. */}
-        <div className={`md-layout${view === "preview" ? " md-layout--preview" : ""}`}>
+        <div className={`md-layout${view === "edit" ? "" : " md-layout--preview"}`}>
           {view === "edit" ? <Palette onDragStart={startCreate} /> : null}
           {view === "edit" ? (
             <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
+          ) : view === "code" ? (
+            <CodeView />
           ) : (
             <PreviewFrame
               doc={value}
@@ -639,7 +643,6 @@ export function MailDesigner({
               identity={identity}
             />
           )}
-          {view === "edit" && permissions.structure ? null : null}
           {view === "edit" ? <Inspector /> : null}
         </div>
         {dataOpen && permissions.data !== "hidden" ? (

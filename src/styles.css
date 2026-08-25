@@ -141,6 +141,10 @@
   background: var(--md-bg);
 }
 
+.md-toolbar-group[hidden] {
+  display: none;
+}
+
 .md-toolbar-group {
   display: flex;
   align-items: center;
@@ -2504,4 +2508,129 @@
   background: var(--md-client-chrome);
   border-top: 1px solid var(--md-client-line);
   color: var(--md-client-tint);
+}
+
+/* --------------------------------------------------------------- the code view */
+
+.md-code {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: calc(var(--md-space) * 3);
+  gap: calc(var(--md-space) * 2);
+  overflow: hidden;
+  background: var(--md-bg-sunken);
+}
+
+.md-code-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space);
+  flex-wrap: wrap;
+}
+
+.md-code-spacer {
+  flex: 1;
+}
+
+.md-code-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--md-text-muted);
+  cursor: pointer;
+}
+
+.md-code-size {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-text-muted);
+}
+
+/* Past Gmail's clipping limit the number stops being trivia. */
+.md-code-size.is-heavy {
+  color: var(--md-danger);
+  font-weight: 600;
+}
+
+.md-code-body {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: calc(var(--md-space) * 2);
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius);
+  background: var(--md-bg);
+  /* Wide markup scrolls in its own box; the editor never scrolls sideways. */
+  overflow: auto;
+  font-family: var(--md-font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.md-code-body code {
+  font: inherit;
+  white-space: pre;
+}
+
+.md-hl-tag {
+  color: #1f6feb;
+}
+
+.md-hl-attr {
+  color: #8250df;
+}
+
+.md-hl-value,
+.md-hl-number,
+.md-hl-literal {
+  color: #0a7c42;
+}
+
+.md-hl-key {
+  color: #1f6feb;
+}
+
+.md-hl-comment {
+  color: var(--md-text-muted);
+  font-style: italic;
+}
+
+.md-hl-punct {
+  color: var(--md-text-muted);
+}
+
+/* Lifted for contrast on a dark surface — the light values go muddy below 4.5:1. */
+.md-root[data-color-scheme="dark"] .md-hl-tag,
+.md-root[data-color-scheme="dark"] .md-hl-key {
+  color: #79b8ff;
+}
+
+.md-root[data-color-scheme="dark"] .md-hl-attr {
+  color: #d2a8ff;
+}
+
+.md-root[data-color-scheme="dark"] .md-hl-value,
+.md-root[data-color-scheme="dark"] .md-hl-number,
+.md-root[data-color-scheme="dark"] .md-hl-literal {
+  color: #7ee787;
+}
+
+@media (prefers-color-scheme: dark) {
+  .md-root:not([data-color-scheme="light"]) .md-hl-tag,
+  .md-root:not([data-color-scheme="light"]) .md-hl-key {
+    color: #79b8ff;
+  }
+
+  .md-root:not([data-color-scheme="light"]) .md-hl-attr {
+    color: #d2a8ff;
+  }
+
+  .md-root:not([data-color-scheme="light"]) .md-hl-value,
+  .md-root:not([data-color-scheme="light"]) .md-hl-number,
+  .md-root:not([data-color-scheme="light"]) .md-hl-literal {
+    color: #7ee787;
+  }
 }

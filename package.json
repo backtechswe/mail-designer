@@ -5,8 +5,16 @@
   "license": "UNLICENSED",
   "private": true,
   "type": "module",
-  "sideEffects": ["*.css"],
-  "files": ["dist"],
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "bin",
+    "schema",
+    "docs/authoring.md",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -24,7 +32,8 @@
     "test": "npm run build && node --test 'test/*.test.mjs'",
     "icons": "node scripts/build-icons.mjs",
     "dev": "npm --prefix examples/playground run dev",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "cli": "node bin/mail-designer.mjs"
   },
   "dependencies": {
     "i18next": "^25.0.0"
@@ -35,5 +44,8 @@
   "devDependencies": {
     "@types/react": "^19.0.7",
     "typescript": "^5.7.3"
+  },
+  "bin": {
+    "mail-designer": "bin/mail-designer.mjs"
   }
 }
