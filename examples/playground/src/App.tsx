@@ -119,9 +119,16 @@ export function App() {
           }
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
           onHistoryChange={(h) => setDepth(h.depth)}
+          // Handing the editor a store turns on the document session: name bar, autosave,
+          // switcher, and the prompts that go with them. Here it is localStorage; in Utskick
+          // it will be Firestore.
+          store={store}
+          autosaveMs={800}
           // The menu is part of the package and speaks only the TemplateStore contract —
           // here backed by localStorage, in Utskick it will be Firestore.
-          toolbarExtra={<TemplateMenu store={store} />}
+          // Presets only: saved documents live in the document bar now, and offering them
+          // in two places would invite opening one in a way that does not switch to it.
+          toolbarExtra={<TemplateMenu />}
         />
       </div>
     </div>

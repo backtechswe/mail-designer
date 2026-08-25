@@ -85,6 +85,34 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
 
+### Document session
+
+Hand the editor a `TemplateStore` and it manages the document itself:
+
+```tsx
+<MailDesigner value={doc} onChange={setDoc} store={store} autosaveMs={1200} />
+```
+
+That adds a strip above the toolbar with the document name, the save state, and a switcher —
+so you can move between documents without leaving the editor. Two rules shape it:
+
+- **The record is created on the first edit**, not on load. There is something to save
+  changes against as soon as the user starts working, without filling the store with empty
+  drafts every time the editor is opened. Unnamed drafts get a dated name, because a list of
+  drafts is only useful if you can tell them apart.
+- **Switching documents clears the undo history.** Applying a template edits the document you
+  are on, so it belongs in the history; switching does not. Undoing across a switch would
+  pull the previous document's content into the new record, and autosave would write it there.
+
+Autosave narrows the unsaved window but does not close it — a save can be in flight, or have
+failed — so the editor asks before a step that could lose work: switching document, starting
+a new one, applying a template over existing content, deleting a document. Each prompt says
+what will happen, and where it is true, that it can be undone. It never asks when there is
+nothing to lose.
+
+Prompts use an in-page dialog, not `window.confirm`: that blocks the page, cannot be
+translated, and in an embedded editor it looks like the host application broke.
+
 ### History
 
 Undo and redo are global: one stack covering every change the editor makes — typing, styling,
@@ -100,15 +128,28 @@ rather than just *Undo*.
 |---|---|
 | `Cmd`/`Ctrl` + `Z` | Undo |
 | `Shift` + `Cmd`/`Ctrl` + `Z`, or `Ctrl` + `Y` | Redo |
+| `Cmd`/`Ctrl` + `S` | Save now |
+| `Cmd`/`Ctrl` + `D` | Duplicate the selected block |
+| `Cmd`/`Ctrl` + `E` | Toggle preview |
+| `Delete` | Delete the selected block |
+| `Esc` | Deselect |
+| `Alt` + `↑` `↓` | Move the block |
+| `Alt` + `←` `→` | Move into or out of a column |
+| `?` | Show this list |
+
+`?` opens a panel listing all of them. Shortcuts people cannot discover are shortcuts nobody
+uses, and a keyboard-first editor that hides its own keyboard is a contradiction.
 
 The shortcut is captured at the editor root. That beats the browser's own contenteditable
 undo — which would otherwise restore DOM text the document model knows nothing about, and the
 two histories would drift apart within a few keystrokes — while keeping the shortcut scoped to
 the editor rather than the whole host application.
 
-200 steps are kept. Consecutive changes merge only while they share a key scoped to what is
-being changed (`text:blockId`), so typing a sentence is one step but moving to another block
-starts a new one.
+200 steps are kept. Consecutive changes to the same property of the same block merge into one
+step; the run ends when you leave the field, select another block, touch another property, or
+undo. Time is only a 30-second backstop — it started out as the primary rule with a 600 ms
+window, and that was wrong: on a heavy document a render delays the next input event enough
+that consecutive keystrokes arrive a second apart, and every digit became its own step.
 
 ```tsx
 <MailDesigner

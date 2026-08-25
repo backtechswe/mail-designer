@@ -41,7 +41,8 @@
   --md-lift: 0 1px 2px rgba(22, 22, 26, 0.06), 0 8px 24px rgba(22, 22, 26, 0.08);
 
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  /* Document bar (optional), toolbar, panels. */
+  grid-template-rows: auto auto minmax(0, 1fr);
   height: 100%;
   min-height: 480px;
   color: var(--md-text);
@@ -1232,4 +1233,230 @@
   font-size: 11px;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* ---------------------------------------------------------------- document bar */
+
+/*
+ * Which document is open, kept a level above the toolbar. The toolbar is about what to do
+ * with the mail in front of you; this is about which mail that is, and "switch document"
+ * should never sit one slip away from "undo".
+ */
+.md-docbar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--md-space) * 1.5);
+  padding: 0 calc(var(--md-space) * 1.5);
+  height: 42px;
+  border-bottom: 1px solid var(--md-border);
+  background: var(--md-bg-subtle);
+}
+
+/* The name is the document's identity, so it is edited where it is read. */
+.md-docname {
+  min-width: 8ch;
+  max-width: 34ch;
+  padding: 4px 7px !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.md-docname:hover {
+  border-color: var(--md-border) !important;
+}
+
+.md-docname:focus {
+  border-color: var(--md-accent) !important;
+  background: var(--md-bg) !important;
+}
+
+.md-docbar-spacer {
+  flex: 1;
+}
+
+.md-savestate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  font-size: 11px;
+  color: var(--md-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.md-savestate--dirty {
+  color: var(--md-text);
+}
+
+.md-savestate--dirty::before,
+.md-savestate--error::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.md-savestate--error {
+  color: var(--md-danger);
+}
+
+.md-savestate--error button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--md-danger);
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.md-menu-tick {
+  padding-left: 6px;
+  color: var(--md-accent);
+}
+
+.md-menu-panel li > button:first-child:disabled {
+  color: var(--md-text-muted);
+  cursor: default;
+}
+
+/* --------------------------------------------------------------------- dialogs */
+
+.md-dialog-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(22, 22, 26, 0.4);
+}
+
+.md-dialog {
+  width: 100%;
+  max-width: 380px;
+  padding: calc(var(--md-space) * 2.5);
+  border-radius: var(--md-radius);
+  background: var(--md-bg);
+  box-shadow: var(--md-lift);
+}
+
+.md-dialog--wide {
+  max-width: 460px;
+}
+
+.md-dialog h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--md-text);
+}
+
+.md-dialog p {
+  margin: 0 0 calc(var(--md-space) * 2.5);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--md-text-muted);
+}
+
+.md-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.md-dialog-actions button {
+  padding: 7px 14px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.md-dialog-actions button:hover {
+  border-color: var(--md-border-strong);
+}
+
+.md-dialog-primary {
+  border-color: var(--md-accent) !important;
+  background: var(--md-accent) !important;
+  color: var(--md-accent-contrast) !important;
+}
+
+.md-dialog-danger {
+  border-color: var(--md-danger) !important;
+  background: var(--md-danger) !important;
+  color: #fff !important;
+}
+
+/* ------------------------------------------------------------------- shortcuts */
+
+.md-shortcuts {
+  margin: 0 0 calc(var(--md-space) * 2.5);
+  display: grid;
+  gap: 2px;
+}
+
+.md-shortcuts > div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--md-border);
+}
+
+.md-shortcuts > div:last-child {
+  border-bottom: 0;
+}
+
+.md-shortcuts dt {
+  display: flex;
+  gap: 3px;
+}
+
+.md-shortcuts dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--md-text);
+}
+
+.md-shortcuts kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--md-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--md-bg-subtle);
+  font-family: var(--md-font);
+  font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+.md-help-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--md-border);
+  border-radius: 999px;
+  background: var(--md-bg);
+  color: var(--md-text-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-help-button:hover {
+  border-color: var(--md-accent);
+  color: var(--md-accent);
 }

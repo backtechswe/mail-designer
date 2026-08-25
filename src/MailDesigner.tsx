@@ -13,6 +13,7 @@ import type {
 import type { Position } from "./document.js";
 import {
   duplicateBlock as duplicateBlockIn,
+  emptyDocument,
   findBlock,
   insertBlock,
   moveBlock,
@@ -32,6 +33,13 @@ import { Canvas } from "./editor/Canvas.js";
 import { Palette } from "./editor/Palette.js";
 import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
+import { ConfirmDialog } from "./editor/ConfirmDialog.js";
+import type { ConfirmRequest } from "./editor/ConfirmDialog.js";
+import { ShortcutsPanel } from "./editor/ShortcutsPanel.js";
+import { DocumentBar } from "./session/DocumentBar.js";
+import { useDocumentSession } from "./session/useDocumentSession.js";
+import { duplicateBlock as duplicateFor } from "./document.js";
+import type { TemplateStore } from "./templates.js";
 import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
@@ -98,6 +106,20 @@ export interface MailDesignerProps {
   /** How many steps to keep. Default 200. */
   historyLimit?: number;
 
+  /**
+   * Give the editor a store and it manages the document session itself: a name bar, autosave,
+   * a switcher, and the prompts that go with them.
+   *
+   * The record is created on the first edit rather than on load, so there is something to
+   * save against as soon as the user starts working without filling the store with empty
+   * drafts. Omit the store and the editor is a plain controlled component.
+   */
+  store?: TemplateStore;
+  /** Open this document on mount. */
+  documentId?: string;
+  /** Quiet period after the last edit before autosaving. Default 1200 ms. */
+  autosaveMs?: number;
+
   className?: string;
 }
 
@@ -123,11 +145,16 @@ export function MailDesigner({
   onHistoryChange,
   showHistory = true,
   historyLimit = 200,
+  store,
+  documentId,
+  autosaveMs,
   className,
 }: MailDesignerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("edit");
   const [viewport, setViewport] = useState<Viewport>("desktop");
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Derived, not stored: keeping a width in state meant it went stale the moment the user
@@ -142,6 +169,29 @@ export function MailDesigner({
     externalLabel: t("history.replace"),
   });
   const { commit } = history;
+
+  const session = useDocumentSession({
+    value,
+    load: history.load,
+    store,
+    initialId: documentId,
+    ...(autosaveMs === undefined ? {} : { autosaveMs }),
+    untitledTemplate: t("session.untitled"),
+    locale,
+  });
+
+  /**
+   * Guards a step that would discard work. Autosave keeps the window short, but it is not
+   * zero — a save can be in flight, or have failed — and switching documents cannot be
+   * undone, so it is the one place a prompt genuinely earns its interruption.
+   */
+  const guard = (request: ConfirmRequest, needed: boolean): void => {
+    if (!needed) {
+      request.onConfirm();
+      return;
+    }
+    setConfirmRequest(request);
+  };
 
   // Let a host mirror the controls into its own chrome.
   useEffect(() => {
@@ -160,20 +210,79 @@ export function MailDesigner({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+
     const onKeyDown = (event: KeyboardEvent): void => {
+      // "?" opens the list. Not gated on the modifier, but not while typing either.
+      if (event.key === "?" && !event.metaKey && !event.ctrlKey) {
+        const target = event.target as HTMLElement | null;
+        const typing =
+          target?.isContentEditable ||
+          target?.tagName === "INPUT" ||
+          target?.tagName === "TEXTAREA";
+        if (!typing) {
+          event.preventDefault();
+          setShortcutsOpen(true);
+        }
+        return;
+      }
+
+      if (event.key === "Escape" && !shortcutsOpen && !confirmRequest) {
+        setSelectedId(null);
+        return;
+      }
+
       if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
       const key = event.key.toLowerCase();
-      const isUndo = key === "z" && !event.shiftKey;
-      const isRedo = (key === "z" && event.shiftKey) || (key === "y" && event.ctrlKey);
-      if (!isUndo && !isRedo) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (isUndo) history.undo();
-      else history.redo();
+
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        history.undo();
+        return;
+      }
+      if ((key === "z" && event.shiftKey) || (key === "y" && event.ctrlKey)) {
+        event.preventDefault();
+        event.stopPropagation();
+        history.redo();
+        return;
+      }
+      if (key === "s") {
+        // Also stops the browser's own save dialog, which is never what was meant here.
+        event.preventDefault();
+        event.stopPropagation();
+        void session.saveNow();
+        return;
+      }
+      if (key === "d" && selectedId) {
+        event.preventDefault();
+        event.stopPropagation();
+        commit(duplicateFor(value, selectedId), { label: t("history.duplicate") });
+        return;
+      }
+      if (key === "e") {
+        event.preventDefault();
+        event.stopPropagation();
+        setView((current) => (current === "edit" ? "preview" : "edit"));
+      }
     };
+
     root.addEventListener("keydown", onKeyDown, { capture: true });
     return () => root.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [history]);
+  }, [history, session, selectedId, value, commit, t, shortcutsOpen, confirmRequest]);
+
+  /**
+   * Warn before leaving with work the store has not accepted. The browser shows its own
+   * wording; all we control is whether it asks at all, so it must only ask when true.
+   */
+  useEffect(() => {
+    if (!store || !session.hasUnsavedWork) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [store, session.hasUnsavedWork]);
 
   // The drag layer sits between history and the canvas: it decides *where* a block lands,
   // and the same commit path applies it, so a drag is one undo step like any other edit.
@@ -238,6 +347,7 @@ export function MailDesigner({
       move: (id, position) => apply(moveBlock(value, id, position), t("history.move")),
       replaceDocument: (next) => apply(next, t("history.replace")),
       endEdit: history.breakRun,
+      confirm: setConfirmRequest,
       startBlockDrag: startMove,
       isDragging: drag !== null,
       viewportWidth,
@@ -267,12 +377,49 @@ export function MailDesigner({
       style={themeToStyle(theme)}
     >
       <EditorProvider api={api}>
+        {store ? (
+          <DocumentBar
+            session={session}
+            onNew={() =>
+              guard(
+                {
+                  title: t("confirm.newDocumentTitle"),
+                  body: t("confirm.newDocumentBody"),
+                  confirmLabel: t("confirm.newDocumentOk"),
+                  onConfirm: () => session.startNew(emptyDocument()),
+                },
+                session.hasUnsavedWork,
+              )
+            }
+            onOpen={(id, name) =>
+              guard(
+                {
+                  title: t("confirm.switchDocumentTitle", { name }),
+                  body: t("confirm.switchDocumentBody"),
+                  confirmLabel: t("confirm.switchDocumentOk"),
+                  onConfirm: () => void session.open(id),
+                },
+                session.hasUnsavedWork,
+              )
+            }
+            onDelete={(id, name) =>
+              setConfirmRequest({
+                title: t("confirm.deleteDocumentTitle", { name }),
+                body: t("confirm.deleteDocumentBody"),
+                confirmLabel: t("confirm.deleteDocumentOk"),
+                destructive: true,
+                onConfirm: () => void session.remove(id),
+              })
+            }
+          />
+        ) : null}
         <Toolbar
           view={view}
           onViewChange={setView}
           viewport={viewport}
           onViewportChange={setViewport}
           showHistory={showHistory}
+          onOpenShortcuts={() => setShortcutsOpen(true)}
           extra={toolbarExtra}
         />
         {/* Preview renders a single child, so the three-column grid has to collapse with it
@@ -286,6 +433,8 @@ export function MailDesigner({
           )}
           {view === "edit" ? <Inspector /> : null}
         </div>
+        <ConfirmDialog request={confirmRequest} onCancel={() => setConfirmRequest(null)} />
+        <ShortcutsPanel open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       </EditorProvider>
     </div>
   );

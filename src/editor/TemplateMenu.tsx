@@ -24,7 +24,7 @@ export function TemplateMenu({
   store?: TemplateStore;
   presets?: MailPreset[];
 }) {
-  const { doc, replaceDocument, select, t } = useEditor();
+  const { doc, replaceDocument, select, confirm, t } = useEditor();
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState<MailTemplateSummary[]>([]);
   const [name, setName] = useState("");
@@ -63,11 +63,21 @@ export function TemplateMenu({
     };
   }, [open]);
 
-  const apply = (next: Parameters<typeof replaceDocument>[0]): void => {
-    // Fresh ids: applying the same preset twice must not produce colliding block ids.
-    replaceDocument({ ...next, blocks: next.blocks.map((section) => cloneBlock(section)) });
-    select(null);
+  const apply = (next: Parameters<typeof replaceDocument>[0], name: string): void => {
     setOpen(false);
+    // A wholesale replace is easy to trigger by mistake and hard to recognise afterwards, so
+    // it asks — and the prompt says the undo is right there, which is what makes the answer
+    // easy rather than frightening.
+    confirm({
+      title: t("confirm.switchTemplateTitle", { name }),
+      body: t("confirm.switchTemplateBody"),
+      confirmLabel: t("confirm.switchTemplateOk"),
+      onConfirm: () => {
+        // Fresh ids: applying the same preset twice must not produce colliding block ids.
+        replaceDocument({ ...next, blocks: next.blocks.map((section) => cloneBlock(section)) });
+        select(null);
+      },
+    });
   };
 
   const save = async (): Promise<void> => {
@@ -101,7 +111,7 @@ export function TemplateMenu({
           <ul>
             {presets.map((preset) => (
               <li key={preset.id}>
-                <button type="button" onClick={() => apply(preset.document)}>
+                <button type="button" onClick={() => apply(preset.document, preset.name)}>
                   {preset.name}
                 </button>
               </li>
@@ -121,7 +131,7 @@ export function TemplateMenu({
                         type="button"
                         onClick={async () => {
                           const full = await store.load(template.id);
-                          if (full) apply(full.document);
+                          if (full) apply(full.document, full.name);
                         }}
                       >
                         {template.name}

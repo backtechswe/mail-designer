@@ -4,6 +4,7 @@ import type { Block, MailColumn, MailDocument, MailSettings } from "../types.js"
 import type { Position } from "../document.js";
 import type { Translate } from "../i18n.js";
 import type { HistoryControls } from "./useHistory.js";
+import type { ConfirmRequest } from "./ConfirmDialog.js";
 
 /**
  * Everything a panel needs, in one place.
@@ -41,6 +42,12 @@ export interface EditorApi {
   replaceDocument: (next: MailDocument) => void;
   /** Ends the current merge run, so the next change is its own undo step. */
   endEdit: () => void;
+
+  /**
+   * Ask before a step the user might not mean. Panels raise the request; MailDesigner owns
+   * the dialog, so there is one of them and it behaves the same wherever it comes from.
+   */
+  confirm: (request: ConfirmRequest) => void;
 
   /** Arms a drag from a block's grip. Provided by the drag layer in MailDesigner. */
   startBlockDrag: (id: string, event: React.PointerEvent) => void;

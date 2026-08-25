@@ -50,8 +50,11 @@ export function statusReducer(status: SessionStatus, event: SessionEvent): Sessi
     case "saveSucceeded":
       return {
         ...status,
-        // An edit that landed mid-flight leaves the document dirty again, not clean.
+        // An edit that landed mid-flight leaves the document dirty again, not clean. The
+        // flag is cleared here: from now on `dirty` is what says another write is owed, and
+        // leaving `pending` set would make the scheduler fire on every render.
         state: status.pending ? "dirty" : "clean",
+        pending: false,
         id: event.id,
         name: event.name,
         savedAt: event.at,

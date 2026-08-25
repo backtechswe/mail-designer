@@ -12,6 +12,7 @@ export function Toolbar({
   viewport,
   onViewportChange,
   showHistory = true,
+  onOpenShortcuts,
   extra,
 }: {
   view: ViewMode;
@@ -19,6 +20,7 @@ export function Toolbar({
   viewport: Viewport;
   onViewportChange: (viewport: Viewport) => void;
   showHistory?: boolean;
+  onOpenShortcuts?: () => void;
   /** Host-supplied controls — the template menu lands here. */
   extra?: ReactNode;
 }) {
@@ -69,6 +71,17 @@ export function Toolbar({
 
       <div className="md-toolbar-spacer" />
       {extra}
+      {onOpenShortcuts ? (
+        <button
+          type="button"
+          className="md-help-button"
+          title={t("shortcuts.open")}
+          aria-label={t("shortcuts.open")}
+          onClick={onOpenShortcuts}
+        >
+          ?
+        </button>
+      ) : null}
     </div>
   );
 }
