@@ -98,7 +98,6 @@ function HistoryButton({
   const { t } = useEditor();
   const timer = useRef<number | null>(null);
   const menu = useRef<HTMLDivElement | null>(null);
-  const [hovered, setHovered] = useState(0);
   const disabled = steps.length === 0;
 
   const clearTimer = useCallback(() => {
@@ -107,9 +106,6 @@ function HistoryButton({
   }, []);
 
   useEffect(() => clearTimer, [clearTimer]);
-  useEffect(() => {
-    if (!open) setHovered(0);
-  }, [open]);
 
   const schedule = useCallback(
     (next: boolean, delay: number) => {
@@ -166,19 +162,12 @@ function HistoryButton({
         <div className="md-history-menu" ref={menu} onKeyDown={onMenuKeyDown}>
           <div className="md-history-panel" role="menu" aria-label={heading}>
             <h4>{heading}</h4>
-            <ul onPointerLeave={() => setHovered(0)}>
+            {/* Every step above the one under the pointer is going too, and the highlight
+                says so — see the `:has(~ li:hover)` rule, which does it without a render. */}
+            <ul>
               {steps.map((step) => (
                 <li key={`${step.at}-${step.steps}`}>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    // Every step above this one is going too — the highlight has to say so,
-                    // or picking the sixth line looks like it undoes one thing.
-                    className={step.steps <= hovered ? "is-in-range" : undefined}
-                    onPointerEnter={() => setHovered(step.steps)}
-                    onFocus={() => setHovered(step.steps)}
-                    onClick={() => take(step.steps)}
-                  >
+                  <button type="button" role="menuitem" onClick={() => take(step.steps)}>
                     <span className="md-history-step">{step.label || t("history.unnamed")}</span>
                     {step.steps > 1 ? (
                       <span className="md-history-count" aria-hidden>

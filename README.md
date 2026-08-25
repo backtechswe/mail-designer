@@ -251,10 +251,10 @@ Undo and redo are global: one stack covering every change the editor makes — t
 moving, adding, deleting, email settings, applying a template — plus documents the host swaps
 in from its own chrome, which are recorded as a step rather than discarding what came before.
 
-The controls sit in their own recessed cluster, set apart from the view and viewport toggles,
-because history acts on the whole document and a button grouped with the preview toggle reads
-as belonging to the preview. Two plain icon buttons, not a segmented control — a segmented
-control means "one of these is the current state", and neither undo nor redo is a state.
+The controls sit apart from the view and viewport toggles, because history acts on the whole
+document and a button grouped with the preview toggle reads as belonging to the preview. Two
+standalone buttons, spaced but not boxed: boxing them implies a group, and undo and redo are
+not one — neither is a state, and one is not an alternative to the other.
 
 **Resting on either button opens the last ten steps.** Picking one takes every step down to
 it, so going back six changes is one gesture rather than six clicks, and hovering a line

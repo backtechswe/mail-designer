@@ -155,44 +155,45 @@
  * History has its own recessed surface and its own rule, so it does not read as belonging to
  * the controls beside it. It acts on the whole document; nothing else in the toolbar does.
  */
+/*
+ * Two standalone buttons, spaced but not boxed. They used to sit in a recessed filled pill,
+ * which made them the only control in a toolbar of bordered ones — and boxing them together
+ * implied a group, which undo and redo are not: neither is a state, and one is not an
+ * alternative to the other.
+ */
 .md-history {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   margin-right: calc(var(--md-space) * 0.5);
-  padding: 3px 4px 3px 3px;
-  border: 1px solid var(--md-border);
-  border-radius: var(--md-radius-sm);
-  background: var(--md-bg-subtle);
 }
 
 .md-history button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 24px;
+  width: 29px;
+  height: 29px;
   padding: 0;
-  border: 0;
-  border-radius: 3px;
-  background: transparent;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
   color: var(--md-text);
   cursor: pointer;
 }
 
-.md-history button:hover:not(:disabled) {
-  background: var(--md-bg);
+/* The same hover the toolbar's other bordered controls use. */
+.md-history button:hover:not(:disabled),
+.md-history button[aria-expanded="true"] {
+  border-color: var(--md-accent);
+  color: var(--md-accent);
 }
 
 .md-history button:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
   cursor: default;
 }
 
-/*
- * The step menu. Resting on either button opens the last ten changes; picking one takes all
- * the steps down to it, which is why hovering a line highlights every line above it too.
- */
 .md-history-slot {
   position: relative;
   display: flex;
@@ -201,7 +202,7 @@
 .md-history-menu {
   position: absolute;
   top: 100%;
-  left: -4px;
+  left: 0;
   z-index: 30;
   /* Transparent bridge across the gap, so moving the pointer from the button into the menu
      never leaves both — which would close it on the way. */
@@ -249,8 +250,17 @@
   cursor: pointer;
 }
 
-/* The range that would be taken, not just the line under the pointer. */
-.md-history-panel li > button.is-in-range {
+/*
+ * The whole range that would be taken, not just the line under the pointer — and done in CSS
+ * rather than React state. `:has(~ li:hover)` reaches *backwards* up the list, so the browser
+ * repaints the highlight on the same frame as the pointer moves. Driving it from state meant
+ * a re-render per row, at React's lower priority for continuous events, and dragging up and
+ * down the list visibly trailed the cursor.
+ */
+.md-history-panel li:hover > button,
+.md-history-panel li:has(~ li:hover) > button,
+.md-history-panel li:focus-within > button,
+.md-history-panel li:has(~ li:focus-within) > button {
   background: var(--md-accent-soft);
   color: var(--md-accent);
 }
@@ -269,7 +279,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-.is-in-range .md-history-count {
+.md-history-panel li:hover .md-history-count,
+.md-history-panel li:has(~ li:hover) .md-history-count,
+.md-history-panel li:focus-within .md-history-count,
+.md-history-panel li:has(~ li:focus-within) .md-history-count {
   color: inherit;
 }
 
