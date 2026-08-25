@@ -143,14 +143,6 @@ list only opens when something actually matches — so a query that turns out to
 disappears rather than hanging around empty. `findTrigger` is pure and has twelve tests,
 because an off-by-one here pops a menu over someone's address as they type it.
 
-**Fields look like fields.** In the canvas a token renders as a pill carrying the field's
-name; `[Namn]` in running text is easy to skim past and easy to mistake for something the
-recipient will read. The pill exists only in the editor — the document keeps the plain token
-and so does every byte the renderer emits, because decorating the stored HTML would put editor
-chrome in the sent email. `decorateTokens` and `stripTokens` are pure and reversible, and the
-tests hold them to a lossless round trip; a leak in either direction is a real bug, so the
-strip counts nested spans rather than stopping at the first `</span>`.
-
 A right-click menu was considered and rejected: nobody discovers a feature by right-clicking,
 and inside a text field the browser's own context menu is where people go for spellcheck and
 paste, so overriding it costs more than it gives. The caret is already the insertion point.
