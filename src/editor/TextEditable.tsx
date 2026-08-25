@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { sanitizeInline } from "../render/sanitize.js";
 import { Icon } from "./icons.js";
 import { useEditor } from "./EditorContext.js";
+import { FieldPicker } from "../data/FieldPicker.js";
 
 /**
  * Inline rich text on a contenteditable, with a floating toolbar.
@@ -51,6 +52,18 @@ export function TextEditable({
   const domHtml = useRef<string | null>(null);
   const [toolbar, setToolbar] = useState<{ top: number; left: number } | null>(null);
   const [linkDraft, setLinkDraft] = useState<string | null>(null);
+  /**
+   * The field picker. `from` is the offset of the `[` that opened it, so choosing a field
+   * replaces what the user has typed so far rather than leaving a stray bracket behind. Null
+   * `from` means it was opened by the button and there is nothing to replace.
+   */
+  const [picker, setPicker] = useState<{
+    top: number;
+    left: number;
+    query: string;
+    node: Text | null;
+    from: number | null;
+  } | null>(null);
 
   // Write props into the DOM only when they did not come from us. Layout effect so the
   // initial content is present before the browser paints.
@@ -71,12 +84,19 @@ export function TextEditable({
     onChange(next);
   }, [onChange]);
 
-  const positionToolbar = useCallback(() => {
+  /**
+   * Places the toolbar, and decides whether the field picker should be open.
+   *
+   * The toolbar follows a collapsed caret as well as a selection. Inserting a field happens at
+   * a caret, so the old selection-only rule put the affordance at exactly the wrong moment —
+   * and it meant bold could not be armed for text about to be typed either.
+   */
+  const syncCaret = useCallback(() => {
     const el = ref.current;
     const selection = window.getSelection();
-    if (!el || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    if (!el || !selection || selection.rangeCount === 0) {
       setToolbar(null);
-      setLinkDraft(null);
+      setPicker(null);
       return;
     }
     const range = selection.getRangeAt(0);
@@ -86,19 +106,43 @@ export function TextEditable({
     }
     const rect = range.getBoundingClientRect();
     const host = el.getBoundingClientRect();
-    setToolbar({ top: rect.top - host.top - 40, left: Math.max(0, rect.left - host.left) });
+    const top = rect.top - host.top;
+    const left = Math.max(0, rect.left - host.left);
+    setToolbar({ top: top - 40, left });
+
+    // An unclosed `[` before the caret opens the picker. `[` is already the first character of
+    // a token people type by hand, so the trigger explains itself the first time it fires.
+    const node = range.startContainer;
+    if (!selection.isCollapsed || node.nodeType !== Node.TEXT_NODE) {
+      setPicker(null);
+      return;
+    }
+    const text = (node as Text).data.slice(0, range.startOffset);
+    const match = /\[([^[\]\n]{0,40})$/.exec(text);
+    if (!match) {
+      setPicker(null);
+      return;
+    }
+    setPicker({
+      top: top + rect.height + 6,
+      left,
+      query: match[1] ?? "",
+      node: node as Text,
+      from: range.startOffset - match[0].length,
+    });
   }, []);
 
   useEffect(() => {
     if (!active) {
       setToolbar(null);
       setLinkDraft(null);
+      setPicker(null);
       return;
     }
-    const handler = (): void => positionToolbar();
+    const handler = (): void => syncCaret();
     document.addEventListener("selectionchange", handler);
     return () => document.removeEventListener("selectionchange", handler);
-  }, [active, positionToolbar]);
+  }, [active, syncCaret]);
 
   /**
    * execCommand is deprecated but not replaced: there is still no standard API for
@@ -115,13 +159,30 @@ export function TextEditable({
     [emit],
   );
 
-  const insertText = useCallback(
-    (text: string) => {
-      ref.current?.focus();
-      document.execCommand("insertText", false, text);
+  /**
+   * Inserts `[field]` at the caret, replacing the partial `[que…` that opened the picker.
+   * Going through execCommand rather than editing the DOM keeps the browser's own undo stack
+   * and caret handling intact — the caret ends up after the token, ready to keep typing.
+   */
+  const insertField = useCallback(
+    (field: string) => {
+      const el = ref.current;
+      if (!el) return;
+      el.focus();
+      const selection = window.getSelection();
+      const current = picker;
+      if (selection && current?.node && current.from !== null) {
+        const range = document.createRange();
+        range.setStart(current.node, current.from);
+        range.setEnd(current.node, Math.min(current.from + current.query.length + 1, current.node.data.length));
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      document.execCommand("insertText", false, `[${field}]`);
+      setPicker(null);
       emit();
     },
-    [emit],
+    [emit, picker],
   );
 
   const handlePaste = useCallback(
@@ -141,6 +202,8 @@ export function TextEditable({
   );
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
+    // The picker owns arrows, Enter, Tab and Escape while it is open; it captures them at the
+    // document, so all this has to do is stay out of the way.
     if (event.key === "Escape") {
       (event.target as HTMLElement).blur();
       return;
@@ -183,21 +246,28 @@ export function TextEditable({
                 />
               </label>
               {dataFields.length > 0 ? (
-                <select
-                  className="md-toolbar-select"
-                  value=""
-                  title={t("text.dataField")}
-                  onChange={(e) => {
-                    if (e.target.value) insertText(`[${e.target.value}]`);
+                <button
+                  type="button"
+                  className="md-toolbar-field"
+                  title={t("data.insertHint")}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    // Opens the same list the `[` trigger does, at the caret, with nothing to
+                    // replace. The button is here to teach the shortcut, not to replace it.
+                    if (toolbar) {
+                      setPicker({
+                        top: toolbar.top + 40 + 6,
+                        left: toolbar.left,
+                        query: "",
+                        node: null,
+                        from: null,
+                      });
+                    }
                   }}
                 >
-                  <option value="">[ ]</option>
-                  {dataFields.map((field) => (
-                    <option key={field} value={field}>
-                      {field}
-                    </option>
-                  ))}
-                </select>
+                  <Icon name="tag" size={13} />
+                  {t("data.insert")}
+                </button>
               ) : null}
             </>
           ) : (
@@ -226,6 +296,16 @@ export function TextEditable({
             </form>
           )}
         </div>
+      ) : null}
+
+      {editable && picker ? (
+        <FieldPicker
+          top={picker.top}
+          left={picker.left}
+          query={picker.query}
+          onSelect={insertField}
+          onClose={() => setPicker(null)}
+        />
       ) : null}
 
       <Tag

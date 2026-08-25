@@ -1757,3 +1757,99 @@
   font-weight: 600;
   cursor: default;
 }
+
+/* ------------------------------------------------------------- field picker */
+
+/*
+ * The data-field list, at the caret. It replaces a <select> whose placeholder read "[ ]" and
+ * which opened an OS menu that took focus off the text being edited.
+ */
+.md-fieldpicker {
+  position: absolute;
+  z-index: 20;
+  width: 260px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  box-shadow: var(--md-lift);
+  overflow: hidden;
+}
+
+.md-fieldpicker-hint,
+.md-fieldpicker-empty {
+  margin: 0;
+  padding: 7px 10px;
+  font-family: var(--md-font);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+  border-bottom: 1px solid var(--md-border);
+}
+
+.md-fieldpicker-empty {
+  border-bottom: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+}
+
+.md-fieldpicker ul {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.md-fieldpicker button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: var(--md-radius-sm);
+  background: transparent;
+  font-family: var(--md-font);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.md-fieldpicker button.is-active {
+  background: var(--md-accent);
+}
+
+.md-fieldpicker-name {
+  color: var(--md-text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The sample value: "Namn" alone does not say whether it holds a person or a company. */
+.md-fieldpicker-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+.md-fieldpicker button.is-active .md-fieldpicker-name,
+.md-fieldpicker button.is-active .md-fieldpicker-value {
+  color: var(--md-accent-contrast);
+}
+
+.md-toolbar-field {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 5px;
+  width: auto !important;
+  padding: 0 8px !important;
+  font-family: var(--md-font);
+  font-size: 11px;
+  white-space: nowrap;
+}

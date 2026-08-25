@@ -129,6 +129,16 @@ in two representations that mirror each other live:
 Neither is a mode you switch into. Add a key on either side and it appears on the other, and
 becomes insertable into the email — so the data and the available fields cannot drift apart.
 
+**Inserting a field**: type `[` while writing and a filtered list appears at the caret, each
+row showing the field's current sample value — arrows and Enter, no mouse. `[` is already the
+first character of the token people type by hand, so the trigger explains itself the first time
+it fires. A labelled **Datafält** button in the text toolbar opens the same list, and exists to
+teach the shortcut rather than to replace it.
+
+A right-click menu was considered and rejected: nobody discovers a feature by right-clicking,
+and inside a text field the browser's own context menu is where people go for spellcheck and
+paste, so overriding it costs more than it gives. The caret is already the insertion point.
+
 **Coverage is checked both ways.** A field supplied but not shown anywhere is reported, and so
 is a token the data has no value for. That check is the point of the panel: if the application
 supplies `Datum` and the user deletes the block containing `[Datum]`, nothing throws and
