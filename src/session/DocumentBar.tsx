@@ -16,12 +16,22 @@ export function DocumentBar({
   onOpen,
   onNew,
   onDelete,
+  onReset,
+  canManage = true,
 }: {
   session: DocumentSession;
   /** Routed through MailDesigner so the unsaved-work prompt can intervene. */
   onOpen: (id: string, name: string) => void;
   onNew: () => void;
   onDelete: (id: string, name: string) => void;
+  /** Present when the host gave a default document to fall back to. */
+  onReset?: () => void;
+  /**
+   * False hides creating and deleting. Which documents exist is the store's business — it
+   * can return exactly the two an application wants edited — and this decides whether the
+   * user may add to or remove from that set.
+   */
+  canManage?: boolean;
 }) {
   const { t } = useEditor();
   const { status } = session;
@@ -80,6 +90,13 @@ export function DocumentBar({
 
       <div className="md-docbar-spacer" />
 
+      {onReset ? (
+        <button type="button" className="md-docbar-reset" onClick={onReset}>
+          <Icon name="undo" size={11} />
+          {t("session.reset")}
+        </button>
+      ) : null}
+
       <div className="md-menu" ref={root}>
         <button type="button" className="md-menu-trigger" onClick={() => setOpen((v) => !v)}>
           <Icon name="templates" size={13} />
@@ -89,17 +106,19 @@ export function DocumentBar({
 
         {open ? (
           <div className="md-menu-panel" role="menu">
-            <button
-              type="button"
-              className="md-secondary-button"
-              onClick={() => {
-                setOpen(false);
-                onNew();
-              }}
-            >
-              <Icon name="plus" size={11} />
-              {t("session.newDocument")}
-            </button>
+            {canManage ? (
+              <button
+                type="button"
+                className="md-secondary-button"
+                onClick={() => {
+                  setOpen(false);
+                  onNew();
+                }}
+              >
+                <Icon name="plus" size={11} />
+                {t("session.newDocument")}
+              </button>
+            ) : null}
 
             {session.documents.length === 0 ? (
               <p className="md-menu-empty">{t("session.noDocuments")}</p>
@@ -119,17 +138,19 @@ export function DocumentBar({
                       {row.name}
                       {row.id === status.id ? <span className="md-menu-tick">•</span> : null}
                     </button>
-                    <button
-                      type="button"
-                      className="md-icon-button md-danger"
-                      title={t("confirm.deleteDocumentOk")}
-                      onClick={() => {
-                        setOpen(false);
-                        onDelete(row.id, row.name);
-                      }}
-                    >
-                      <Icon name="trash" size={11} />
-                    </button>
+                    {canManage ? (
+                      <button
+                        type="button"
+                        className="md-icon-button md-danger"
+                        title={t("confirm.deleteDocumentOk")}
+                        onClick={() => {
+                          setOpen(false);
+                          onDelete(row.id, row.name);
+                        }}
+                      >
+                        <Icon name="trash" size={11} />
+                      </button>
+                    ) : null}
                   </li>
                 ))}
               </ul>

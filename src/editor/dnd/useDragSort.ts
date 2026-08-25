@@ -141,6 +141,8 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
           source.kind === "create"
             ? ({ type: source.type } as Block)
             : latest.current.getBlock(source.id);
+        // getBlock returns undefined for a block the user may not move, so a locked block
+        // simply has nowhere to land.
         return block ? canInsert(block, candidate.container) : false;
       };
 

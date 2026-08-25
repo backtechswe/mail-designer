@@ -156,13 +156,13 @@ import { toHtml } from "@backtech/mail-designer/render";
 const template = await store.load(templateId);
 for (const recipient of recipients) {
   const { html, text } = toHtml(template.document, {
-    mergeValues: { Namn: recipient.namn, Ort: recipient.ort },
+    data: { Namn: recipient.namn, Ort: recipient.ort },
   });
   await sendEmail({ to: recipient.email, subject, html, text });
 }
 ```
 
-`extractMergeFields(document)` säger vilka kolumner mallen kräver, inklusive de som
+`extractDataFields(document)` säger vilka kolumner mallen kräver, inklusive de som
 gömmer sig i en knapp-URL — precis de man glömmer att man är beroende av.
 
 Att lagra den renderade HTML:en tillsammans med utskicket är ändå klokt: då kan du visa

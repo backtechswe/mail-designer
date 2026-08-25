@@ -2,6 +2,7 @@ import type { BlockType } from "../types.js";
 import { createBlock, createSection, findBlock } from "../document.js";
 import type { Position } from "../document.js";
 import { useEditor } from "./EditorContext.js";
+import { allowsBlockType } from "../permissions.js";
 import { Icon } from "./icons.js";
 import type { IconName } from "./icons.js";
 
@@ -24,7 +25,9 @@ export function Palette({
   /** Supplied by the drag layer. Absent means click-to-append only. */
   onDragStart?: (type: BlockType, event: React.PointerEvent) => void;
 }) {
-  const { doc, selectedId, insert, select, t } = useEditor();
+  const { doc, selectedId, insert, select, permissions, t } = useEditor();
+  const offered = PALETTE.filter(({ type }) => allowsBlockType(permissions, type));
+  if (!permissions.structure || offered.length === 0) return null;
 
   /**
    * Where a click puts the new block. Following the selection is what makes the palette
@@ -77,7 +80,7 @@ export function Palette({
       <h3>{t("palette.title")}</h3>
       <p className="md-palette-hint">{t("palette.hint")}</p>
       <div className="md-palette-list">
-        {PALETTE.map(({ type, icon }) => (
+        {offered.map(({ type, icon }) => (
           <button
             key={type}
             type="button"

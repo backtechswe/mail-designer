@@ -4,11 +4,12 @@ import { TextEditable } from "../editor/TextEditable.js";
 import { headingStyle } from "./canvasStyle.js";
 
 export function HeadingView({ block, active }: { block: HeadingBlock; active: boolean }) {
-  const { doc, update, t } = useEditor();
+  const { doc, update, capabilities, t } = useEditor();
   return (
     <TextEditable
       as={`h${block.level}` as "h1" | "h2" | "h3"}
-      active={active}
+      active={active && capabilities(block).editContent}
+      editable={capabilities(block).editContent}
       html={block.html}
       placeholder={t("block.heading")}
       style={headingStyle(block, doc.settings)}

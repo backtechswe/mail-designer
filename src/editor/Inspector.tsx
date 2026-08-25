@@ -41,10 +41,11 @@ import type { Translate } from "../i18n.js";
  * how these panels become unreadable.
  */
 export function Inspector() {
-  const { doc, selectedId, t } = useEditor();
+  const { doc, selectedId, permissions, t } = useEditor();
   const [tab, setTab] = useState<"mail" | "block">("block");
   const found = selectedId ? findBlock(doc, selectedId) : undefined;
-  const active = found && tab === "block" ? "block" : tab === "mail" ? "mail" : "block";
+  const wanted = permissions.mailSettings ? tab : "block";
+  const active = found && wanted === "block" ? "block" : wanted === "mail" ? "mail" : "block";
 
   return (
     <aside className="md-inspector">
@@ -57,14 +58,16 @@ export function Inspector() {
         >
           {t("inspector.block")}
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={active === "mail"}
-          onClick={() => setTab("mail")}
-        >
-          {t("inspector.mail")}
-        </button>
+        {permissions.mailSettings ? (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={active === "mail"}
+            onClick={() => setTab("mail")}
+          >
+            {t("inspector.mail")}
+          </button>
+        ) : null}
       </div>
 
       <div className="md-inspector-body">
@@ -241,7 +244,8 @@ function MailSettingsPanel() {
 }
 
 function BlockPanel({ block }: { block: Block }) {
-  const { update, t } = useEditor();
+  const { update, capabilities, t } = useEditor();
+  const caps = capabilities(block);
   const alignLabels: Record<Align, string> = {
     left: t("align.left"),
     center: t("align.center"),
@@ -251,6 +255,10 @@ function BlockPanel({ block }: { block: Block }) {
 
   return (
     <>
+      {caps.locked && !caps.editContent && !caps.editAppearance ? (
+        <p className="md-inspector-hint">{t("locked.content")}</p>
+      ) : null}
+
       <Section title={t(`block.${block.type}` as "block.text")}>
         {block.type === "section" ? <SectionFields block={block} /> : null}
         {block.type === "columns" ? <ColumnsFields block={block} /> : null}
@@ -264,7 +272,7 @@ function BlockPanel({ block }: { block: Block }) {
         {block.type === "html" ? <HtmlFields block={block} /> : null}
       </Section>
 
-      {block.type === "spacer" ? null : (
+      {block.type === "spacer" || !caps.editAppearance ? null : (
         <Section title={t("field.padding")}>
           <SpacingField
             label={t("field.padding")}
@@ -449,20 +457,23 @@ function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align,
 }
 
 function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Align, string> }) {
-  const { update, onUploadImage, t } = useEditor();
+  const { update, onUploadImage, capabilities, t } = useEditor();
+  const caps = capabilities(block);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   return (
     <>
-      <TextField
-        label={t("field.src")}
-        value={block.src}
-        placeholder="https://"
-        onChange={(src) => update(block.id, { src })}
-      />
-      {onUploadImage ? (
+      {caps.editContent ? (
+        <TextField
+          label={t("field.src")}
+          value={block.src}
+          placeholder="https://"
+          onChange={(src) => update(block.id, { src })}
+        />
+      ) : null}
+      {onUploadImage && caps.editContent ? (
         <Field label={t("field.upload")} hint={error ?? undefined}>
           <input
             ref={fileInput}
@@ -488,18 +499,22 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
           {uploading ? <span className="md-field-hint">{t("field.uploading")}</span> : null}
         </Field>
       ) : null}
-      <TextField
-        label={t("field.alt")}
-        hint={t("field.altHint")}
-        value={block.alt}
-        onChange={(alt) => update(block.id, { alt })}
-      />
-      <TextField
-        label={t("field.href")}
-        value={block.href ?? ""}
-        placeholder="https://"
-        onChange={(href) => update(block.id, { href: href || undefined })}
-      />
+      {caps.editContent ? (
+        <>
+          <TextField
+            label={t("field.alt")}
+            hint={t("field.altHint")}
+            value={block.alt}
+            onChange={(alt) => update(block.id, { alt })}
+          />
+          <TextField
+            label={t("field.href")}
+            value={block.href ?? ""}
+            placeholder="https://"
+            onChange={(href) => update(block.id, { href: href || undefined })}
+          />
+        </>
+      ) : null}
       <AlignField
         label={t("field.align")}
         value={block.align}
@@ -529,20 +544,25 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
 }
 
 function ButtonFields({ block, labels }: { block: ButtonBlock; labels: Record<Align, string> }) {
-  const { doc, update, t } = useEditor();
+  const { doc, update, capabilities, t } = useEditor();
+  const caps = capabilities(block);
   return (
     <>
-      <TextField
-        label={t("field.label")}
-        value={block.label}
-        onChange={(label) => update(block.id, { label })}
-      />
-      <TextField
-        label={t("field.href")}
-        value={block.href}
-        placeholder="https://"
-        onChange={(href) => update(block.id, { href })}
-      />
+      {caps.editContent ? (
+        <>
+          <TextField
+            label={t("field.label")}
+            value={block.label}
+            onChange={(label) => update(block.id, { label })}
+          />
+          <TextField
+            label={t("field.href")}
+            value={block.href}
+            placeholder="https://"
+            onChange={(href) => update(block.id, { href })}
+          />
+        </>
+      ) : null}
       <FieldRow>
         <ColorField
           label={t("field.backgroundColor")}
@@ -761,7 +781,8 @@ function SpacerFields({ block }: { block: SpacerBlock }) {
 }
 
 function HtmlFields({ block }: { block: HtmlBlock }) {
-  const { update, t } = useEditor();
+  const { update, capabilities, t } = useEditor();
+  if (!capabilities(block).editContent) return null;
   return (
     <TextAreaField
       label={t("field.html")}

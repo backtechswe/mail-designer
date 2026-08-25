@@ -41,8 +41,8 @@
   --md-lift: 0 1px 2px rgba(22, 22, 26, 0.06), 0 8px 24px rgba(22, 22, 26, 0.08);
 
   display: grid;
-  /* Document bar (optional), toolbar, panels. */
-  grid-template-rows: auto auto minmax(0, 1fr);
+  /* Document bar (optional), toolbar, panels, data panel (optional). */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   height: 100%;
   min-height: 480px;
   color: var(--md-text);
@@ -1457,6 +1457,172 @@
 }
 
 .md-help-button:hover {
+  border-color: var(--md-accent);
+  color: var(--md-accent);
+}
+
+/* ------------------------------------------------------------------ data panel */
+
+/*
+ * Sample data, in a strip below the panels. Both representations are visible at once: four
+ * values are faster to fill in as fields, a payload from a real request is only sensible as
+ * JSON, and neither is a mode anyone has to find a switch for.
+ */
+.md-datapanel {
+  display: flex;
+  flex-direction: column;
+  max-height: 38vh;
+  border-top: 1px solid var(--md-border);
+  background: var(--md-bg);
+}
+
+.md-datapanel header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px calc(var(--md-space) * 1.5);
+}
+
+.md-datapanel header strong {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+}
+
+.md-datapanel-spacer {
+  flex: 1;
+}
+
+.md-datapanel-hint,
+.md-datapanel-empty {
+  margin: 0 0 8px;
+  padding: 0 calc(var(--md-space) * 1.5);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--md-text-muted);
+}
+
+.md-datapanel-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: calc(var(--md-space) * 2);
+  min-height: 0;
+  padding: 0 calc(var(--md-space) * 1.5) calc(var(--md-space) * 1.5);
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .md-datapanel-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.md-datafields ul {
+  margin: 0 0 var(--md-space);
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md-datafields li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 16px 28px 28px;
+  align-items: center;
+  gap: 4px;
+}
+
+.md-datafields input {
+  font-size: 12px !important;
+  padding: 4px 6px !important;
+}
+
+/* Whether a field actually reaches the recipient. The whole point of the panel. */
+.md-fieldstate {
+  font-size: 11px;
+  text-align: center;
+  color: var(--md-accent);
+  cursor: default;
+}
+
+.md-fieldstate--unused {
+  color: var(--md-text-muted);
+}
+
+.md-datajson {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.md-datajson textarea {
+  flex: 1;
+  min-height: 120px;
+  resize: vertical;
+  font-size: 12px !important;
+  line-height: 1.5;
+}
+
+.md-datajson-error {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--md-danger);
+}
+
+.md-coverage {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.md-coverage--ok {
+  color: var(--md-text-muted);
+}
+
+.md-coverage--warn {
+  color: var(--md-text);
+}
+
+.md-coverage--warn::before,
+.md-coverage--error::before {
+  content: "▲ ";
+}
+
+.md-coverage--error {
+  color: var(--md-danger);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------- locking */
+
+/* Locked text still reads as text, not as a disabled form control. */
+.md-editable--locked {
+  cursor: default;
+}
+
+.md-block-label svg {
+  margin-left: 4px;
+  vertical-align: -1px;
+}
+
+.md-docbar-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 4px 9px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+  color: var(--md-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-docbar-reset:hover {
   border-color: var(--md-accent);
   color: var(--md-accent);
 }

@@ -7,9 +7,9 @@ import { escAttr } from "./esc.js";
  * substituted afterwards, per recipient — which means one render can serve a whole
  * mailing list, and the host app decides where the values come from.
  */
-export const MERGE_TOKEN = /\[([^[\]\n]{1,64})\]/g;
+export const DATA_TOKEN = /\[([^[\]\n]{1,64})\]/g;
 
-export interface MergeOptions {
+export interface DataOptions {
   /**
    * "html" escapes the substituted value. Always use it when the target is markup —
    * a recipient named `Ben & Jerry's` must not be able to break the document.
@@ -19,16 +19,16 @@ export interface MergeOptions {
   onMissing?: "keep" | "blank";
 }
 
-export function applyMergeValues(
+export function applyDataValues(
   input: string,
   values: Record<string, string> | undefined,
-  options: MergeOptions = {},
+  options: DataOptions = {},
 ): string {
   if (!input) return input;
   const { escape = "html", onMissing = "keep" } = options;
-  if (!values) return onMissing === "blank" ? input.replace(MERGE_TOKEN, "") : input;
+  if (!values) return onMissing === "blank" ? input.replace(DATA_TOKEN, "") : input;
 
-  return input.replace(MERGE_TOKEN, (whole, name: string) => {
+  return input.replace(DATA_TOKEN, (whole, name: string) => {
     const key = name.trim();
     const value = values[key] ?? findCaseInsensitive(values, key);
     if (value === undefined) return onMissing === "blank" ? "" : whole;
@@ -52,13 +52,13 @@ function findCaseInsensitive(
  * uses this to tell the user which columns the design actually needs — including the
  * ones hidden in a button's URL, which is exactly the case people forget.
  */
-export function extractMergeFields(doc: MailDocument): string[] {
+export function extractDataFields(doc: MailDocument): string[] {
   const seen = new Set<string>();
   const order: string[] = [];
 
   const scan = (value: string | undefined): void => {
     if (!value) return;
-    for (const match of value.matchAll(MERGE_TOKEN)) {
+    for (const match of value.matchAll(DATA_TOKEN)) {
       const name = (match[1] ?? "").trim();
       if (!name || seen.has(name)) continue;
       seen.add(name);

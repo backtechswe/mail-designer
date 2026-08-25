@@ -13,6 +13,8 @@ export function Toolbar({
   onViewportChange,
   showHistory = true,
   onOpenShortcuts,
+  dataOpen,
+  onToggleData,
   extra,
 }: {
   view: ViewMode;
@@ -21,6 +23,9 @@ export function Toolbar({
   onViewportChange: (viewport: Viewport) => void;
   showHistory?: boolean;
   onOpenShortcuts?: () => void;
+  /** Present when the data panel is available. */
+  dataOpen?: boolean;
+  onToggleData?: () => void;
   /** Host-supplied controls — the template menu lands here. */
   extra?: ReactNode;
 }) {
@@ -68,6 +73,15 @@ export function Toolbar({
           <Icon name="mobile" size={13} />
         </button>
       </div>
+
+      {onToggleData ? (
+        <div className="md-toolbar-group md-segmented">
+          <button type="button" aria-pressed={dataOpen} onClick={onToggleData}>
+            <Icon name="code" size={12} />
+            {t("data.panel")}
+          </button>
+        </div>
+      ) : null}
 
       <div className="md-toolbar-spacer" />
       {extra}

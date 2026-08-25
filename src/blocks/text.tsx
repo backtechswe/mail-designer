@@ -4,10 +4,11 @@ import { TextEditable } from "../editor/TextEditable.js";
 import { textStyle } from "./canvasStyle.js";
 
 export function TextView({ block, active }: { block: TextBlock; active: boolean }) {
-  const { doc, update, t } = useEditor();
+  const { doc, update, capabilities, t } = useEditor();
   return (
     <TextEditable
-      active={active}
+      active={active && capabilities(block).editContent}
+      editable={capabilities(block).editContent}
       html={block.html}
       placeholder={t("block.text")}
       style={textStyle(block, doc.settings)}

@@ -1,6 +1,6 @@
 import type { ColumnsBlock, MailDocument, RenderOptions, RenderResult } from "../types.js";
 import { walkBlocks } from "../document.js";
-import { applyMergeValues } from "./mergeFields.js";
+import { applyDataValues } from "./dataFields.js";
 import { renderSection } from "./html/section.js";
 import { wrapDocument } from "./html/skeleton.js";
 import { toPlainText } from "./toPlainText.js";
@@ -28,11 +28,11 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
   });
 
   const text = toPlainText(doc);
-  const onMissing = options.onMissingMergeField ?? "keep";
+  const onMissing = options.onMissingField ?? "keep";
 
   return {
-    html: applyMergeValues(html, options.mergeValues, { escape: "html", onMissing }),
-    text: applyMergeValues(text, options.mergeValues, { escape: "none", onMissing }),
+    html: applyDataValues(html, options.data, { escape: "html", onMissing }),
+    text: applyDataValues(text, options.data, { escape: "none", onMissing }),
   };
 }
 

@@ -7,10 +7,10 @@
  */
 export { toHtml } from "./toHtml.js";
 export { toPlainText } from "./toPlainText.js";
-export { applyMergeValues, extractMergeFields, MERGE_TOKEN } from "./mergeFields.js";
+export { applyDataValues, extractDataFields, DATA_TOKEN } from "./dataFields.js";
 export { sanitize, sanitizeInline, sanitizeBlock, stripTags } from "./sanitize.js";
 export { computeWidths } from "./html/columns.js";
-export type { MergeOptions } from "./mergeFields.js";
+export type { DataOptions } from "./dataFields.js";
 export type {
   Align,
   Block,

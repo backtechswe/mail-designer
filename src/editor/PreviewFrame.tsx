@@ -13,8 +13,17 @@ import { toHtml } from "../render/toHtml.js";
  * scripts are still blocked because `allow-scripts` is absent, so a raw-HTML block cannot
  * execute anything. Same-origin only buys the parent the ability to measure the content.
  */
-export function PreviewFrame({ doc, width }: { doc: MailDocument; width: number }) {
-  const html = useMemo(() => toHtml(doc).html, [doc]);
+export function PreviewFrame({
+  doc,
+  width,
+  data,
+}: {
+  doc: MailDocument;
+  width: number;
+  /** Sample values substituted into the preview, so it shows a real recipient's mail. */
+  data?: Record<string, string>;
+}) {
+  const html = useMemo(() => toHtml(doc, data ? { data } : {}).html, [doc, data]);
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState(600);
 

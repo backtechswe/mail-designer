@@ -28,9 +28,30 @@ export interface MailSettings {
   preheader?: string;
 }
 
+/**
+ * Locks that travel with the block, in the document itself.
+ *
+ * That placement is the point: a host can ship a template where the legal footer and the
+ * `[Datum]` line are fixed while everything around them is the user's to arrange. Permissions
+ * passed as a prop cannot express "this block, not that one".
+ *
+ * `true` locks everything. An object locks individual aspects.
+ */
+export type BlockLock =
+  | boolean
+  | {
+      /** The words and pictures. */
+      content?: boolean;
+      /** Colours, fonts, spacing, alignment. */
+      appearance?: boolean;
+      move?: boolean;
+      remove?: boolean;
+    };
+
 interface BlockBase {
   id: string;
   padding?: Spacing;
+  locked?: BlockLock;
 }
 
 /**
@@ -181,9 +202,9 @@ export interface MailDocument {
 
 export interface RenderOptions {
   /** Values substituted for [Token] placeholders after the HTML is built. */
-  mergeValues?: Record<string, string>;
+  data?: Record<string, string>;
   /** What to do with a [Token] that has no value. Default: keep it visible. */
-  onMissingMergeField?: "keep" | "blank";
+  onMissingField?: "keep" | "blank";
   /** <html lang>. Default "sv". */
   lang?: string;
   /** <title>. Clients rarely show it, but screen readers do. */

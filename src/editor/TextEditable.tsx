@@ -32,6 +32,8 @@ export interface TextEditableProps {
   /** h1-h3 for a heading block, div for text. Only affects the wrapper element. */
   as?: "div" | "h1" | "h2" | "h3";
   active: boolean;
+  /** False renders the text as plain output — the application owns these words. */
+  editable?: boolean;
 }
 
 export function TextEditable({
@@ -41,8 +43,9 @@ export function TextEditable({
   placeholder,
   as = "div",
   active,
+  editable = true,
 }: TextEditableProps) {
-  const { t, mergeFields, endEdit } = useEditor();
+  const { t, dataFields, endEdit } = useEditor();
   const ref = useRef<HTMLElement | null>(null);
   // What the DOM currently holds, as far as we know. null means "nothing written yet".
   const domHtml = useRef<string | null>(null);
@@ -154,7 +157,7 @@ export function TextEditable({
 
   return (
     <div className="md-texteditable" style={{ position: "relative" }}>
-      {active && toolbar ? (
+      {editable && active && toolbar ? (
         <div className="md-floating-toolbar" style={{ top: toolbar.top, left: toolbar.left }}>
           {linkDraft === null ? (
             <>
@@ -179,17 +182,17 @@ export function TextEditable({
                   aria-label={t("text.color")}
                 />
               </label>
-              {mergeFields.length > 0 ? (
+              {dataFields.length > 0 ? (
                 <select
                   className="md-toolbar-select"
                   value=""
-                  title={t("text.mergeField")}
+                  title={t("text.dataField")}
                   onChange={(e) => {
                     if (e.target.value) insertText(`[${e.target.value}]`);
                   }}
                 >
                   <option value="">[ ]</option>
-                  {mergeFields.map((field) => (
+                  {dataFields.map((field) => (
                     <option key={field} value={field}>
                       {field}
                     </option>
@@ -227,8 +230,8 @@ export function TextEditable({
 
       <Tag
         ref={ref as React.Ref<HTMLDivElement>}
-        className="md-editable"
-        contentEditable
+        className={`md-editable${editable ? "" : " md-editable--locked"}`}
+        contentEditable={editable}
         suppressContentEditableWarning
         spellCheck
         data-placeholder={isEmpty ? (placeholder ?? "") : undefined}

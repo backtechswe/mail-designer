@@ -5,9 +5,15 @@ import {
   builtInPresets,
   createLocalStorageTemplateStore,
   emptyDocument,
-  extractMergeFields,
+  extractDataFields,
 } from "@backtech/mail-designer";
-import type { ColorScheme, DesignerTheme, Locale, MailDocument } from "@backtech/mail-designer";
+import type {
+  ColorScheme,
+  DesignerTheme,
+  Locale,
+  MailDocument,
+  Permissions,
+} from "@backtech/mail-designer";
 
 /**
  * Playground. Not part of the package — it exists to exercise the editor and, in
@@ -50,24 +56,60 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
 
 const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" });
 
+/**
+ * Two profiles, to exercise the permission model from both ends. "Booksmart" is the locked
+ * case: the application owns the copy and the data, the user arranges the layout.
+ */
+const PROFILES: { id: string; label: string; permissions?: Permissions; data?: Record<string, string> }[] = [
+  { id: "full", label: "Full åtkomst" },
+  {
+    id: "booksmart",
+    label: "Booksmart (låst)",
+    permissions: {
+      content: false,
+      data: "readonly",
+      manageDocuments: false,
+      templates: false,
+      blocks: ["text", "heading", "image", "divider", "spacer", "columns"],
+      requiredFields: ["Namn", "Datum", "Tid"],
+    },
+    data: { Namn: "Anna Lind", Datum: "14 april", Tid: "10.30", Plats: "Storgatan 12" },
+  },
+];
+
 export function App() {
   const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[0]!.document);
   const [depth, setDepth] = useState(0);
+  const [profileId, setProfileId] = useState("full");
+  const [data, setData] = useState<Record<string, string>>({
+    Namn: "Anna Lind",
+    Ort: "Kalmar",
+    Datum: "14 april",
+  });
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("sv");
 
   const active = THEMES.find((t) => t.id === themeId) ?? THEMES[0]!;
-  const mergeFields = useMemo(() => {
-    // Union of what the document already uses and a fixed demo list, so the insert menu
-    // has something to offer on a blank document too.
-    const used = extractMergeFields(doc);
-    return [...new Set([...used, "Namn", "Ort", "Datum"])];
-  }, [doc]);
+  const profile = PROFILES.find((p) => p.id === profileId) ?? PROFILES[0]!;
+  // The editor derives the insertable fields itself now, from the data plus whatever the
+  // document already refers to. This is only for the status line.
+  const usedInDoc = useMemo(() => extractDataFields(doc), [doc]);
 
   return (
     <div className="pg">
       <div className="pg-bar">
         <strong>mail-designer</strong>
+
+        <label>
+          Profil
+          <select value={profileId} onChange={(e) => setProfileId(e.target.value)}>
+            {PROFILES.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <label>
           Tema
@@ -96,7 +138,7 @@ export function App() {
         </button>
 
         <span className="pg-note">Historik: {depth} steg</span>
-        <span className="pg-note">Merge-fält: {mergeFields.join(", ")}</span>
+        <span className="pg-note">Fält i mejlet: {usedInDoc.join(", ") || "inga"}</span>
       </div>
 
       <div className="pg-editor">
@@ -106,7 +148,6 @@ export function App() {
           theme={active.theme}
           colorScheme={active.scheme}
           locale={locale}
-          mergeFields={mergeFields}
           // Demonstrates the upload contract without needing a backend: the file becomes a
           // data: URI. Real hosts return a hosted URL — Gmail blocks data: images.
           onUploadImage={async (file) =>
@@ -124,6 +165,10 @@ export function App() {
           // it will be Firestore.
           store={store}
           autosaveMs={800}
+          data={profile.data ?? data}
+          {...(profile.data ? {} : { onDataChange: setData })}
+          {...(profile.permissions ? { permissions: profile.permissions } : {})}
+          resetTo={builtInPresets[0]!.document}
           // The menu is part of the package and speaks only the TemplateStore contract —
           // here backed by localStorage, in Utskick it will be Firestore.
           // Presets only: saved documents live in the document bar now, and offering them

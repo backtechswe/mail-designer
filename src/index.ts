@@ -15,6 +15,20 @@ export { ConfirmDialog } from "./editor/ConfirmDialog.js";
 export type { ConfirmRequest } from "./editor/ConfirmDialog.js";
 export { ShortcutsPanel, MOD } from "./editor/ShortcutsPanel.js";
 export { DocumentBar } from "./session/DocumentBar.js";
+export { DataPanel } from "./data/DataPanel.js";
+export {
+  allowsBlockType,
+  blockCapabilities,
+  dataCoverage,
+  lockedBlockIds,
+  resolvePermissions,
+} from "./permissions.js";
+export type {
+  BlockCapabilities,
+  DataCoverage,
+  Permissions,
+  ResolvedPermissions,
+} from "./permissions.js";
 export { useDocumentSession } from "./session/useDocumentSession.js";
 export type { DocumentSession, DocumentSessionOptions } from "./session/useDocumentSession.js";
 export { hasUnsavedWork, statusReducer, initialStatus, generateName } from "./session/status.js";
@@ -55,7 +69,7 @@ export type { Container, Found, Position } from "./document.js";
 /* rendering — re-exported so a browser consumer needs only one import */
 export { toHtml } from "./render/toHtml.js";
 export { toPlainText } from "./render/toPlainText.js";
-export { applyMergeValues, extractMergeFields, MERGE_TOKEN } from "./render/mergeFields.js";
+export { applyDataValues, extractDataFields, DATA_TOKEN } from "./render/dataFields.js";
 export { sanitize, sanitizeBlock, sanitizeInline, stripTags } from "./render/sanitize.js";
 export { computeWidths } from "./render/html/columns.js";
 
@@ -110,4 +124,5 @@ export type {
   Spacing,
   TextBlock,
   VerticalAlign,
+  BlockLock,
 } from "./types.js";

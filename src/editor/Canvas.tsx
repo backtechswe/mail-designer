@@ -43,8 +43,10 @@ export function Canvas({
   canvasRef: RefObject<HTMLDivElement | null>;
   dropTarget: DropTarget | null;
 }) {
-  const { doc, select, selectedId, insert, remove, move, isDragging, viewportWidth, t } =
-    useEditor();
+  const {
+    doc, select, selectedId, insert, remove, move, isDragging, viewportWidth,
+    permissions, capabilities, t,
+  } = useEditor();
 
   /**
    * Alt+arrows are the keyboard equivalent of dragging. Not a nicety: drag-and-drop is
@@ -61,13 +63,16 @@ export function Canvas({
       const found = findBlock(doc, selectedId);
       if (!found) return;
 
+      const caps = capabilities(found.block);
+
       if (event.key === "Delete" || event.key === "Backspace") {
+        if (!caps.remove) return;
         event.preventDefault();
         remove(selectedId);
         select(null);
         return;
       }
-      if (!event.altKey) return;
+      if (!event.altKey || !caps.move) return;
 
       if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         event.preventDefault();
@@ -84,7 +89,7 @@ export function Canvas({
         move(selectedId, target);
       }
     },
-    [doc, selectedId, remove, select, move],
+    [doc, selectedId, remove, select, move, capabilities],
   );
 
   return (
@@ -113,16 +118,21 @@ export function Canvas({
           doc.blocks.map((section) => <SectionView key={section.id} section={section} />)
         )}
 
-        <button
-          type="button"
-          className="md-add-section"
-          onClick={() =>
-            insert(createBlock("section"), { container: { kind: "document" }, index: doc.blocks.length })
-          }
-        >
-          <Icon name="plus" size={12} />
-          {t("canvas.addSection")}
-        </button>
+        {permissions.structure ? (
+          <button
+            type="button"
+            className="md-add-section"
+            onClick={() =>
+              insert(createBlock("section"), {
+                container: { kind: "document" },
+                index: doc.blocks.length,
+              })
+            }
+          >
+            <Icon name="plus" size={12} />
+            {t("canvas.addSection")}
+          </button>
+        ) : null}
       </div>
 
       <DropIndicator target={dropTarget} />
@@ -335,9 +345,14 @@ function BlockShell({
   variant: "section" | "columns" | "leaf";
   children: ReactNode;
 }) {
-  const { doc, selectedId, select, remove, duplicate, move, startBlockDrag, t } = useEditor();
+  const { doc, selectedId, select, remove, duplicate, move, startBlockDrag, capabilities, t } =
+    useEditor();
   const active = selectedId === block.id;
   const found = findBlock(doc, block.id);
+  const caps = capabilities(block);
+  // Nothing to act on: no bar rather than a bar of disabled buttons, which only invites
+  // clicking to find out why.
+  const anyAction = caps.move || caps.remove;
 
   return (
     <div
@@ -349,46 +364,55 @@ function BlockShell({
         select(block.id);
       }}
     >
-      <span className="md-block-label">{t(`block.${block.type}` as "block.text")}</span>
+      <span className="md-block-label">
+        {t(`block.${block.type}` as "block.text")}
+        {caps.locked ? <Icon name="lock" size={9} /> : null}
+      </span>
 
-      {found ? (
+      {found && anyAction ? (
         <div className="md-block-actions" onClick={(e) => e.stopPropagation()}>
-          <span
-            className="md-grip"
-            title={t("palette.hint")}
-            onPointerDown={(e) => startBlockDrag(block.id, e)}
-          >
-            <Icon name="grip" size={12} />
-          </span>
-          <button
-            type="button"
-            title={t("action.moveUp")}
-            disabled={found.index === 0}
-            onClick={() => move(block.id, { container: found.container, index: found.index - 1 })}
-          >
-            <Icon name="up" size={12} />
-          </button>
-          <button
-            type="button"
-            title={t("action.moveDown")}
-            onClick={() => move(block.id, { container: found.container, index: found.index + 2 })}
-          >
-            <Icon name="down" size={12} />
-          </button>
-          <button type="button" title={t("action.duplicate")} onClick={() => duplicate(block.id)}>
-            <Icon name="copy" size={12} />
-          </button>
-          <button
-            type="button"
-            className="md-danger"
-            title={t("action.delete")}
-            onClick={() => {
-              remove(block.id);
-              select(null);
-            }}
-          >
-            <Icon name="trash" size={12} />
-          </button>
+          {caps.move ? (
+            <>
+              <span
+                className="md-grip"
+                title={t("palette.hint")}
+                onPointerDown={(e) => startBlockDrag(block.id, e)}
+              >
+                <Icon name="grip" size={12} />
+              </span>
+              <button
+                type="button"
+                title={t("action.moveUp")}
+                disabled={found.index === 0}
+                onClick={() => move(block.id, { container: found.container, index: found.index - 1 })}
+              >
+                <Icon name="up" size={12} />
+              </button>
+              <button
+                type="button"
+                title={t("action.moveDown")}
+                onClick={() => move(block.id, { container: found.container, index: found.index + 2 })}
+              >
+                <Icon name="down" size={12} />
+              </button>
+              <button type="button" title={t("action.duplicate")} onClick={() => duplicate(block.id)}>
+                <Icon name="copy" size={12} />
+              </button>
+            </>
+          ) : null}
+          {caps.remove ? (
+            <button
+              type="button"
+              className="md-danger"
+              title={t("action.delete")}
+              onClick={() => {
+                remove(block.id);
+                select(null);
+              }}
+            >
+              <Icon name="trash" size={12} />
+            </button>
+          ) : null}
         </div>
       ) : null}
 

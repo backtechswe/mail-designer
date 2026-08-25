@@ -5,6 +5,7 @@ import type { Position } from "../document.js";
 import type { Translate } from "../i18n.js";
 import type { HistoryControls } from "./useHistory.js";
 import type { ConfirmRequest } from "./ConfirmDialog.js";
+import type { BlockCapabilities, ResolvedPermissions } from "../permissions.js";
 
 /**
  * Everything a panel needs, in one place.
@@ -19,8 +20,17 @@ export interface EditorApi {
   selectedId: string | null;
   select: (id: string | null) => void;
   t: Translate;
-  /** Tokens offered in the insert menus. Purely informational to the editor. */
-  mergeFields: string[];
+  /** Field names offered in the insert menus, derived from the sample data. */
+  dataFields: string[];
+  /** Sample values used to render the preview. */
+  data: Record<string, string>;
+  setData: (next: Record<string, string>) => void;
+  /** Inserts `[field]` into the selected block's text. */
+  insertDataField: (field: string) => void;
+  /** What the user is allowed to do, with defaults already applied. */
+  permissions: ResolvedPermissions;
+  /** What may be done to one block, after its own locks. */
+  capabilities: (block: Block) => BlockCapabilities;
   onUploadImage?: ((file: File) => Promise<string>) | undefined;
   resolveSocialIcon?: ((network: string) => string) | undefined;
 

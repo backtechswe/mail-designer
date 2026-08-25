@@ -40,6 +40,10 @@ import { DocumentBar } from "./session/DocumentBar.js";
 import { useDocumentSession } from "./session/useDocumentSession.js";
 import { duplicateBlock as duplicateFor } from "./document.js";
 import type { TemplateStore } from "./templates.js";
+import { DataPanel } from "./data/DataPanel.js";
+import { blockCapabilities, resolvePermissions } from "./permissions.js";
+import type { Permissions } from "./permissions.js";
+import { extractDataFields } from "./render/dataFields.js";
 import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
@@ -81,8 +85,32 @@ export interface MailDesignerProps {
   /** Override individual labels without touching i18next. */
   strings?: Strings;
 
-  /** Tokens offered in the insert menus, e.g. ["Namn", "Ort"]. */
-  mergeFields?: string[];
+  /**
+   * Sample values for the preview, keyed by field name. Controlled when `onDataChange` is
+   * given, otherwise the editor holds them itself.
+   *
+   * Kept out of the document on purpose: this is example data for designing against, while
+   * the real values arrive per recipient at send time. A host that wants it persisted can put
+   * it in the template's `meta`.
+   */
+  data?: Record<string, string>;
+  onDataChange?: (next: Record<string, string>) => void;
+
+  /**
+   * What the user may do. Everything defaults to permitted.
+   *
+   * ```tsx
+   * // The application owns the copy and the data; the user arranges the layout.
+   * permissions={{ content: false, data: "readonly", requiredFields: ["Datum", "Tid"] }}
+   * ```
+   */
+  permissions?: Permissions;
+
+  /**
+   * The document a "reset to default" returns to. Shown in the document bar when given.
+   * It is an edit to the open document, so it can be undone.
+   */
+  resetTo?: MailDocument;
   /** Enables the file picker on image blocks. Without it, only a URL field is offered. */
   onUploadImage?: (file: File) => Promise<string>;
   /** Fills in a social icon URL from a network name, so users need not paste URLs. */
@@ -138,7 +166,10 @@ export function MailDesigner({
   colorScheme = "system",
   locale = "sv",
   strings,
-  mergeFields = [],
+  data: dataProp,
+  onDataChange,
+  permissions: permissionsProp,
+  resetTo,
   onUploadImage,
   resolveSocialIcon,
   toolbarExtra,
@@ -155,6 +186,28 @@ export function MailDesigner({
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [ownData, setOwnData] = useState<Record<string, string>>(dataProp ?? {});
+  const [dataOpen, setDataOpen] = useState(false);
+
+  const permissions = useMemo(() => resolvePermissions(permissionsProp), [permissionsProp]);
+  const data = dataProp ?? ownData;
+  const setData = onDataChange ?? setOwnData;
+
+  /**
+   * Field names offered in the insert menus: the sample data's own keys plus anything the
+   * document already refers to. Adding a key to the data is therefore all it takes to make a
+   * new field insertable — which is the behaviour asked for, and it means the two never drift.
+   */
+  const dataFields = useMemo(() => {
+    const fromDoc = extractDataFields(value);
+    const seen = new Set<string>();
+    return [...Object.keys(data), ...fromDoc].filter((f) => {
+      const key = f.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [data, value]);
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Derived, not stored: keeping a width in state meant it went stale the moment the user
@@ -253,7 +306,7 @@ export function MailDesigner({
         void session.saveNow();
         return;
       }
-      if (key === "d" && selectedId) {
+      if (key === "d" && selectedId && permissions.structure) {
         event.preventDefault();
         event.stopPropagation();
         commit(duplicateFor(value, selectedId), { label: t("history.duplicate") });
@@ -268,7 +321,17 @@ export function MailDesigner({
 
     root.addEventListener("keydown", onKeyDown, { capture: true });
     return () => root.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [history, session, selectedId, value, commit, t, shortcutsOpen, confirmRequest]);
+  }, [
+    history,
+    session,
+    selectedId,
+    value,
+    commit,
+    t,
+    shortcutsOpen,
+    confirmRequest,
+    permissions.structure,
+  ]);
 
   /**
    * Warn before leaving with work the store has not accepted. The browser shows its own
@@ -288,7 +351,13 @@ export function MailDesigner({
   // and the same commit path applies it, so a drag is one undo step like any other edit.
   const { drag, startMove, startCreate } = useDragSort({
     canvasRef,
-    getBlock: (id) => findBlock(value, id)?.block,
+    getBlock: (id) => {
+      const block = findBlock(value, id)?.block;
+      // A locked block is not draggable: refusing here means no drop indicator ever appears
+      // for it, rather than a drag that silently does nothing on release.
+      if (!block || !blockCapabilities(block, permissions).move) return undefined;
+      return block;
+    },
     onMove: (id, container, index) =>
       commit(moveBlock(value, id, { container, index }), { label: t("history.move") }),
     onCreate: (block, container, index) => {
@@ -310,7 +379,30 @@ export function MailDesigner({
         setSelectedId(id);
       },
       t,
-      mergeFields,
+      dataFields,
+      data,
+      setData,
+      insertDataField: (field) => {
+        // Appending is the honest fallback: the caret lives inside a contenteditable this
+        // component does not own, and guessing at a position would drop the token somewhere
+        // the user did not ask for.
+        if (!selectedId) return;
+        const found = findBlock(value, selectedId);
+        if (!found) return;
+        const block = found.block as { html?: string; label?: string };
+        const patch =
+          typeof block.html === "string"
+            ? { html: `${block.html} [${field}]` }
+            : typeof block.label === "string"
+              ? { label: `${block.label} [${field}]` }
+              : null;
+        if (!patch) return;
+        commit(updateBlock(value, selectedId, patch as Partial<Block>), {
+          label: t("history.edit"),
+        });
+      },
+      permissions,
+      capabilities: (block) => blockCapabilities(block, permissions),
       onUploadImage,
       resolveSocialIcon,
       update: (id, patch) => {
@@ -358,7 +450,7 @@ export function MailDesigner({
     value,
     selectedId,
     t,
-    mergeFields,
+    dataFields,
     onUploadImage,
     resolveSocialIcon,
     commit,
@@ -367,6 +459,10 @@ export function MailDesigner({
     drag,
     viewportWidth,
     viewport,
+    data,
+    setData,
+    dataFields,
+    permissions,
   ]);
 
   return (
@@ -402,6 +498,21 @@ export function MailDesigner({
                 session.hasUnsavedWork,
               )
             }
+            {...(resetTo
+              ? {
+                  onReset: () =>
+                    setConfirmRequest({
+                      title: t("confirm.resetTitle"),
+                      body: t("confirm.resetBody"),
+                      confirmLabel: t("confirm.resetOk"),
+                      onConfirm: () => {
+                        commit(structuredClone(resetTo), { label: t("session.reset") });
+                        setSelectedId(null);
+                      },
+                    }),
+                }
+              : {})}
+            canManage={permissions.manageDocuments}
             onDelete={(id, name) =>
               setConfirmRequest({
                 title: t("confirm.deleteDocumentTitle", { name }),
@@ -418,9 +529,12 @@ export function MailDesigner({
           onViewChange={setView}
           viewport={viewport}
           onViewportChange={setViewport}
-          showHistory={showHistory}
+          showHistory={showHistory && permissions.history}
           onOpenShortcuts={() => setShortcutsOpen(true)}
-          extra={toolbarExtra}
+          {...(permissions.data === "hidden"
+            ? {}
+            : { dataOpen, onToggleData: () => setDataOpen((v) => !v) })}
+          extra={permissions.templates ? toolbarExtra : null}
         />
         {/* Preview renders a single child, so the three-column grid has to collapse with it
             — otherwise the frame lands in the 176px palette column. */}
@@ -429,10 +543,14 @@ export function MailDesigner({
           {view === "edit" ? (
             <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
           ) : (
-            <PreviewFrame doc={value} width={viewportWidth} />
+            <PreviewFrame doc={value} width={viewportWidth} data={data} />
           )}
+          {view === "edit" && permissions.structure ? null : null}
           {view === "edit" ? <Inspector /> : null}
         </div>
+        {dataOpen && permissions.data !== "hidden" ? (
+          <DataPanel onClose={() => setDataOpen(false)} />
+        ) : null}
         <ConfirmDialog request={confirmRequest} onCancel={() => setConfirmRequest(null)} />
         <ShortcutsPanel open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       </EditorProvider>

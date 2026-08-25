@@ -18,12 +18,12 @@ const [doc, setDoc] = useState(emptyDocument());
   value={doc}
   onChange={setDoc}
   theme={{ accent: "#2f54eb", radius: 8 }}
-  mergeFields={["Namn", "Ort"]}
+  dataFields={["Namn", "Ort"]}
   onUploadImage={uploadToStorage}
   locale="sv"
 />;
 
-const { html, text } = toHtml(doc, { mergeValues: { Namn: "Anna" } });
+const { html, text } = toHtml(doc, { data: { Namn: "Anna" } });
 ```
 
 ## Why it renders its own HTML
@@ -84,6 +84,88 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
+
+### Data fields
+
+Text can carry `[Bracketed]` tokens — a **data field** — replaced per recipient at send time.
+The panel below the editor holds sample values so the preview shows a real recipient's mail,
+in two representations that mirror each other live:
+
+- **Fields**, for filling in four values by hand.
+- **JSON**, for pasting a payload from a real request.
+
+Neither is a mode you switch into. Add a key on either side and it appears on the other, and
+becomes insertable into the email — so the data and the available fields cannot drift apart.
+
+**Coverage is checked both ways.** A field supplied but not shown anywhere is reported, and so
+is a token the data has no value for. That check is the point of the panel: if the application
+supplies `Datum` and the user deletes the block containing `[Datum]`, nothing throws and
+nothing looks broken — the recipient just gets a confirmation with the date missing. List the
+ones that must never disappear in `permissions.requiredFields` and the editor says so loudly.
+
+```tsx
+const { used, unused, withoutValue, missingRequired } = dataCoverage(doc, data, ["Datum"]);
+```
+
+Sample data is deliberately **not** part of the document: it is what you design against, while
+the real values arrive per recipient. Persist it in the template's `meta` if you want it back
+next time.
+
+### Permissions
+
+Everything defaults to permitted. Restrict what a particular integration allows:
+
+```tsx
+// The application owns the copy and the data; the user arranges the layout.
+<MailDesigner
+  permissions={{
+    content: false,
+    data: "readonly",
+    templates: false,
+    manageDocuments: false,
+    blocks: ["heading", "text", "image", "columns", "divider", "spacer"],
+    requiredFields: ["Namn", "Datum", "Tid"],
+  }}
+  data={{ Namn: "Anna Lind", Datum: "14 april", Tid: "10.30" }}
+  resetTo={confirmationTemplate}
+/>
+```
+
+| | |
+|---|---|
+| `structure` | Add, remove, duplicate and move blocks |
+| `content` | The words and pictures: text, image sources, links, button labels |
+| `appearance` | Colours, fonts, sizes, spacing, alignment |
+| `mailSettings` | The email-wide settings tab |
+| `data` | `"edit"` · `"readonly"` · `"hidden"` |
+| `blocks` | Which types the palette offers |
+| `requiredFields` | Fields that must appear somewhere in the email |
+| `manageDocuments` | Whether the user may create and delete documents |
+| `history`, `templates` | Show those controls |
+
+Few knobs on purpose, each one something a product decision actually sounds like — *"they can
+rearrange it but not rewrite the words"*. A config with forty flags is one nobody configures
+correctly.
+
+**Which** documents exist is the store's business: return two from `list()` and those are the
+two. `manageDocuments: false` then stops the user adding or removing any. Give `resetTo` a
+document and the bar offers a one-click way back to it — an edit, so it can be undone.
+
+#### Locking individual blocks
+
+Some blocks should be fixed even when the rest is not — a legal footer, a logo, the line
+carrying `[Datum]`. That lock lives on the block, in the document, because a prop cannot say
+"this block, not that one":
+
+```ts
+{ id: "footer", type: "text", html: "…", locked: true }
+{ id: "date", type: "text", html: "[Datum]", locked: { content: true, remove: true } }
+```
+
+A lock can only take away. A locked block in a fully editable document is still locked, and an
+unlocked block in a read-only document is still read-only. Locked blocks show a padlock, offer
+no actions they cannot perform, and cannot be dragged — so nothing appears to work and then
+quietly doesn't.
 
 ### Document session
 
@@ -193,7 +275,7 @@ Everything is also reachable from the keyboard, because drag-and-drop is not:
 
 Merge fields are `[Bracketed]` tokens. They survive rendering untouched and are substituted
 afterwards, so one render serves a whole recipient list.
-`extractMergeFields(doc)` reports every token in use — including the ones hiding in a
+`extractDataFields(doc)` reports every token in use — including the ones hiding in a
 button's URL.
 
 ## Starting points
