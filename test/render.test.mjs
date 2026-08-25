@@ -102,13 +102,52 @@ test("column widths always total exactly 100", () => {
     [{}],
   ];
   for (const columns of cases) {
-    const widths = computeWidths(columns);
-    const total = widths.reduce((a, b) => a + b, 0);
-    assert.ok(
-      Math.abs(total - 100) < 0.001,
-      `${JSON.stringify(columns)} -> ${JSON.stringify(widths)} = ${total}`,
-    );
+    for (const options of [{}, { totalWidth: 600, gap: 24 }]) {
+      const widths = computeWidths(columns, options);
+      const total = widths.reduce((a, b) => a + b, 0);
+      assert.ok(
+        Math.abs(total - 100) < 0.001,
+        `${JSON.stringify(columns)} ${JSON.stringify(options)} -> ${JSON.stringify(widths)} = ${total}`,
+      );
+    }
   }
+});
+
+test("the gap is taken out of the percentages so every column gets equal content width", () => {
+  // Three equal columns in a 600px row with a 24px gap. The gap sits as padding-right on
+  // the first two, so their boxes must be wider by exactly that much — otherwise the middle
+  // column renders a gap narrower than its neighbours and a three-up image grid goes ragged.
+  const totalWidth = 600;
+  const gap = 24;
+  const widths = computeWidths([{}, {}, {}], { totalWidth, gap });
+
+  const contentPx = widths.map((w, i) => {
+    const box = (w / 100) * totalWidth;
+    return box - (i < 2 ? gap : 0);
+  });
+
+  const spread = Math.max(...contentPx) - Math.min(...contentPx);
+  assert.ok(spread < 0.5, `content widths differ by ${spread}px: ${JSON.stringify(contentPx)}`);
+  assert.ok(
+    Math.abs(contentPx[0] - (totalWidth - 2 * gap) / 3) < 0.5,
+    "each column should get an equal share of what is left after the gaps",
+  );
+});
+
+test("explicit column widths still describe the content, not the box", () => {
+  const totalWidth = 600;
+  const gap = 20;
+  const widths = computeWidths([{ width: 25 }, { width: 75 }], { totalWidth, gap });
+  const firstContent = (widths[0] / 100) * totalWidth - gap;
+  assert.ok(
+    Math.abs(firstContent - 0.25 * (totalWidth - gap)) < 0.5,
+    `25% column got ${firstContent}px of content`,
+  );
+});
+
+test("without a row width the gap cannot be compensated, and shares pass through", () => {
+  assert.deepEqual(computeWidths([{}, {}]), [50, 50]);
+  assert.deepEqual(computeWidths([{}, {}], { gap: 24 }), [50, 50]);
 });
 
 test("an empty block contributes no table row at all", () => {

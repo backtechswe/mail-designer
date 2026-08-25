@@ -105,6 +105,21 @@ afterwards, so one render serves a whole recipient list.
 `extractMergeFields(doc)` reports every token in use — including the ones hiding in a
 button's URL.
 
+## Starting points
+
+Six built-in presets — **Nyhetsbrev**, **Inbjudan**, **Kampanj**, **Välkomstmejl**,
+**Bekräftelse**, **Tomt** — each designed as its own piece rather than one layout recoloured:
+its own palette, measure and typography. A user who opens a template and finds something
+worth keeping edits it; one who finds a grey skeleton starts over, and the template has cost
+them time instead of saving it.
+
+Sample photography is **hotlinked from Unsplash**, never bundled — the package stays small,
+and an email has to reference remote images anyway (Gmail blocks `data:` URIs in `<img>`).
+`src/presets/images.ts` holds the catalogue with a sizing helper. Photos from
+[Unsplash](https://unsplash.com), free to use under the Unsplash License.
+
+Pass `presets` to replace or extend the list.
+
 ## Templates
 
 Drop `<TemplateMenu store={…} />` into `toolbarExtra` for a ready-made picker. `remove` on

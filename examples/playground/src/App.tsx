@@ -50,7 +50,7 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
 const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" });
 
 export function App() {
-  const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[1]!.document);
+  const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[0]!.document);
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("sv");
 

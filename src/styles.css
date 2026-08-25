@@ -939,6 +939,7 @@
 
 .md-preview {
   display: flex;
+  align-items: flex-start;
   justify-content: center;
   padding: calc(var(--md-space) * 4) calc(var(--md-space) * 3);
   overflow: auto;
@@ -946,9 +947,9 @@
 }
 
 .md-preview iframe {
+  /* Height is set inline from the measured content — see PreviewFrame. */
   flex: none;
-  height: 100%;
-  min-height: 480px;
+  align-self: flex-start;
   border: 0;
   border-radius: var(--md-radius);
   background: #ffffff;

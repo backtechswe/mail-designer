@@ -211,8 +211,11 @@ function ChildView({ child }: { child: SectionChild }) {
 }
 
 function ColumnsView({ block }: { block: ColumnsBlock }) {
-  const { isMobileViewport } = useEditor();
-  const widths = computeWidths(block.columns);
+  const { doc, isMobileViewport, viewportWidth } = useEditor();
+  // Mirrors renderColumns: the gap comes out of the percentages so every column ends up
+  // with the same content width, rather than the middle one being a gap narrower.
+  const rowWidth = Math.min(doc.settings.width, viewportWidth);
+  const widths = computeWidths(block.columns, { totalWidth: rowWidth, gap: block.gap });
   // Mirrors the media query the renderer emits. Without this the canvas would show columns
   // side by side at 375px while the actual email stacks them — the one thing the mobile
   // toggle exists to reveal.
@@ -258,7 +261,6 @@ function ColumnView({
   isLast: boolean;
 }) {
   const { t } = useEditor();
-  const half = Math.round(gap / 2);
   const base = column.padding ?? [0, 0, 0, 0];
   return (
     <div
@@ -272,9 +274,9 @@ function ColumnView({
         // Stacked, the gap moves from between the columns to above each one but the first
         // — exactly what the .md-cgN adjacent-sibling rule does in the rendered email.
         paddingTop: base[0] + (stacked && !isFirst ? gap : 0),
-        paddingRight: base[1] + (stacked || isLast ? 0 : half),
+        paddingRight: base[1] + (stacked || isLast ? 0 : gap),
         paddingBottom: base[2],
-        paddingLeft: base[3] + (stacked || isFirst ? 0 : half),
+        paddingLeft: base[3],
       }}
     >
       {column.children.length === 0 ? (
