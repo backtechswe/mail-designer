@@ -26,6 +26,31 @@ const [doc, setDoc] = useState(emptyDocument());
 const { html, text } = toHtml(doc, { data: { Namn: "Anna" } });
 ```
 
+## Email client compatibility
+
+The renderer targets both current clients and Outlook's Word engine, and every workaround is
+commented at the line that makes it and guarded by a test. **[docs/email-compatibility.md](./docs/email-compatibility.md)**
+is the full account: what is done and why, what degrades and to what, and what cannot be
+guaranteed without sending real test mail.
+
+The short version: everything visual is inline, layout is tables, the content column is fluid
+with a ghost table for Outlook, line heights are in px with `mso-line-height-rule`, and
+progressive enhancements — mobile padding, stacked columns, rounded buttons — always have the
+desktop value as their fallback.
+
+`inspectEmail(doc, result)` reports what a preview cannot show, and the editor shows it above
+the preview: a mail past Gmail's ~102 kB clipping limit, a `data:` image Gmail will refuse, a
+section background Outlook will drop, images with no alt text, a missing preheader.
+
+### Mobile-specific padding
+
+Any block or section can carry `mobilePadding`, used instead of `padding` on narrow screens.
+It is delivered by the media query in `<style>`, which makes it a progressive enhancement:
+Outlook for desktop ignores it by design, and a few clients strip `<style>` altogether. **The
+desktop value therefore has to be the one that works** — the mobile value only makes it
+tighter. One CSS rule is emitted per distinct value, so thirty blocks sharing a padding share
+a class.
+
 ## Why it renders its own HTML
 
 Email HTML is nested tables and client-specific workarounds. MJML solves that well, but

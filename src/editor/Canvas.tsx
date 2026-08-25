@@ -182,7 +182,7 @@ function lateralTarget(
 }
 
 function SectionView({ section }: { section: SectionBlock }) {
-  const { doc, viewportWidth, t } = useEditor();
+  const { doc, viewportWidth, isMobileViewport, t } = useEditor();
   const { settings } = doc;
 
   // Mirrors renderSection: fullWidth puts the colour on the outer band, otherwise it stays
@@ -200,7 +200,9 @@ function SectionView({ section }: { section: SectionBlock }) {
             maxWidth: Math.min(settings.width, viewportWidth),
             margin: "0 auto",
             background: innerBackground,
-            padding: spacingToCss(section.padding),
+            padding: spacingToCss(
+              isMobileViewport ? (section.mobilePadding ?? section.padding) : section.padding,
+            ),
           }}
           data-md-container={`section:${section.id}`}
         >
@@ -299,11 +301,19 @@ function ColumnView({
 }
 
 function LeafShell({ block }: { block: LeafBlock }) {
-  const { selectedId } = useEditor();
+  const { selectedId, isMobileViewport } = useEditor();
   const active = selectedId === block.id;
   return (
     <BlockShell block={block} variant="leaf">
-      <div style={{ padding: spacingToCss(block.padding) }}>
+      {/* The canvas honours the mobile override too, or the toggle would show a layout the
+          recipient never gets. */}
+      <div
+        style={{
+          padding: spacingToCss(
+            isMobileViewport ? (block.mobilePadding ?? block.padding) : block.padding,
+          ),
+        }}
+      >
         <LeafView block={block} active={active} />
       </div>
     </BlockShell>

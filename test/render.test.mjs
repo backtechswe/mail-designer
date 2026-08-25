@@ -8,7 +8,13 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { toHtml, computeWidths } from "../dist/render/index.js";
-import { emptyDocument, createSection, createBlock, setIdFactory } from "../dist/document.js";
+import {
+  createBlock,
+  createColumn,
+  createSection,
+  emptyDocument,
+  setIdFactory,
+} from "../dist/document.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixtureDir = join(here, "fixtures");
@@ -51,6 +57,36 @@ for (const [name, doc] of docs) {
       assert.match(tag, /role="presentation"/, `missing role: ${tag}`);
       assert.match(tag, /cellpadding="0"/, `missing cellpadding: ${tag}`);
       assert.match(tag, /cellspacing="0"/, `missing cellspacing: ${tag}`);
+    }
+  });
+
+  test(`${name}: line height is in px, with the rule Outlook needs`, () => {
+    const { html } = toHtml(doc);
+    // Outlook's Word engine ignores a unitless line-height and substitutes its own, which
+    // silently changes the vertical rhythm of every paragraph.
+    // `inherit` and `100%` are client resets, not layout values.
+    for (const decl of html.match(/line-height:[^;"}\n]*/g) ?? []) {
+      assert.match(
+        decl,
+        /line-height:\s*(0|\d+px|100%|inherit)/,
+        `unitless line height would be ignored by Outlook: ${decl}`,
+      );
+    }
+    if (/font-size:\d+px;line-height:\d+px/.test(html)) {
+      assert.match(html, /mso-line-height-rule:exactly/);
+    }
+  });
+
+  test(`${name}: no blanket font override for Outlook`, () => {
+    const { html } = toHtml(doc);
+    // An !important font-family inside an [if mso] block overrides every deliberate choice
+    // in the document. Only ever correct for a webfont, and this renderer offers none.
+    for (const conditional of html.match(/<!--\[if mso\]>[\s\S]*?<!\[endif\]-->/g) ?? []) {
+      assert.doesNotMatch(
+        conditional,
+        /font-family[^;}]*!important/,
+        "an MSO font override would destroy the document's own typography in Outlook",
+      );
     }
   });
 
@@ -229,4 +265,61 @@ test("the content column is fluid, so a phone never scrolls sideways", () => {
     /<table[^>]*\swidth="\d+"/,
     "no fixed pixel table width outside a conditional comment",
   );
+});
+
+
+test("long unbroken text cannot widen the table in Outlook", () => {
+  const doc = emptyDocument();
+  doc.blocks = [
+    createSection([
+      set(createBlock("text"), {
+        html: "<p>https://exempel.se/en/mycket/lang/url/utan/nagra/blanksteg/alls/i/den</p>",
+      }),
+    ]),
+  ];
+  assert.match(toHtml(doc).html, /word-break:break-word/);
+});
+
+test("a coloured column carries bgcolor as well as the CSS", () => {
+  const doc = emptyDocument();
+  const cols = set(createBlock("columns"), {
+    columns: [
+      Object.assign(createColumn([createBlock("text")]), { backgroundColor: "#ff0000" }),
+      createColumn([createBlock("text")]),
+    ],
+  });
+  doc.blocks = [createSection([cols])];
+  const { html } = toHtml(doc);
+  // Older Outlook and some gateways drop background-color from a cell but honour the
+  // attribute, so a coloured column needs both.
+  assert.match(html, /bgcolor="#ff0000"/);
+  assert.match(html, /background-color:#ff0000/);
+});
+
+test("mobile padding becomes one media-query rule per distinct value", () => {
+  const doc = emptyDocument();
+  const a = set(createBlock("text"), { padding: [24, 24, 24, 24], mobilePadding: [12, 12, 12, 12] });
+  const b = set(createBlock("text"), { padding: [40, 40, 40, 40], mobilePadding: [12, 12, 12, 12] });
+  const c = set(createBlock("text"), { padding: [8, 8, 8, 8], mobilePadding: [4, 4, 4, 4] });
+  doc.blocks = [createSection([a, b, c])];
+  const { html } = toHtml(doc);
+
+  const rules = html.match(/\.md-mp\d\{padding:[^}]+\}/g) ?? [];
+  assert.equal(rules.length, 2, "two distinct values, not three blocks");
+  assert.ok(rules.some((r) => /padding:12px 12px 12px 12px!important/.test(r)));
+  assert.ok(rules.some((r) => /padding:4px 4px 4px 4px!important/.test(r)));
+
+  // The desktop padding stays inline, so a client that strips <style> still gets a layout.
+  assert.match(html, /padding:24px 24px 24px 24px/);
+  assert.match(html, /padding:40px 40px 40px 40px/);
+
+  // And the two blocks sharing a value share the class.
+  const used = [...html.matchAll(/class="(md-mp\d)"/g)].map((m) => m[1]);
+  assert.equal(new Set(used).size, 2);
+  assert.equal(used.length, 3);
+});
+
+test("no mobile padding means no rule and no class", () => {
+  const { html } = toHtml(emptyDocument());
+  assert.doesNotMatch(html, /md-mp/);
 });

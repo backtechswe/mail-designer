@@ -11,9 +11,15 @@ export function renderText(block: TextBlock, ctx: RenderContext): string {
   const style = css({
     "font-family": block.fontFamily ?? settings.fontFamily,
     "font-size": px(size),
-    "line-height": lineHeight,
+    // Outlook's Word engine ignores a unitless line-height and substitutes its own; px plus
+    // mso-line-height-rule is what makes it obey. Everything else treats them the same.
+    "line-height": px(Math.round(size * lineHeight)),
+    "mso-line-height-rule": "exactly",
     color: block.color ?? settings.textColor,
     "text-align": block.align,
+    // A pasted URL with no spaces in it will otherwise widen the table past the mail's own
+    // width in Outlook, pushing everything out of alignment.
+    "word-break": "break-word",
   });
   const inner = prepareInline(block.html, {
     linkColor: settings.linkColor,

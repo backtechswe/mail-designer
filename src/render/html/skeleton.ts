@@ -6,8 +6,10 @@ import { headCss } from "./css.js";
 export interface SkeletonOptions {
   lang: string;
   title: string;
-  /** Distinct column gaps that need a stacked-mobile rule. Empty means no media query. */
+  /** Distinct column gaps that need a stacked-mobile rule. */
   stackGaps: readonly number[];
+  /** Distinct mobile paddings, as CSS shorthand. */
+  mobilePaddings: readonly string[];
 }
 
 /**
@@ -35,14 +37,8 @@ export function wrapDocument(
 <!--[if mso]>
 <xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
 <![endif]-->
-<!--[if mso]>
 <style type="text/css">
-/* Outlook cannot use webfonts; force a real font so it does not fall back to Times. */
-body,table,td,a,p,h1,h2,h3,div{font-family:Arial,Helvetica,sans-serif !important}
-</style>
-<![endif]-->
-<style type="text/css">
-${headCss(settings, options.stackGaps)}
+${headCss(settings, options.stackGaps, options.mobilePaddings)}
 </style>
 </head>
 <body id="body" style="${escAttr(
@@ -52,7 +48,7 @@ ${headCss(settings, options.stackGaps)}
       "background-color": settings.backgroundColor,
       "font-family": settings.fontFamily,
       "font-size": px(settings.fontSize),
-      "line-height": settings.lineHeight,
+      "line-height": px(Math.round(settings.fontSize * settings.lineHeight)),
       color: settings.textColor,
     }),
   )}">

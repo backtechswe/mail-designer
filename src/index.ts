@@ -72,6 +72,8 @@ export { toPlainText } from "./render/toPlainText.js";
 export { applyDataValues, extractDataFields, DATA_TOKEN } from "./render/dataFields.js";
 export { sanitize, sanitizeBlock, sanitizeInline, stripTags } from "./render/sanitize.js";
 export { computeWidths } from "./render/html/columns.js";
+export { inspectEmail, emailSize, GMAIL_CLIP_BYTES } from "./render/inspect.js";
+export type { EmailWarning, WarningId } from "./render/inspect.js";
 
 /* loading documents that came out of someone else's database */
 export { coerceDocument, validateDocument } from "./validate.js";

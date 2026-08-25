@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type {
   Align,
+  Spacing,
   Block,
   ButtonBlock,
   ColumnsBlock,
@@ -104,6 +105,15 @@ const FONT_STACKS = [
 ];
 
 const fontLabel = (stack: string): string => stack.split(",")[0]!.replace(/'/g, "");
+
+/**
+ * Starting point for a mobile override: half the desktop padding, rounded. Tighter is nearly
+ * always what is wanted on a phone, and half of something is a better first guess than zero.
+ */
+function halved(padding: Spacing | undefined): Spacing {
+  const value = padding ?? [0, 0, 0, 0];
+  return value.map((n) => Math.round(n / 2)) as unknown as Spacing;
+}
 
 /** Builds the marker that tells a field whether it is inheriting or overriding. */
 function inherit(t: Translate, isSet: boolean, onClear: () => void): Inherit {
@@ -281,6 +291,26 @@ function BlockPanel({ block }: { block: Block }) {
             value={block.padding}
             onChange={(padding) => set({ padding })}
           />
+          {block.mobilePadding ? (
+            <SpacingField
+              label={t("field.mobilePadding")}
+              lockLabel={t("field.paddingLinked")}
+              hint={t("field.mobilePaddingHint")}
+              onClear={() => set({ mobilePadding: undefined })}
+              clearLabel={t("field.resetToInherited")}
+              value={block.mobilePadding}
+              onChange={(mobilePadding) => set({ mobilePadding })}
+            />
+          ) : (
+            <button
+              type="button"
+              className="md-secondary-button"
+              onClick={() => set({ mobilePadding: halved(block.padding) })}
+            >
+              <Icon name="mobile" size={11} />
+              {t("field.addMobilePadding")}
+            </button>
+          )}
         </Section>
       )}
     </>

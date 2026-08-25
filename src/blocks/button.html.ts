@@ -18,11 +18,17 @@ export function renderButton(block: ButtonBlock, ctx: RenderContext): string {
   const label = escText(block.label ?? "");
   const fontFamily = block.fontFamily ?? ctx.settings.fontFamily;
 
+  // Same factor the VML height below uses, so Outlook's box matches everyone else's button.
+  const lineHeight = Math.round(block.fontSize * 1.2);
+
   const linkStyle = css({
     display: "inline-block",
     "font-family": fontFamily,
     "font-size": px(block.fontSize),
-    "line-height": 1.2,
+    // px, not a ratio: Outlook ignores unitless line-height, which would change the button's
+    // height and leave the label off-centre.
+    "line-height": px(lineHeight),
+    "mso-line-height-rule": "exactly",
     "font-weight": "bold",
     color: block.textColor,
     "text-decoration": "none",
@@ -50,11 +56,8 @@ export function renderButton(block: ButtonBlock, ctx: RenderContext): string {
 
   if (!block.width || block.borderRadius <= 0) return table;
 
-  // Height Outlook will use for the VML box. Derived from the same numbers the CSS uses,
-  // with 1.2 matching the line-height above.
-  const height = Math.round(
-    block.innerPadding[0] + block.innerPadding[2] + block.fontSize * 1.2,
-  );
+  // Height Outlook will use for the VML box, from the same numbers the CSS uses.
+  const height = block.innerPadding[0] + block.innerPadding[2] + lineHeight;
   const arcsize = `${Math.round((block.borderRadius / height) * 100)}%`;
   const centerStyle = css({
     color: block.textColor,

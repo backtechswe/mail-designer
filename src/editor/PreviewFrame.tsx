@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MailDocument } from "../types.js";
 import { toHtml } from "../render/toHtml.js";
+import { WarningStrip } from "./WarningStrip.js";
 
 /**
  * The byte-exact truth: the renderer's actual output in an iframe.
@@ -23,7 +24,8 @@ export function PreviewFrame({
   /** Sample values substituted into the preview, so it shows a real recipient's mail. */
   data?: Record<string, string>;
 }) {
-  const html = useMemo(() => toHtml(doc, data ? { data } : {}).html, [doc, data]);
+  const rendered = useMemo(() => toHtml(doc, data ? { data } : {}), [doc, data]);
+  const html = rendered.html;
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState(600);
 
@@ -54,6 +56,7 @@ export function PreviewFrame({
 
   return (
     <div className="md-preview">
+      <WarningStrip doc={doc} result={rendered} />
       <iframe
         ref={ref}
         title="preview"

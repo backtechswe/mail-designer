@@ -1047,8 +1047,9 @@
 
 .md-preview {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
   padding: calc(var(--md-space) * 4) calc(var(--md-space) * 3);
   overflow: auto;
   background: var(--md-bg-sunken);
@@ -1659,4 +1660,54 @@
 .md-colwidths input::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
+}
+
+/* Inbox checks, above the preview — the moment someone decides the mail is finished. */
+.md-warnings {
+  flex: none;
+  align-self: stretch;
+  max-width: 760px;
+  margin: 0 auto calc(var(--md-space) * 2);
+  padding: calc(var(--md-space) * 1.5);
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-bg);
+}
+
+.md-warnings strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--md-text-muted);
+}
+
+.md-warnings ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md-warnings li {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--md-text);
+}
+
+.md-warnings li::before {
+  content: "▲ ";
+  color: var(--md-text-muted);
+}
+
+.md-warn--error::before {
+  color: var(--md-danger) !important;
+}
+
+.md-preview {
+  flex-direction: column;
 }

@@ -110,8 +110,11 @@ export function renderColumns(
 
       const inner = renderChildren(column, { ...ctx, width: innerWidth });
       return (
-        `<td${classes} width="${pct(width)}" valign="${column.verticalAlign ?? "top"}" ` +
-        `style="${escAttr(style)}">${inner}</td>`
+        `<td${classes} width="${pct(width)}" valign="${column.verticalAlign ?? "top"}"` +
+        // bgcolor as well as the CSS: older Outlook and a few gateways drop background-color
+        // from a cell but honour the attribute.
+        (column.backgroundColor ? ` bgcolor="${escAttr(column.backgroundColor)}"` : "") +
+        ` style="${escAttr(style)}">${inner}</td>`
       );
     })
     .join("");

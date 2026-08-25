@@ -45,6 +45,8 @@ export function renderSection(section: SectionBlock, ctx: RenderContext): string
 
   const body = renderChildren(section.children, { ...ctx, width: contentWidth });
 
+  const sectionMobile = ctx.mobileClass(section.mobilePadding);
+
   return (
     `<table${TABLE_RESET} width="100%" style="${escAttr(outerStyle)}"` +
     (outerBackground ? ` bgcolor="${escAttr(outerBackground)}"` : "") +
@@ -52,7 +54,7 @@ export function renderSection(section: SectionBlock, ctx: RenderContext): string
     `<!--[if mso]><table${TABLE_RESET} align="center" width="${settings.width}"><tr><td style="padding:0"><![endif]-->` +
     `<table${TABLE_RESET} align="center" width="100%" style="${escAttr(innerStyle)}"` +
     (innerBackground ? ` bgcolor="${escAttr(innerBackground)}"` : "") +
-    `><tr><td style="${escAttr(css({ padding: spacing(padding) }))}">` +
+    `><tr><td${sectionMobile} style="${escAttr(css({ padding: spacing(padding) }))}">` +
     body +
     `</td></tr></table>` +
     `<!--[if mso]></td></tr></table><![endif]-->` +
@@ -75,7 +77,10 @@ export function renderChildren(children: readonly SectionChild[], ctx: RenderCon
           : renderLeaf(child, ctx);
       if (!inner) return "";
       return (
-        `<tr><td style="${escAttr(css({ padding: spacing(padding) }))}">` + inner + `</td></tr>`
+        `<tr><td${ctx.mobileClass(child.mobilePadding)} ` +
+        `style="${escAttr(css({ padding: spacing(padding) }))}">` +
+        inner +
+        `</td></tr>`
       );
     })
     .filter(Boolean)

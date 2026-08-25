@@ -348,13 +348,20 @@ export function AlignField({
 export function SpacingField({
   label,
   lockLabel,
+  hint,
   value,
   onChange,
+  onClear,
+  clearLabel,
 }: {
   label: string;
   lockLabel: string;
+  hint?: string;
   value: Spacing | undefined;
   onChange: (value: Spacing) => void;
+  /** Present for an optional override, so it can be removed again. */
+  onClear?: () => void;
+  clearLabel?: string;
 }) {
   const { endEdit } = useEditor();
   const current: Spacing = value ?? [0, 0, 0, 0];
@@ -373,7 +380,19 @@ export function SpacingField({
   };
 
   return (
-    <Field label={label}>
+    <Field
+      label={label}
+      hint={hint}
+      {...(onClear && clearLabel
+        ? {
+            inherit: {
+              isSet: true,
+              onClear,
+              labels: { inherited: "", overridden: label, reset: clearLabel },
+            },
+          }
+        : {})}
+    >
       <span className="md-spacing">
         {current.map((n, index) => (
           <input

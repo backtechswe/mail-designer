@@ -8,6 +8,11 @@ export function gapClass(gap: number): string {
   return `md-cg${Math.round(gap)}`;
 }
 
+/** Class for one distinct mobile padding, keyed by its position in the collected list. */
+export function mobilePaddingClass(index: number): string {
+  return `md-mp${index}`;
+}
+
 /**
  * The only <style> block in the document.
  *
@@ -19,7 +24,11 @@ export function gapClass(gap: number): string {
  * Outlook desktop ignores media queries entirely, which is exactly what we want: it is
  * always a wide viewport, so its columns should never stack.
  */
-export function headCss(settings: MailSettings, stackGaps: readonly number[]): string {
+export function headCss(
+  settings: MailSettings,
+  stackGaps: readonly number[],
+  mobilePaddings: readonly string[] = [],
+): string {
   const rules: string[] = [
     // Kill the default page chrome.
     "body{margin:0!important;padding:0!important;width:100%!important;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}",
@@ -38,7 +47,11 @@ export function headCss(settings: MailSettings, stackGaps: readonly number[]): s
     "u+#body a{color:inherit;text-decoration:none}",
   ];
 
-  if (stackGaps.length > 0) {
+  const mobileRules = mobilePaddings.map(
+    (value, index) => `.${mobilePaddingClass(index)}{padding:${value}!important}`,
+  );
+
+  if (stackGaps.length > 0 || mobileRules.length > 0) {
     // One rule per distinct gap value, so a stacked column keeps the same breathing room
     // vertically that it had horizontally. The adjacent-sibling selector skips the first
     // column, which is what makes the spacing sit *between* them and not around them.
@@ -46,10 +59,15 @@ export function headCss(settings: MailSettings, stackGaps: readonly number[]): s
       .sort((a, b) => a - b)
       .map((gap) => `.${gapClass(gap)}+.${gapClass(gap)}{padding-top:${gap}px!important}`)
       .join("");
+    const stackRules =
+      stackGaps.length > 0
+        ? `.${STACK_CLASS}{display:block!important;width:100%!important;max-width:100%!important;padding-left:0!important;padding-right:0!important}` +
+          gapRules
+        : "";
     rules.push(
       `@media only screen and (max-width:${settings.width - 20}px){` +
-        `.${STACK_CLASS}{display:block!important;width:100%!important;max-width:100%!important;padding-left:0!important;padding-right:0!important}` +
-        gapRules +
+        stackRules +
+        mobileRules.join("") +
         `}`,
     );
   }

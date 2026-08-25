@@ -13,14 +13,18 @@ const DEFAULT_SIZE: Record<1 | 2 | 3, number> = { 1: 30, 2: 24, 3: 19 };
 export function renderHeading(block: HeadingBlock, ctx: RenderContext): string {
   const { settings } = ctx;
   const size = block.fontSize ?? DEFAULT_SIZE[block.level];
+  const lineHeight = block.lineHeight ?? 1.25;
   const style = css({
     margin: 0,
     "font-family": block.fontFamily ?? settings.fontFamily,
     "font-size": px(size),
-    "line-height": block.lineHeight ?? 1.25,
+    // px, not a ratio: Outlook ignores a unitless line-height and picks its own.
+    "line-height": px(Math.round(size * lineHeight)),
+    "mso-line-height-rule": "exactly",
     "font-weight": "bold",
     color: block.color ?? settings.textColor,
     "text-align": block.align,
+    "word-break": "break-word",
   });
   const inner = prepareInline(block.html, {
     linkColor: settings.linkColor,

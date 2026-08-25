@@ -51,6 +51,16 @@ export type BlockLock =
 interface BlockBase {
   id: string;
   padding?: Spacing;
+  /**
+   * Padding used on narrow screens instead of `padding`.
+   *
+   * A progressive enhancement, and it has to be treated as one: it is delivered by the media
+   * query in <style>, which Outlook desktop ignores by design (it is always a wide viewport)
+   * but which a handful of clients strip from <head> altogether. Where that happens the
+   * desktop padding is used, so that value must be the one that is merely tight rather than
+   * broken.
+   */
+  mobilePadding?: Spacing;
   locked?: BlockLock;
 }
 

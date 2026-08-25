@@ -1,7 +1,15 @@
-import type { ColumnsBlock, MailDocument, RenderOptions, RenderResult } from "../types.js";
+import type {
+  ColumnsBlock,
+  MailDocument,
+  RenderOptions,
+  RenderResult,
+  Spacing,
+} from "../types.js";
 import { walkBlocks } from "../document.js";
 import { applyDataValues } from "./dataFields.js";
 import { renderSection } from "./html/section.js";
+import { mobilePaddingClass } from "./html/css.js";
+import { spacing } from "./style.js";
 import { wrapDocument } from "./html/skeleton.js";
 import { toPlainText } from "./toPlainText.js";
 
@@ -16,15 +24,25 @@ import { toPlainText } from "./toPlainText.js";
 export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderResult {
   const { settings } = doc;
   const stackGaps = collectStackGaps(doc);
+  const mobilePaddings = collectMobilePaddings(doc);
+
+  // One rule per distinct value, so a document that uses the same tight mobile padding on
+  // thirty blocks emits one rule rather than thirty.
+  const mobileClass = (padding: Spacing | undefined): string => {
+    if (!padding) return "";
+    const index = mobilePaddings.indexOf(spacing(padding));
+    return index === -1 ? "" : ` class="${mobilePaddingClass(index)}"`;
+  };
 
   const body = doc.blocks
-    .map((section) => renderSection(section, { settings, width: settings.width }))
+    .map((section) => renderSection(section, { settings, width: settings.width, mobileClass }))
     .join("\n");
 
   const html = wrapDocument(settings, body, {
     lang: options.lang ?? "sv",
     title: options.title ?? "",
     stackGaps,
+    mobilePaddings,
   });
 
   const text = toPlainText(doc);
@@ -34,6 +52,15 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
     html: applyDataValues(html, options.data, { escape: "html", onMissing }),
     text: applyDataValues(text, options.data, { escape: "none", onMissing }),
   };
+}
+
+/** Distinct mobile paddings, as CSS shorthand, in a stable order for the golden files. */
+function collectMobilePaddings(doc: MailDocument): string[] {
+  const seen = new Set<string>();
+  walkBlocks(doc, (block) => {
+    if (block.mobilePadding) seen.add(spacing(block.mobilePadding));
+  });
+  return [...seen].sort();
 }
 
 /** Gaps that need a stacked-mobile rule. Empty means we emit no media query at all. */
