@@ -52,6 +52,7 @@ const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" 
 
 export function App() {
   const [doc, setDoc] = useState<MailDocument>(() => builtInPresets[0]!.document);
+  const [depth, setDepth] = useState(0);
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("sv");
 
@@ -94,6 +95,7 @@ export function App() {
           Nytt mejl (utifrån)
         </button>
 
+        <span className="pg-note">Historik: {depth} steg</span>
         <span className="pg-note">Merge-fält: {mergeFields.join(", ")}</span>
       </div>
 
@@ -116,6 +118,7 @@ export function App() {
             })
           }
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
+          onHistoryChange={(h) => setDepth(h.depth)}
           // The menu is part of the package and speaks only the TemplateStore contract —
           // here backed by localStorage, in Utskick it will be Firestore.
           toolbarExtra={<TemplateMenu store={store} />}

@@ -23,15 +23,24 @@ export interface EditorApi {
   onUploadImage?: ((file: File) => Promise<string>) | undefined;
   resolveSocialIcon?: ((network: string) => string) | undefined;
 
-  /** `coalesce` merges rapid changes into one undo step — used while typing and dragging. */
-  update: (id: string, patch: Partial<Block>, coalesce?: boolean) => void;
-  updateSettings: (patch: Partial<MailSettings>, coalesce?: boolean) => void;
+  /**
+   * Rapid changes to the same property of the same block merge into one undo step
+   * automatically — no flag to remember at the call site. That was the original design and
+   * it was wrong: every control that forgot to pass it produced one undo step per
+   * keystroke, so undoing a font size landed on a half-typed number.
+   *
+   * Call `endEdit` when focus leaves the control to close the run early.
+   */
+  update: (id: string, patch: Partial<Block>) => void;
+  updateSettings: (patch: Partial<MailSettings>) => void;
   updateColumn: (columnId: string, patch: Partial<Omit<MailColumn, "id" | "children">>) => void;
   insert: (block: Block, position: Position) => void;
   remove: (id: string) => void;
   duplicate: (id: string) => void;
   move: (id: string, position: Position) => void;
   replaceDocument: (next: MailDocument) => void;
+  /** Ends the current merge run, so the next change is its own undo step. */
+  endEdit: () => void;
 
   /** Arms a drag from a block's grip. Provided by the drag layer in MailDesigner. */
   startBlockDrag: (id: string, event: React.PointerEvent) => void;

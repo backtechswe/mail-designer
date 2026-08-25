@@ -12,7 +12,7 @@ export function HeadingView({ block, active }: { block: HeadingBlock; active: bo
       html={block.html}
       placeholder={t("block.heading")}
       style={headingStyle(block, doc.settings)}
-      onChange={(html, coalesce) => update(block.id, { html }, coalesce)}
+      onChange={(html) => update(block.id, { html })}
     />
   );
 }

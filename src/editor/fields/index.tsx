@@ -2,9 +2,14 @@ import type { ReactNode } from "react";
 import { useId, useState } from "react";
 import type { Align, Spacing } from "../../types.js";
 import { Icon } from "../icons.js";
+import { useEditor } from "../EditorContext.js";
 
 /**
  * Inspector controls built on native form elements.
+ *
+ * Each control that can be edited continuously calls `endEdit` on blur. Rapid changes to one
+ * property merge into a single undo step, and leaving the field is what closes that run —
+ * coming back to the same field later should be a new step, not an extension of the old one.
  *
  * `<input type="color">`, `<input type="number">` and `<select>` are keyboard accessible,
  * localised and platform-consistent for free. A component library would add a dependency to
@@ -90,9 +95,10 @@ export function TextField({
   hint?: string;
   value: string;
   placeholder?: string;
-  onChange: (value: string, coalesce: boolean) => void;
+  onChange: (value: string) => void;
 }) {
   const id = useId();
+  const { endEdit } = useEditor();
   return (
     <Field label={label} hint={hint} htmlFor={id}>
       <input
@@ -100,9 +106,8 @@ export function TextField({
         type="text"
         value={value}
         placeholder={placeholder}
-        // coalesce while typing, commit a discrete step on blur.
-        onChange={(e) => onChange(e.target.value, true)}
-        onBlur={(e) => onChange(e.target.value, false)}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={endEdit}
       />
     </Field>
   );
@@ -121,9 +126,10 @@ export function TextAreaField({
   value: string;
   rows?: number;
   mono?: boolean;
-  onChange: (value: string, coalesce: boolean) => void;
+  onChange: (value: string) => void;
 }) {
   const id = useId();
+  const { endEdit } = useEditor();
   return (
     <Field label={label} hint={hint} htmlFor={id}>
       <textarea
@@ -131,8 +137,8 @@ export function TextAreaField({
         rows={rows}
         className={mono ? "md-mono" : undefined}
         value={value}
-        onChange={(e) => onChange(e.target.value, true)}
-        onBlur={(e) => onChange(e.target.value, false)}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={endEdit}
       />
     </Field>
   );
@@ -166,12 +172,14 @@ export function NumberField({
   onChange: (value: number | undefined) => void;
 }) {
   const id = useId();
+  const { endEdit } = useEditor();
   return (
     <Field label={label} hint={hint} htmlFor={id} inherit={inherit}>
       <span className="md-number">
         <input
           id={id}
           type="number"
+          onBlur={endEdit}
           value={value ?? ""}
           min={min}
           max={max}
@@ -205,14 +213,18 @@ export function ColorField({
   onChange: (value: string | undefined) => void;
 }) {
   const id = useId();
+  const { endEdit } = useEditor();
   return (
     <Field label={label} htmlFor={id} inherit={inherit}>
       <span className="md-color">
+        {/* A colour input fires continuously while the picker is dragged, which is exactly
+            what the merge run is for; blur closes it. */}
         <input
           id={id}
           type="color"
           value={normaliseHex(value) ?? fallback}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={endEdit}
         />
         {/* The text input accepts named colours and shorthand hex the swatch cannot show. */}
         <input
@@ -221,6 +233,7 @@ export function ColorField({
           value={value ?? ""}
           placeholder={allowEmpty ? "—" : fallback}
           onChange={(e) => onChange(e.target.value || undefined)}
+          onBlur={endEdit}
         />
 
       </span>
@@ -343,6 +356,7 @@ export function SpacingField({
   value: Spacing | undefined;
   onChange: (value: Spacing) => void;
 }) {
+  const { endEdit } = useEditor();
   const current: Spacing = value ?? [0, 0, 0, 0];
   const [linked, setLinked] = useState(
     () => new Set(current).size === 1,
@@ -370,6 +384,7 @@ export function SpacingField({
             value={n}
             aria-label={["top", "right", "bottom", "left"][index]}
             onChange={(e) => set(index, Number(e.target.value || 0))}
+            onBlur={endEdit}
           />
         ))}
         <button

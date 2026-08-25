@@ -25,7 +25,7 @@ import { useEditor } from "./EditorContext.js";
 
 export interface TextEditableProps {
   html: string;
-  onChange: (html: string, coalesce: boolean) => void;
+  onChange: (html: string) => void;
   /** Applied to the editable element so it looks like the rendered email. */
   style?: React.CSSProperties;
   placeholder?: string;
@@ -42,7 +42,7 @@ export function TextEditable({
   as = "div",
   active,
 }: TextEditableProps) {
-  const { t, mergeFields } = useEditor();
+  const { t, mergeFields, endEdit } = useEditor();
   const ref = useRef<HTMLElement | null>(null);
   // What the DOM currently holds, as far as we know. null means "nothing written yet".
   const domHtml = useRef<string | null>(null);
@@ -59,16 +59,14 @@ export function TextEditable({
     domHtml.current = html;
   }, [html]);
 
-  const emit = useCallback(
-    (coalesce: boolean) => {
-      const el = ref.current;
-      if (!el) return;
-      const next = sanitizeInline(el.innerHTML);
-      domHtml.current = next;
-      onChange(next, coalesce);
-    },
-    [onChange],
-  );
+  const emit = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const next = sanitizeInline(el.innerHTML);
+    if (next === domHtml.current) return;
+    domHtml.current = next;
+    onChange(next);
+  }, [onChange]);
 
   const positionToolbar = useCallback(() => {
     const el = ref.current;
@@ -109,7 +107,7 @@ export function TextEditable({
     (command: string, value?: string) => {
       ref.current?.focus();
       document.execCommand(command, false, value);
-      emit(false);
+      emit();
     },
     [emit],
   );
@@ -118,7 +116,7 @@ export function TextEditable({
     (text: string) => {
       ref.current?.focus();
       document.execCommand("insertText", false, text);
-      emit(false);
+      emit();
     },
     [emit],
   );
@@ -134,7 +132,7 @@ export function TextEditable({
       } else {
         document.execCommand("insertText", false, clipboard.getData("text/plain"));
       }
-      emit(false);
+      emit();
     },
     [emit],
   );
@@ -235,8 +233,13 @@ export function TextEditable({
         spellCheck
         data-placeholder={isEmpty ? (placeholder ?? "") : undefined}
         style={style}
-        onInput={() => emit(true)}
-        onBlur={() => emit(false)}
+        onInput={emit}
+        // Leaving the block ends the merge run: coming back to it later is a new edit, not
+        // a continuation of the last one.
+        onBlur={() => {
+          emit();
+          endEdit();
+        }}
         onPaste={handlePaste}
         onKeyDown={handleKeyDown}
       />

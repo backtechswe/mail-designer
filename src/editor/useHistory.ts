@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useReducer, useRef } from "react";
 import type { MailDocument } from "../types.js";
 import {
+  DEFAULT_RUN_TIMEOUT_MS,
   historyReducer,
   initialHistory,
   redoLabel,
@@ -27,10 +28,25 @@ export interface HistoryControls {
   undo: () => void;
   redo: () => void;
   commit: (next: MailDocument, options: CommitOptions) => void;
+  /**
+   * End the current merge run. The next change becomes its own step even if it shares a
+   * key and arrives inside the time window — what should happen when focus leaves a field.
+   */
+  breakRun: () => void;
+  /**
+   * Swap in a different document and forget the history.
+   *
+   * Not the same thing as `commit`, and the difference matters. Applying a template edits
+   * the document you are on, so it belongs in the history. *Switching* to another document
+   * must not: undoing across a switch would pull the previous document's content into the
+   * new record, and autosave would then write it there. So the stacks are cleared instead.
+   */
+  load: (next: MailDocument) => void;
 }
 
 export interface HistoryOptions {
   limit?: number;
+  /** Backstop only — see DEFAULT_RUN_TIMEOUT_MS. Runs normally end on a real event. */
   coalesceMs?: number;
   /** Label used when the host swaps the document out from under the editor. */
   externalLabel?: string;
@@ -53,7 +69,7 @@ export function useHistory(
   options: HistoryOptions = {},
 ): HistoryControls {
   const limit = options.limit ?? 200;
-  const coalesceMs = options.coalesceMs ?? 600;
+  const coalesceMs = options.coalesceMs ?? DEFAULT_RUN_TIMEOUT_MS;
   const externalLabel = options.externalLabel ?? "";
 
   const [state, dispatch] = useReducer(historyReducer, initialHistory);
@@ -96,6 +112,18 @@ export function useHistory(
     [value, onChange, limit, coalesceMs],
   );
 
+  const breakRun = useCallback(() => dispatch({ type: "break" }), []);
+
+  const load = useCallback(
+    (next: MailDocument) => {
+      dispatch({ type: "clear" });
+      emitted.current = next;
+      previous.current = next;
+      onChange(next);
+    },
+    [onChange],
+  );
+
   const step = useCallback(
     (direction: "undo" | "redo") => {
       const target = direction === "undo" ? undoTarget(state) : redoTarget(state);
@@ -118,7 +146,9 @@ export function useHistory(
       undo: () => step("undo"),
       redo: () => step("redo"),
       commit,
+      breakRun,
+      load,
     }),
-    [state, step, commit],
+    [state, step, commit, breakRun, load],
   );
 }

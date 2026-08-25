@@ -11,7 +11,7 @@ export function TextView({ block, active }: { block: TextBlock; active: boolean 
       html={block.html}
       placeholder={t("block.text")}
       style={textStyle(block, doc.settings)}
-      onChange={(html, coalesce) => update(block.id, { html }, coalesce)}
+      onChange={(html) => update(block.id, { html })}
     />
   );
 }

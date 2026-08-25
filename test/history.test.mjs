@@ -6,6 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  DEFAULT_RUN_TIMEOUT_MS,
   historyReducer,
   initialHistory,
   redoLabel,
@@ -15,7 +16,6 @@ import {
 } from "../dist/editor/history.js";
 
 const LIMIT = 200;
-const WINDOW = 600;
 
 const doc = (n) => ({ version: 1, settings: {}, blocks: [], marker: n });
 
@@ -27,7 +27,7 @@ const commit = (state, previous, label, opts = {}) =>
     coalesceKey: opts.key,
     at: opts.at ?? 0,
     limit: opts.limit ?? LIMIT,
-    coalesceMs: opts.coalesceMs ?? WINDOW,
+    coalesceMs: opts.coalesceMs ?? DEFAULT_RUN_TIMEOUT_MS,
   });
 
 test("a commit records the document as it was, not the one replacing it", () => {
@@ -88,11 +88,11 @@ test("commits sharing a key merge while they keep arriving", () => {
   assert.equal(undoTarget(s).marker, 1, "undo lands before the whole burst, not inside it");
 });
 
-test("the merge window closes, so a pause starts a new step", () => {
+test("the backstop timeout does eventually close a run", () => {
   let s = initialHistory;
-  s = commit(s, doc(1), "x", { key: "text:a", at: 0 });
-  s = commit(s, doc(2), "x", { key: "text:a", at: 700 });
-  assert.equal(s.past.length, 2, `700ms is past the ${WINDOW}ms window`);
+  s = commit(s, doc(1), "x", { key: "text:a", at: 0, coalesceMs: 600 });
+  s = commit(s, doc(2), "x", { key: "text:a", at: 700, coalesceMs: 600 });
+  assert.equal(s.past.length, 2, "700ms is past the 600ms window this test set");
 });
 
 test("a different key never merges, even back to back", () => {
@@ -140,6 +140,39 @@ test("a long history really is long", () => {
   for (let i = 0; i < LIMIT; i += 1) s = historyReducer(s, { type: "undo", current: doc(-1) });
   assert.equal(s.past.length, 0);
   assert.equal(s.future.length, LIMIT);
+});
+
+test("an explicit break ends the run, so the next change is its own step", () => {
+  let s = initialHistory;
+  s = commit(s, doc(1), "x", { key: "text:a", at: 0 });
+  s = historyReducer(s, { type: "break" });
+  s = commit(s, doc(2), "x", { key: "text:a", at: 50 });
+  assert.equal(s.past.length, 2, "leaving the field and coming back is a new edit");
+});
+
+test("break on an already-closed run changes nothing", () => {
+  const s = commit(initialHistory, doc(1), "x", { at: 0 });
+  assert.equal(historyReducer(s, { type: "break" }), s, "same object, so React skips a render");
+});
+
+test("a run merges across a slow burst, not just a fast one", () => {
+  // The original 600ms window was the bug: on a document heavy enough that a render takes a
+  // few hundred milliseconds, the browser delays the next input event, so consecutive
+  // keystrokes arrived a second apart and every digit became its own undo step.
+  let s = initialHistory;
+  s = commit(s, doc(1), "x", { key: "update:a:fontSize", at: 0 });
+  s = commit(s, doc(2), "x", { key: "update:a:fontSize", at: 999 });
+  s = commit(s, doc(3), "x", { key: "update:a:fontSize", at: 2500 });
+  assert.equal(s.past.length, 1, "one adjustment session is one step");
+  assert.equal(undoTarget(s).marker, 1, "undo lands before the burst, not on a half-typed value");
+});
+
+test("the default run timeout is a backstop, not the primary rule", () => {
+  assert.ok(
+    DEFAULT_RUN_TIMEOUT_MS >= 10_000,
+    "runs end on real events — blur, reselection, another property — so the timer only has " +
+      "to catch a run nothing ever closes",
+  );
 });
 
 test("clear empties both stacks", () => {

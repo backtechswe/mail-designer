@@ -168,8 +168,7 @@ function OverrideEscape({ property }: { property: InheritableProperty }) {
 function MailSettingsPanel() {
   const { doc, updateSettings, t } = useEditor();
   const s = doc.settings;
-  const patch = (next: Partial<MailSettings>, coalesce = false): void =>
-    updateSettings(next, coalesce);
+  const patch = (next: Partial<MailSettings>): void => updateSettings(next);
 
   return (
     <>
@@ -234,7 +233,7 @@ function MailSettingsPanel() {
           hint={t("field.preheaderHint")}
           rows={2}
           value={s.preheader ?? ""}
-          onChange={(preheader, coalesce) => patch({ preheader }, coalesce)}
+          onChange={(preheader) => patch({ preheader })}
         />
       </Section>
     </>
@@ -248,7 +247,7 @@ function BlockPanel({ block }: { block: Block }) {
     center: t("align.center"),
     right: t("align.right"),
   };
-  const set = (patch: Partial<Block>, coalesce = false): void => update(block.id, patch, coalesce);
+  const set = (patch: Partial<Block>): void => update(block.id, patch);
 
   return (
     <>
@@ -461,7 +460,7 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
         label={t("field.src")}
         value={block.src}
         placeholder="https://"
-        onChange={(src, coalesce) => update(block.id, { src }, coalesce)}
+        onChange={(src) => update(block.id, { src })}
       />
       {onUploadImage ? (
         <Field label={t("field.upload")} hint={error ?? undefined}>
@@ -493,13 +492,13 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
         label={t("field.alt")}
         hint={t("field.altHint")}
         value={block.alt}
-        onChange={(alt, coalesce) => update(block.id, { alt }, coalesce)}
+        onChange={(alt) => update(block.id, { alt })}
       />
       <TextField
         label={t("field.href")}
         value={block.href ?? ""}
         placeholder="https://"
-        onChange={(href, coalesce) => update(block.id, { href: href || undefined }, coalesce)}
+        onChange={(href) => update(block.id, { href: href || undefined })}
       />
       <AlignField
         label={t("field.align")}
@@ -536,13 +535,13 @@ function ButtonFields({ block, labels }: { block: ButtonBlock; labels: Record<Al
       <TextField
         label={t("field.label")}
         value={block.label}
-        onChange={(label, coalesce) => update(block.id, { label }, coalesce)}
+        onChange={(label) => update(block.id, { label })}
       />
       <TextField
         label={t("field.href")}
         value={block.href}
         placeholder="https://"
-        onChange={(href, coalesce) => update(block.id, { href }, coalesce)}
+        onChange={(href) => update(block.id, { href })}
       />
       <FieldRow>
         <ColorField
@@ -630,7 +629,7 @@ function SocialFields({ block, labels }: { block: SocialBlock; labels: Record<Al
                   // typed by hand is never overwritten.
                   ...(resolveSocialIcon ? { iconUrl: resolveSocialIcon(network) } : {}),
                 };
-                update(block.id, { items }, true);
+                update(block.id, { items });
               }}
             />
             <input
@@ -640,7 +639,7 @@ function SocialFields({ block, labels }: { block: SocialBlock; labels: Record<Al
               onChange={(e) => {
                 const items = [...block.items];
                 items[index] = { ...item, href: e.target.value };
-                update(block.id, { items }, true);
+                update(block.id, { items });
               }}
             />
             <input
@@ -650,7 +649,7 @@ function SocialFields({ block, labels }: { block: SocialBlock; labels: Record<Al
               onChange={(e) => {
                 const items = [...block.items];
                 items[index] = { ...item, iconUrl: e.target.value };
-                update(block.id, { items }, true);
+                update(block.id, { items });
               }}
             />
             <button
@@ -769,7 +768,7 @@ function HtmlFields({ block }: { block: HtmlBlock }) {
       rows={10}
       mono
       value={block.html}
-      onChange={(html, coalesce) => update(block.id, { html }, coalesce)}
+      onChange={(html) => update(block.id, { html })}
     />
   );
 }

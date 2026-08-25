@@ -48,6 +48,19 @@ function describeUpdate(patch: object): "history.edit" | "history.style" {
     : "history.style";
 }
 
+/** True when every key in the patch already holds that value. Arrays compare by JSON. */
+function isNoOp(target: object, patch: object): boolean {
+  const current = target as Record<string, unknown>;
+  return Object.entries(patch).every(([key, next]) => {
+    const now = current[key];
+    if (now === next) return true;
+    if (typeof now === "object" && typeof next === "object" && now !== null && next !== null) {
+      return JSON.stringify(now) === JSON.stringify(next);
+    }
+    return false;
+  });
+}
+
 export interface MailDesignerProps {
   value: MailDocument;
   onChange: (next: MailDocument) => void;
@@ -181,33 +194,50 @@ export function MailDesigner({
     return {
       doc: value,
       selectedId,
-      select: setSelectedId,
+      select: (id) => {
+        // Moving the selection closes the merge run: whatever the user does next is a new
+        // edit, even if it touches the same property as before.
+        if (id !== selectedId) history.breakRun();
+        setSelectedId(id);
+      },
       t,
       mergeFields,
       onUploadImage,
       resolveSocialIcon,
-      update: (id, patch, coalesce) =>
+      update: (id, patch) => {
+        const found = findBlock(value, id);
+        // A control that re-emits its current value — a blur, a re-render, a colour picker
+        // settling on the shade it started from — must not leave an undo step behind.
+        if (found && isNoOp(found.block, patch)) return;
         apply(
           updateBlock(value, id, patch as Partial<Block>),
           t(describeUpdate(patch)),
-          // Keyed on the block *and* the fields, so typing merges but switching to another
-          // block — or to another property of the same block — starts a fresh step.
-          coalesce ? `update:${id}:${Object.keys(patch).join(",")}` : undefined,
-        ),
-      updateSettings: (patch: Partial<MailSettings>, coalesce) =>
+          // Keyed on the block *and* the fields: typing merges, but moving to another block
+          // or another property starts a fresh step.
+          `update:${id}:${Object.keys(patch).sort().join(",")}`,
+        );
+      },
+      updateSettings: (patch: Partial<MailSettings>) => {
+        if (isNoOp(value.settings, patch)) return;
         apply(
           updateSettingsIn(value, patch),
           t("history.settings"),
-          coalesce ? `settings:${Object.keys(patch).join(",")}` : undefined,
-        ),
+          `settings:${Object.keys(patch).sort().join(",")}`,
+        );
+      },
       updateColumn: (columnId, patch: Partial<Omit<MailColumn, "id" | "children">>) =>
-        apply(updateColumnIn(value, columnId, patch), t("history.column")),
+        apply(
+          updateColumnIn(value, columnId, patch),
+          t("history.column"),
+          `column:${columnId}:${Object.keys(patch).sort().join(",")}`,
+        ),
       insert: (block: Block, position: Position) =>
         apply(insertBlock(value, block, position), t("history.insert")),
       remove: (id) => apply(removeBlock(value, id), t("history.remove")),
       duplicate: (id) => apply(duplicateBlockIn(value, id), t("history.duplicate")),
       move: (id, position) => apply(moveBlock(value, id, position), t("history.move")),
       replaceDocument: (next) => apply(next, t("history.replace")),
+      endEdit: history.breakRun,
       startBlockDrag: startMove,
       isDragging: drag !== null,
       viewportWidth,

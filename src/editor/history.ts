@@ -14,10 +14,9 @@ export interface HistoryEntry {
   /** What the change was, for the undo button's label. */
   label: string;
   /**
-   * Consecutive changes sharing a key merge into one step while they keep arriving —
-   * that is what makes typing a sentence one undo rather than thirty. A key is scoped to
-   * what is being changed (`text:blockId`), so moving to another block starts a new step
-   * even if the user keeps typing.
+   * Consecutive changes sharing a key merge into one step — that is what makes typing a
+   * sentence one undo rather than thirty. A key is scoped to what is being changed
+   * (`update:blockId:fontSize`), so touching anything else starts a new step.
    */
   coalesceKey?: string | undefined;
   at: number;
@@ -48,9 +47,28 @@ export interface StepAction {
   current: MailDocument;
 }
 
-export type HistoryAction = CommitAction | StepAction | { type: "clear" };
+export type HistoryAction =
+  | CommitAction
+  | StepAction
+  | { type: "break" }
+  | { type: "clear" };
 
 export const initialHistory: HistoryState = { past: [], future: [], openAt: 0 };
+
+/**
+ * How long a merge run may stay open on time alone.
+ *
+ * Generous on purpose. Time started out as the *primary* criterion with a 600 ms window, and
+ * that was wrong: on a document heavy enough that a render takes a few hundred milliseconds,
+ * the browser delays the next input event, so two consecutive keystrokes arrived a full
+ * second apart and every digit became its own undo step. Undoing a font size then landed on
+ * a half-typed number.
+ *
+ * Runs are closed by real events instead — leaving the field, selecting another block,
+ * touching a different property, undoing. This is only a backstop for a run that no such
+ * event ever closes.
+ */
+export const DEFAULT_RUN_TIMEOUT_MS = 30_000;
 
 export function historyReducer(state: HistoryState, action: HistoryAction): HistoryState {
   switch (action.type) {
@@ -101,6 +119,11 @@ export function historyReducer(state: HistoryState, action: HistoryAction): Hist
         openAt: 0,
       };
     }
+
+    case "break":
+      // Ends the merge run without recording anything, so the next change starts a fresh
+      // step. Used when focus leaves a field: continuing to type in it later is a new edit.
+      return state.openKey === undefined ? state : { ...state, openKey: undefined, openAt: 0 };
 
     case "clear":
       return initialHistory;
