@@ -101,6 +101,11 @@ export const sv = {
   "inspector.mailHint": "Gäller hela mejlet. Ett enskilt block kan ha ett eget värde som går före.",
   "inspector.blockHint": "Tomma fält ärver från mejlet.",
   "field.upload": "Ladda upp",
+  "field.dropHint": "Dra hit en bild, eller klicka för att välja",
+  "field.quality": "Kvalitet",
+  "field.maxWidth": "Max bredd",
+  "field.originalSize": "Originalstorlek",
+  "field.compressGrew": "Komprimeringen gav en större fil — originalet används.",
   "field.compressed": "Komprimerad: {{before}} → {{after}} ({{width}} px bred)",
   "field.uploading": "Laddar upp …",
 
@@ -360,6 +365,11 @@ export const en: Record<keyof typeof sv, string> = {
   "inspector.mailHint": "Applies to the whole email. A block with its own value overrides it.",
   "inspector.blockHint": "Empty fields inherit from the email.",
   "field.upload": "Upload",
+  "field.dropHint": "Drop an image here, or click to choose",
+  "field.quality": "Quality",
+  "field.maxWidth": "Max width",
+  "field.originalSize": "Original size",
+  "field.compressGrew": "Compressing made the file bigger — the original is used instead.",
   "field.compressed": "Compressed: {{before}} → {{after}} ({{width}} px wide)",
   "field.uploading": "Uploading …",
 

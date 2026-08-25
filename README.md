@@ -155,10 +155,26 @@ than about images:
 - **Everything else becomes JPEG, not WebP.** Outlook on Windows still does not render WebP.
 
 Animated GIF and SVG pass through untouched, a file already small enough is left alone, and a
-re-encode that came out *bigger* is discarded in favour of the original. The default width is
-twice the mail's own, which is what a retina screen uses. `imageCompression={false}` turns it
-off; `imageCompression={{ maxWidth: 1600, quality: 0.9 }}` tunes it. `compressImage` is
-exported for hosts that want it elsewhere.
+re-encode that came out *bigger* is discarded in favour of the original — the usual fate of a
+small PNG screenshot pushed through JPEG. The default width is twice the mail's own, which is
+what a retina screen uses.
+
+**The user gets the last word.** After an upload, a quality slider and a width menu appear with
+the resulting size beside them. Dragging shows what it would weigh; releasing uploads once —
+`onUploadImage` writes to storage someone pays for, and a slider that uploaded per frame would
+leave a trail of orphans behind every adjustment. Adjusting always re-encodes the *original*
+file, which is kept in memory for the purpose: re-compressing an already-compressed JPEG is how
+a picture quietly turns to mush over a few passes.
+
+`imageCompression={false}` turns the whole thing off; `imageCompression={{ maxWidth: 1600,
+quality: 0.9 }}` changes the starting point. `compressImage` is exported for hosts that want it
+elsewhere.
+
+The picker itself is a drop target rather than a file input: `<input type="file">`'s button
+belongs to the browser and cannot be styled to match anything, and dragging a picture in is
+what people try first. And once an image has been uploaded the URL field disappears — a `data:`
+URI is twenty kilobytes of base64 that nobody reads and nobody can edit. It comes back for the
+case it is good for: pasting the address of a hosted picture.
 
 ### Data fields
 

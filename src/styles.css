@@ -2680,3 +2680,132 @@
   top: auto;
   bottom: calc(100% + 8px);
 }
+
+/* -------------------------------------------------------- picking and squeezing images */
+
+/*
+ * A drop target, not a file input. The browser's own button cannot be styled to match
+ * anything, and dragging a picture in is what people try first — so the input is hidden
+ * behind a target that accepts both.
+ */
+.md-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 1px dashed var(--md-border-strong);
+  border-radius: var(--md-radius);
+  background: var(--md-bg-subtle);
+  color: var(--md-text-muted);
+  font-size: 11.5px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.md-drop:hover,
+.md-drop:focus-visible {
+  border-color: var(--md-accent);
+  color: var(--md-accent);
+}
+
+.md-drop.is-dragging {
+  border-color: var(--md-accent);
+  border-style: solid;
+  background: var(--md-accent-soft);
+  color: var(--md-accent);
+}
+
+.md-drop input[type="file"] {
+  /* Present for the file dialog and for assistive technology; never seen. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.md-drop-label {
+  min-width: 0;
+}
+
+.md-compress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: calc(var(--md-space) * -0.5) 0 var(--md-space);
+  padding: 10px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius);
+  background: var(--md-bg-subtle);
+}
+
+.md-compress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.md-compress-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--md-text-muted);
+}
+
+.md-compress-size {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.md-compress-row {
+  display: grid;
+  grid-template-columns: 5em 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--md-text-muted);
+}
+
+.md-compress-row input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--md-accent);
+}
+
+.md-compress-row select {
+  font-size: 11px;
+  padding: 3px 5px;
+}
+
+.md-compress-value {
+  min-width: 2.5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-text);
+}
+
+.md-compress-note {
+  margin: 2px 0 0;
+  font-size: 10.5px;
+  line-height: 1.4;
+  color: var(--md-text-muted);
+}
+
+/* The size is being recomputed: dimmed rather than replaced, so the panel does not jump. */
+.md-compress-size.is-measuring {
+  opacity: 0.45;
+}

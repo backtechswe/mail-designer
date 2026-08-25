@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type {
   Align,
   Spacing,
@@ -23,7 +23,7 @@ import { computeWidths } from "../render/html/columns.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
-import { formatBytes } from "./compress.js";
+import { ImageUpload } from "./ImageUpload.js";
 import {
   AlignField,
   VerticalAlignField,
@@ -598,17 +598,18 @@ function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align,
 }
 
 function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Align, string> }) {
-  const { update, onUploadImage, compressImage, capabilities, t } = useEditor();
+  const { update, capabilities, t } = useEditor();
   const caps = capabilities(block);
-  const fileInput = useRef<HTMLInputElement | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** What the last upload saved, so the shrinking is something the user can see happening. */
-  const [saved, setSaved] = useState<string | null>(null);
+  /*
+   * A data: URI is the shape an uploaded image takes in a host with no storage, and it is
+   * twenty kilobytes of base64 that nobody reads and nobody can meaningfully edit. The field
+   * is for the case it is good for: pasting the address of a hosted picture.
+   */
+  const uploaded = block.src.startsWith("data:");
 
   return (
     <>
-      {caps.editContent ? (
+      {caps.editContent && !uploaded ? (
         <TextField
           label={t("field.src")}
           value={block.src}
@@ -616,45 +617,10 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
           onChange={(src) => update(block.id, { src })}
         />
       ) : null}
-      {onUploadImage && caps.editContent ? (
-        <Field label={t("field.upload")} hint={error ?? saved ?? undefined}>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/*"
-            disabled={uploading}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUploading(true);
-              setError(null);
-              setSaved(null);
-              try {
-                // Shrink first, upload second: the host's callback should never see the
-                // 4000px original when the column is 600px wide.
-                const result = compressImage ? await compressImage(file) : null;
-                const url = await onUploadImage(result?.file ?? file);
-                update(block.id, { src: url });
-                if (result?.changed) {
-                  setSaved(
-                    t("field.compressed", {
-                      before: formatBytes(result.before),
-                      after: formatBytes(result.after),
-                      width: result.width,
-                    }),
-                  );
-                }
-              } catch (err) {
-                setError(err instanceof Error ? err.message : String(err));
-              } finally {
-                setUploading(false);
-                if (fileInput.current) fileInput.current.value = "";
-              }
-            }}
-          />
-          {uploading ? <span className="md-field-hint">{t("field.uploading")}</span> : null}
-        </Field>
-      ) : null}
+      {/* Keyed on the block: the picked file, the quality and the error belong to one image,
+          and a component instance that survived the selection change would carry them to the
+          next one. */}
+      {caps.editContent ? <ImageUpload key={block.id} block={block} /> : null}
       {caps.editContent ? (
         <>
           <TextField
