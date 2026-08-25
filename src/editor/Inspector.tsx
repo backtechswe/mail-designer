@@ -17,6 +17,7 @@ import type {
 import { clearOverrides, countOverrides, createBlock, createColumn, findBlock } from "../document.js";
 import type { InheritableProperty } from "../document.js";
 import { HEADING_SIZE } from "../blocks/canvasStyle.js";
+import { computeWidths } from "../render/html/columns.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import {
@@ -309,25 +310,101 @@ function SectionFields({ block }: { block: SectionBlock }) {
   );
 }
 
+/** Two is a pair, six is an icon row. Beyond that a 600px email has nothing left to give. */
+const MAX_COLUMNS = 6;
+
 function ColumnsFields({ block }: { block: ColumnsBlock }) {
-  const { update, t } = useEditor();
+  const { doc, update, updateColumn, t } = useEditor();
+  const count = block.columns.length;
+
+  // What the renderer will actually produce, so the panel shows the truth rather than the
+  // numbers that were typed.
+  const resolved = computeWidths(block.columns);
+  const explicitTotal = block.columns.reduce((sum, c) => sum + (c.width ?? 0), 0);
+  const anyExplicit = block.columns.some((c) => c.width !== undefined);
+  const approxPx = Math.round(
+    (doc.settings.width - 80 - block.gap * (count - 1)) / Math.max(1, count),
+  );
+
+  const setCount = (next: number): void => {
+    const columns = [...block.columns];
+    // Growing adds a column with a text block in it; shrinking drops trailing ones. Widths
+    // are cleared either way — kept ones would no longer add up to a sensible row.
+    while (columns.length < next) columns.push(createColumn([createBlock("text") as TextBlock]));
+    while (columns.length > next) columns.pop();
+    update(block.id, {
+      columns: columns.map(({ width: _width, ...rest }) => rest),
+    } as Partial<ColumnsBlock>);
+  };
+
   return (
     <>
       <SelectField
         label={t("field.columnCount")}
-        value={block.columns.length}
-        options={[2, 3].map((n) => ({ value: n, label: String(n) }))}
-        onChange={(count) => {
-          const columns = [...block.columns];
-          // Growing adds an empty column; shrinking drops trailing ones. Widths are
-          // cleared so computeWidths shares the row evenly again.
-          while (columns.length < count) columns.push(createColumn([createBlock("text") as TextBlock]));
-          while (columns.length > count) columns.pop();
-          update(block.id, {
-            columns: columns.map(({ width: _width, ...rest }) => rest),
-          } as Partial<ColumnsBlock>);
-        }}
+        value={count}
+        options={Array.from({ length: MAX_COLUMNS - 1 }, (_, i) => ({
+          value: i + 2,
+          label: String(i + 2),
+        }))}
+        {...(count >= 4
+          ? { hint: t("field.columnsNarrowHint", { count, px: approxPx }) }
+          : {})}
+        onChange={setCount}
       />
+
+      {/*
+        Widths behave like a table: give a column a percentage and it keeps it, leave one
+        blank and it shares whatever is left. That mix is the useful part — "sidebar at 30%,
+        the rest splits the remainder" is one number, not three.
+      */}
+      <Field
+        label={t("field.columnWidths")}
+        {...(anyExplicit && explicitTotal > 100
+          ? { hint: t("field.columnsOverHint", { total: Math.round(explicitTotal) }) }
+          : {})}
+      >
+        <span className="md-colwidths">
+          {block.columns.map((column, index) => (
+            <label key={column.id}>
+              <span>{index + 1}</span>
+              <input
+                type="number"
+                min={5}
+                max={95}
+                value={column.width ?? ""}
+                placeholder={String(Math.round(resolved[index] ?? 0))}
+                aria-label={t("field.columnLabel", { n: index + 1 })}
+                title={
+                  column.width === undefined
+                    ? `${t("field.shared")} · ${Math.round(resolved[index] ?? 0)} %`
+                    : undefined
+                }
+                onChange={(e) =>
+                  updateColumn(column.id, {
+                    width: e.target.value === "" ? undefined : Number(e.target.value),
+                  })
+                }
+              />
+            </label>
+          ))}
+        </span>
+      </Field>
+
+      {anyExplicit ? (
+        <button
+          type="button"
+          className="md-secondary-button"
+          onClick={() =>
+            update(block.id, {
+              columns: block.columns.map(({ width: _w, ...rest }) => rest),
+            } as Partial<ColumnsBlock>)
+          }
+        >
+          <Icon name="columns" size={11} />
+          {t("field.equalWidths")}
+        </button>
+      ) : null}
+
       <NumberField
         label={t("field.gap")}
         value={block.gap}

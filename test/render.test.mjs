@@ -134,6 +134,40 @@ test("the gap is taken out of the percentages so every column gets equal content
   );
 });
 
+test("many columns still divide the row exactly", () => {
+  for (const n of [4, 5, 6]) {
+    const widths = computeWidths(Array.from({ length: n }, () => ({})), {
+      totalWidth: 600,
+      gap: 16,
+    });
+    assert.equal(widths.length, n);
+    const total = widths.reduce((a, b) => a + b, 0);
+    assert.ok(Math.abs(total - 100) < 0.001, `${n} columns summed to ${total}`);
+
+    // Equal content widths, the same guarantee three columns get.
+    const content = widths.map((w, i) => (w / 100) * 600 - (i < n - 1 ? 16 : 0));
+    const spread = Math.max(...content) - Math.min(...content);
+    assert.ok(spread < 0.5, `${n} columns differ by ${spread}px`);
+  }
+});
+
+test("a mix of fixed and shared widths splits only the remainder", () => {
+  // "Sidebar at 30%, the rest shares what is left" — the useful case, and one number.
+  const widths = computeWidths([{ width: 30 }, {}, {}], { totalWidth: 600, gap: 0 });
+  assert.ok(Math.abs(widths[0] - 30) < 0.01);
+  assert.ok(Math.abs(widths[1] - 35) < 0.01);
+  assert.ok(Math.abs(widths[2] - 35) < 0.01);
+});
+
+test("widths that add up to more than 100 still produce a row that fits", () => {
+  // The inspector warns about this, but the renderer must not emit a row wider than 100%
+  // whatever it is handed — Outlook would push the second column out of the mail.
+  const widths = computeWidths([{ width: 70 }, { width: 70 }], { totalWidth: 600, gap: 0 });
+  const total = widths.reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(total - 100) < 0.001, `summed to ${total}`);
+  assert.ok(widths[1] < widths[0], "the last column absorbs the overflow");
+});
+
 test("explicit column widths still describe the content, not the box", () => {
   const totalWidth = 600;
   const gap = 20;

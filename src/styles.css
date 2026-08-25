@@ -1626,3 +1626,37 @@
   border-color: var(--md-accent);
   color: var(--md-accent);
 }
+
+/* Column widths, laid out like the row they describe. */
+.md-colwidths {
+  display: flex;
+  gap: 4px;
+}
+
+.md-colwidths label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md-colwidths label > span {
+  font-size: 9px;
+  text-align: center;
+  color: var(--md-text-muted);
+}
+
+.md-colwidths input {
+  padding: 4px 2px !important;
+  text-align: center;
+  font-size: 12px !important;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.md-colwidths input::-webkit-outer-spin-button,
+.md-colwidths input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}

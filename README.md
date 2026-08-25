@@ -79,8 +79,15 @@ Light and dark are the same tokens redefined; pass `colorScheme="light" | "dark"
 
 ## Blocks
 
-`section` › `columns` (2–3, no nesting) › `heading` · `text` · `image` · `button` · `social` ·
+`section` › `columns` (2–6, no nesting) › `heading` · `text` · `image` · `button` · `social` ·
 `divider` · `spacer` · `html`
+
+Columns behave like a table row: give one an explicit percentage and it keeps it, leave the
+rest blank and they share what is left — so *"sidebar at 30%, the others split the remainder"*
+is one number rather than three. The inspector shows the resulting width of every column as a
+placeholder, warns when explicit widths add up to more than 100, and offers one click back to
+equal. The renderer always emits a row that totals exactly 100% whatever it is handed, because
+Outlook would push an over-wide column out of the mail rather than wrapping it.
 
 Nesting rules live in one predicate (`canInsert`), and drag-and-drop consults it to decide
 which drop targets to offer — an illegal arrangement is never reachable through the UI.
