@@ -320,6 +320,26 @@ of where you click:
 
 `ancestorsOf(doc, id)` and `parentOf(doc, id)` expose the same chain to a host app.
 
+### Three viewports, and an optional device frame
+
+`Desktop`, `Tablet` and `Phone` — 640 (the mail's own width), 768 and 375 CSS pixels — and
+they work while editing, not only while previewing. The canvas stacks columns on the same rule
+the emitted CSS uses (`viewportWidth < settings.width - 20`) rather than on the name of the
+viewport, so what you see while editing and what the media query actually does cannot drift
+apart.
+
+The frame toggle draws the preview inside a generic phone, tablet or window, in CSS, with no
+images. The screen has a real device's height and the mail scrolls inside it — a frame that
+grew to the height of the mail would be a 4000px-tall "phone", which answers the one question
+the mockup exists to answer, *how much of this is above the fold*, wrongly. The phone's status
+strip and home area take the mail's own page colour, so nothing about the frame can be
+mistaken for a seam in the mail.
+
+| | |
+|---|---|
+| `1` / `2` / `3` | Desktop, tablet, phone |
+| `M` | Show or hide the device frame (switches to preview, where it means something) |
+
 ### Moving blocks
 
 Drag by the grip that appears on hover, or drop a new block straight from the palette.

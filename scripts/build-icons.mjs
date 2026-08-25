@@ -51,6 +51,9 @@ const ICONS = {
   // views and settings
   desktop: ["desktop", "solid"],
   mobile: ["mobile-screen", "solid"],
+  tablet: ["tablet-screen-button", "solid"],
+  laptop: ["laptop", "solid"],
+  frame: ["crop-simple", "solid"],
   eye: ["eye", "solid"],
   gear: ["gear", "solid"],
   templates: ["layer-group", "solid"],

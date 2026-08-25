@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MailDocument } from "../types.js";
 import { toHtml } from "../render/toHtml.js";
 import { WarningStrip } from "./WarningStrip.js";
+import { DeviceFrame } from "./DeviceFrame.js";
+import type { Viewport } from "./Toolbar.js";
 
 /**
  * The byte-exact truth: the renderer's actual output in an iframe.
@@ -18,11 +20,15 @@ export function PreviewFrame({
   doc,
   width,
   data,
+  viewport = "desktop",
+  mockup = false,
 }: {
   doc: MailDocument;
   width: number;
   /** Sample values substituted into the preview, so it shows a real recipient's mail. */
   data?: Record<string, string>;
+  viewport?: Viewport;
+  mockup?: boolean;
 }) {
   const rendered = useMemo(() => toHtml(doc, data ? { data } : {}), [doc, data]);
   const html = rendered.html;
@@ -57,16 +63,22 @@ export function PreviewFrame({
   return (
     <div className="md-preview">
       <WarningStrip doc={doc} result={rendered} />
-      <iframe
-        ref={ref}
-        title="preview"
-        // srcDoc rather than a blob URL: this re-renders on every edit, and blob URLs would
-        // leak one object per keystroke.
-        srcDoc={html}
-        sandbox="allow-same-origin"
-        onLoad={measure}
-        style={{ width, height }}
-      />
+      <DeviceFrame
+        viewport={viewport}
+        enabled={mockup}
+        background={doc.settings.backgroundColor}
+      >
+        <iframe
+          ref={ref}
+          title="preview"
+          // srcDoc rather than a blob URL: this re-renders on every edit, and blob URLs would
+          // leak one object per keystroke.
+          srcDoc={html}
+          sandbox="allow-same-origin"
+          onLoad={measure}
+          style={{ width, height }}
+        />
+      </DeviceFrame>
     </div>
   );
 }

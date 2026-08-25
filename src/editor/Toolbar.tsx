@@ -4,7 +4,7 @@ import { HistoryBar } from "./HistoryBar.js";
 import type { ReactNode } from "react";
 
 export type ViewMode = "edit" | "preview";
-export type Viewport = "desktop" | "mobile";
+export type Viewport = "desktop" | "tablet" | "phone";
 
 export function Toolbar({
   view,
@@ -15,6 +15,8 @@ export function Toolbar({
   onOpenShortcuts,
   dataOpen,
   onToggleData,
+  mockup,
+  onToggleMockup,
   extra,
 }: {
   view: ViewMode;
@@ -26,6 +28,9 @@ export function Toolbar({
   /** Present when the data panel is available. */
   dataOpen?: boolean;
   onToggleData?: () => void;
+  /** Present in preview mode, where a device outline is meaningful. */
+  mockup?: boolean;
+  onToggleMockup?: () => void;
   /** Host-supplied controls — the template menu lands here. */
   extra?: ReactNode;
 }) {
@@ -50,29 +55,42 @@ export function Toolbar({
         </button>
       </div>
 
-      {/* Applies to the canvas as well as the preview: switching to mobile while editing
-          is how you check that a design still works there, so it must not yank the user
-          out of edit mode to do it. */}
+      {/* Applies to the canvas as well as the preview: checking a design at phone width while
+          editing it must not yank the user out of edit mode. */}
       <div className="md-toolbar-group md-segmented">
-        <button
-          type="button"
-          aria-pressed={viewport === "desktop"}
-          title={t("toolbar.desktop")}
-          aria-label={t("toolbar.desktop")}
-          onClick={() => onViewportChange("desktop")}
-        >
-          <Icon name="desktop" size={13} />
-        </button>
-        <button
-          type="button"
-          aria-pressed={viewport === "mobile"}
-          title={t("toolbar.mobile")}
-          aria-label={t("toolbar.mobile")}
-          onClick={() => onViewportChange("mobile")}
-        >
-          <Icon name="mobile" size={13} />
-        </button>
+        {(
+          [
+            ["desktop", "desktop", "toolbar.desktop"],
+            ["tablet", "tablet", "toolbar.tablet"],
+            ["phone", "mobile", "toolbar.phone"],
+          ] as const
+        ).map(([id, icon, label]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={viewport === id}
+            title={t(label)}
+            aria-label={t(label)}
+            onClick={() => onViewportChange(id)}
+          >
+            <Icon name={icon} size={13} />
+          </button>
+        ))}
       </div>
+
+      {onToggleMockup ? (
+        <div className="md-toolbar-group md-segmented">
+          <button
+            type="button"
+            aria-pressed={mockup}
+            title={t("toolbar.mockup")}
+            aria-label={t("toolbar.mockup")}
+            onClick={onToggleMockup}
+          >
+            <Icon name="frame" size={13} />
+          </button>
+        </div>
+      ) : null}
 
       {onToggleData ? (
         <div className="md-toolbar-group md-segmented">

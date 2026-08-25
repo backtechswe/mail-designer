@@ -184,26 +184,36 @@ export function masthead(
     [
       columns(
         [
-          column([
-            text(
-              `<span style="letter-spacing:0.16em;font-weight:bold">${wordmark.toUpperCase()}</span>`,
-              { fontSize: 13, color: colors.ink, padding: [0, 0, 0, 0] },
-            ),
-          ]),
-          column([
-            text(meta, {
-              fontSize: 12,
-              color: colors.muted,
-              align: "right",
-              padding: [1, 0, 0, 0],
-            }),
-          ]),
+          // 60/40, not halves: a letter-spaced wordmark needs more room than a date, and at
+          // 375px an even split wrapped it onto two lines.
+          column(
+            [
+              text(
+                `<span style="letter-spacing:0.16em;font-weight:bold">${wordmark.toUpperCase()}</span>`,
+                { fontSize: 13, color: colors.ink, padding: [0, 0, 0, 0] },
+              ),
+            ],
+            60,
+          ),
+          column(
+            [
+              text(meta, {
+                fontSize: 12,
+                color: colors.muted,
+                align: "right",
+                padding: [1, 0, 0, 0],
+              }),
+            ],
+            40,
+          ),
         ],
         // Two halves of one line: stacking them on a phone would read as two paragraphs.
         { gap: 12, stackOnMobile: false },
       ),
     ],
-    { padding: [28, 40, 28, 40], ...patch },
+    // Tighter side padding on a phone: 40px of margin either side of a header line is most
+    // of a narrow screen.
+    { padding: [28, 40, 28, 40], mobilePadding: [24, 24, 24, 24], ...patch },
   );
 }
 

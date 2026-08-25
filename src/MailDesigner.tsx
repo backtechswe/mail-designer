@@ -49,8 +49,19 @@ import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
 
-/** Width the mobile viewport renders at. Narrow enough to catch real phone problems. */
-const MOBILE_WIDTH = 375;
+/**
+ * Widths the viewports render at, in CSS pixels — the numbers a real client would report.
+ * 375 is the narrow end of current phones, 768 a tablet in portrait. Desktop is the mail's own
+ * width, because there is nothing wider for it to render at.
+ */
+const VIEWPORT_WIDTH = { tablet: 768, phone: 375 } as const;
+
+/** 1 / 2 / 3 switch viewport, left to right, in the same order as the toolbar's own buttons. */
+const VIEWPORT_KEYS: Record<string, Viewport | undefined> = {
+  "1": "desktop",
+  "2": "tablet",
+  "3": "phone",
+};
 
 /** Fields whose change is content the reader will see, rather than styling. */
 const CONTENT_FIELDS = new Set(["html", "label", "src", "alt", "href", "items", "level"]);
@@ -189,6 +200,7 @@ export function MailDesigner({
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [ownData, setOwnData] = useState<Record<string, string>>(dataProp ?? {});
   const [dataOpen, setDataOpen] = useState(false);
+  const [mockup, setMockup] = useState(false);
 
   const permissions = useMemo(() => resolvePermissions(permissionsProp), [permissionsProp]);
   const data = dataProp ?? ownData;
@@ -213,7 +225,8 @@ export function MailDesigner({
 
   // Derived, not stored: keeping a width in state meant it went stale the moment the user
   // changed the email's own width in the inspector.
-  const viewportWidth = viewport === "mobile" ? MOBILE_WIDTH : value.settings.width;
+  const viewportWidth =
+    viewport === "desktop" ? value.settings.width : VIEWPORT_WIDTH[viewport];
 
   // One i18next instance per locale/overrides pair, never the global singleton.
   const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
@@ -266,18 +279,37 @@ export function MailDesigner({
     if (!root) return;
 
     const onKeyDown = (event: KeyboardEvent): void => {
-      // "?" opens the list. Not gated on the modifier, but not while typing either.
-      if (event.key === "?" && !event.metaKey && !event.ctrlKey) {
+      // The unmodified keys. Cheap to reach, so they are the ones worth having for things you
+      // do dozens of times an hour — but only when the keystroke is not text being typed.
+      if (!event.metaKey && !event.ctrlKey && !event.altKey) {
         const target = event.target as HTMLElement | null;
         const typing =
           target?.isContentEditable ||
           target?.tagName === "INPUT" ||
-          target?.tagName === "TEXTAREA";
-        if (!typing) {
+          target?.tagName === "TEXTAREA" ||
+          target?.tagName === "SELECT";
+
+        if (event.key === "?" && !typing) {
           event.preventDefault();
           setShortcutsOpen(true);
+          return;
         }
-        return;
+
+        const asViewport = VIEWPORT_KEYS[event.key];
+        if (asViewport && !typing) {
+          event.preventDefault();
+          setViewport(asViewport);
+          return;
+        }
+
+        if (event.key.toLowerCase() === "m" && !typing) {
+          event.preventDefault();
+          setMockup((on) => !on);
+          // A device frame around the editing canvas would mean nothing, so the key implies
+          // the mode it belongs to rather than silently doing nothing.
+          setView("preview");
+          return;
+        }
       }
 
       if (event.key === "Escape" && !shortcutsOpen && !confirmRequest) {
@@ -447,7 +479,10 @@ export function MailDesigner({
       startBlockDrag: startMove,
       isDragging: drag !== null,
       viewportWidth,
-      isMobileViewport: viewport === "mobile",
+      // Keyed on the actual width against the media query's own breakpoint, not on the
+      // viewport name: a 768px tablet does not stack a 600px mail, and a 900px mail would
+      // stack on a tablet. The canvas has to agree with the CSS, not with the label.
+      isMobileViewport: viewportWidth < value.settings.width - 20,
       history,
     };
   }, [
@@ -538,6 +573,9 @@ export function MailDesigner({
           {...(permissions.data === "hidden"
             ? {}
             : { dataOpen, onToggleData: () => setDataOpen((v) => !v) })}
+          {...(view === "preview"
+            ? { mockup, onToggleMockup: () => setMockup((v) => !v) }
+            : {})}
           extra={permissions.templates ? toolbarExtra : null}
         />
         {/* Preview renders a single child, so the three-column grid has to collapse with it
@@ -547,7 +585,13 @@ export function MailDesigner({
           {view === "edit" ? (
             <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
           ) : (
-            <PreviewFrame doc={value} width={viewportWidth} data={data} />
+            <PreviewFrame
+              doc={value}
+              width={viewportWidth}
+              data={data}
+              viewport={viewport}
+              mockup={mockup}
+            />
           )}
           {view === "edit" && permissions.structure ? null : null}
           {view === "edit" ? <Inspector /> : null}

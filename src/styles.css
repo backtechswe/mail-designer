@@ -1058,6 +1058,12 @@
 
 /* ------------------------------------------------------------------ preview */
 
+/*
+ * A column that centres its children. `align-self: flex-start` used to sit on the iframe,
+ * which on a column layout aligns on the cross axis — so the preview was pinned left inside a
+ * container the warning strip had widened to 760px, and the leftover space read as a stray
+ * right margin.
+ */
 .md-preview {
   display: flex;
   flex-direction: column;
@@ -1071,7 +1077,7 @@
 .md-preview iframe {
   /* Height is set inline from the measured content — see PreviewFrame. */
   flex: none;
-  align-self: flex-start;
+  display: block;
   border: 0;
   border-radius: var(--md-radius);
   background: #ffffff;
@@ -1865,4 +1871,192 @@
   font-family: var(--md-font);
   font-size: 11px;
   white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ device frames */
+
+/*
+ * Generic hardware outlines, drawn in CSS — no images and no dependency, and deliberately not
+ * any manufacturer's product.
+ *
+ * They are not decoration. A 600px mail looks fine floating in a white void and then arrives
+ * on a phone with the text running to both edges; seeing it inside a screen the size of a real
+ * one is what makes that obvious before it is sent.
+ */
+.md-device {
+  flex: none;
+  position: relative;
+  box-sizing: border-box;
+  /*
+   * The frame must fit the pane whatever device it is drawing — a mockup you have to scroll to
+   * see is worse than no mockup. The screens below give their ideal height and shrink from
+   * here, so this one rule keeps all three honest. Against the pane, not the viewport: the
+   * host app owns everything above us and we cannot know how tall its own chrome is.
+   */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #1b1b20;
+  box-shadow: var(--md-lift);
+}
+
+.md-device-screen {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Lets max-height on .md-device shrink the screen instead of overflowing the frame. */
+  min-height: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/*
+ * The scrolling part of the screen. Separate from .md-device-screen so the phone's status bar
+ * and home area stay put while the mail moves under them, as they do on a real device.
+ */
+.md-device-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.md-device-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.md-device-viewport::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.md-device-screen iframe {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Phone: the pill and the home bar are what stop a rounded rectangle reading as a card. */
+.md-device--phone {
+  padding: 12px;
+  border-radius: 44px;
+}
+
+.md-device--phone .md-device-screen {
+  /*
+   * A real handset's screen, so "above the fold" means what it means on a phone — but never
+   * taller than the window, or the frame itself would need scrolling to be seen.
+   */
+  height: 812px;
+  border-radius: 32px;
+}
+
+/*
+ * Reserved strips at the top and bottom of the screen. Without them the island covers the
+ * first line of the mail — which is a lie about the layout, since a real client renders below
+ * the notch. They carry the mail's own page colour (set inline from doc.settings).
+ */
+.md-device-status,
+.md-device-chin {
+  position: relative;
+  flex: none;
+  align-self: stretch;
+  background: #ffffff;
+}
+
+.md-device-status {
+  height: 46px;
+}
+
+.md-device-chin {
+  height: 26px;
+}
+
+.md-device-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 78px;
+  height: 22px;
+  border-radius: 999px;
+  background: #1b1b20;
+}
+
+.md-device-home {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 4px;
+  border-radius: 999px;
+  /*
+   * Inverted against whatever the mail's page colour is, so the indicator stays visible on a
+   * white mail and on a black one without us having to know which it is.
+   */
+  background: #ffffff;
+  mix-blend-mode: difference;
+  opacity: 0.5;
+}
+
+/* Tablet: a thicker even bezel and a single camera dot. */
+.md-device--tablet {
+  padding: 18px;
+  border-radius: 26px;
+}
+
+.md-device--tablet .md-device-screen {
+  height: 1024px;
+  border-radius: 6px;
+}
+
+.md-device-camera {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #43434f;
+}
+
+/*
+ * Desktop: a window bar, not a whole laptop. The mail is read inside a mail client, and a
+ * title bar is the honest amount of chrome to imply.
+ */
+.md-device--desktop {
+  padding: 0;
+  border-radius: 10px 10px 0 0;
+  background: #2a2a31;
+}
+
+.md-device-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  padding: 10px 12px;
+}
+
+.md-device-bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.md-device--desktop .md-device-screen {
+  align-self: stretch;
+  /* A window, not a monitor: roughly what a mail client shows above the fold. */
+  height: 680px;
+}
+
+/* A short foot so the window does not look severed at the bottom of the scroll. */
+.md-device-stand {
+  align-self: stretch;
+  height: 10px;
+  background: #2a2a31;
+  border-radius: 0 0 10px 10px;
 }
