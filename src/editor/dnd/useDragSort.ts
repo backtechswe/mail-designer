@@ -63,8 +63,8 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      // A block cannot be dropped inside itself; excluding its subtree here is cheaper than
-      // filtering candidates on every move.
+      // A block cannot be dropped inside itself, so its own containers are excluded below.
+      // Note it is *not* removed from its parent's list of children — see the comment there.
       const moving =
         source.kind === "move" ? canvas.querySelector(`[data-md-id="${source.id}"]`) : null;
 
@@ -97,7 +97,11 @@ export function useDragSort({ canvasRef, getBlock, onMove, onCreate }: Options) 
         for (const child of element.querySelectorAll<HTMLElement>("[data-md-id]")) {
           // Direct children of *this* container only, not blocks nested deeper.
           if (child.parentElement?.closest("[data-md-container]") !== element) continue;
-          if (moving && (child === moving || moving.contains(child))) continue;
+          // The dragged block stays in the list. Removing it looked tidier and was wrong:
+          // findDropTarget would then return an index into a list with the block already
+          // gone, while moveBlock expects an index into the real list and compensates for
+          // the removal itself. The two compensations cancelled out in one direction only,
+          // so dragging a block *down* moved it nowhere while dragging up worked.
           const childId = child.dataset.mdId;
           if (childId) children.push({ id: childId, rect: toRect(child) });
         }

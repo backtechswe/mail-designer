@@ -21,6 +21,15 @@ export interface MeasuredContainer {
   rect: Rect;
   /** How many containers enclose this one. The deepest hit wins. */
   depth: number;
+  /**
+   * The container's real children, **including the block currently being dragged**.
+   *
+   * That inclusion is part of the contract, not an oversight. The index returned here is fed
+   * to `moveBlock`, which expects an index into the document as it stands and compensates for
+   * removing the block itself. Filtering the dragged block out here would compensate a second
+   * time, and the two cancelled out in one direction only — dragging a block downwards moved
+   * it nowhere while dragging up worked.
+   */
   children: { id: string; rect: Rect }[];
 }
 
