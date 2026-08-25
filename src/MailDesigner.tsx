@@ -162,7 +162,9 @@ export function MailDesigner({
           onWidthChange={handleWidth}
           extra={toolbarExtra}
         />
-        <div className="md-layout">
+        {/* Preview renders a single child, so the three-column grid has to collapse with it
+            — otherwise the frame lands in the 176px palette column. */}
+        <div className={`md-layout${view === "preview" ? " md-layout--preview" : ""}`}>
           {view === "edit" ? <Palette onDragStart={startCreate} /> : null}
           {view === "edit" ? (
             <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />

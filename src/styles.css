@@ -192,12 +192,20 @@
   min-height: 0;
 }
 
+.md-layout--preview {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* Below this the three panels cannot all be useful at once, so the side panels
    become full-width rows above and below the canvas. */
 @media (max-width: 900px) {
   .md-layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(320px, 1fr) auto;
+  }
+
+  .md-layout--preview {
+    grid-template-rows: minmax(0, 1fr);
   }
 }
 
