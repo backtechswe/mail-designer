@@ -282,6 +282,7 @@ export function TextEditable({
               }}
             >
               <input
+                type="text"
                 autoFocus
                 value={linkDraft}
                 placeholder={t("text.linkPrompt")}

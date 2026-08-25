@@ -19,6 +19,9 @@
  */
 
 .md-root {
+  /* Light unless one of the rules below says otherwise — never "whatever the OS says", which
+     would leave the editor's own tokens and the browser's chrome disagreeing. */
+  color-scheme: light;
   /* Neutrals carry a faint blue-violet cast so they sit with the accent rather than
      fighting it. Pure grey next to a blue accent reads as slightly warm and cheap. */
   --md-accent: #2f54eb;
@@ -52,7 +55,14 @@
   line-height: 1.45;
 }
 
+/*
+ * Tells the browser to render its own chrome — scrollbars, spinners, the colour picker, the
+ * caret — in dark. Without it a dark editor keeps light grey scrollbars, because those are
+ * drawn by the user agent and no stylesheet of ours reaches them.
+ */
 .md-root[data-color-scheme="dark"] {
+  color-scheme: dark;
+
   --md-accent: #6a8bff;
   --md-accent-contrast: #0c0c11;
   --md-accent-soft: #1d2340;
@@ -69,6 +79,8 @@
 
 @media (prefers-color-scheme: dark) {
   .md-root:not([data-color-scheme="light"]) {
+    color-scheme: dark;
+
     --md-accent: #6a8bff;
     --md-accent-contrast: #0c0c11;
     --md-accent-soft: #1d2340;
@@ -218,8 +230,15 @@
 }
 
 /* Segmented control: one hairline box, no gaps, active segment filled. */
+/*
+ * One control with a chosen option, not a row of buttons. It also carries .md-toolbar-group,
+ * which spaces its children 2px apart — right for loose icon buttons, wrong here: the segments
+ * have to touch, or the hairline divider between them reads as a gap and the group falls apart
+ * into separate buttons.
+ */
 .md-segmented {
   display: inline-flex;
+  gap: 0;
   border: 1px solid var(--md-border);
   border-radius: var(--md-radius-sm);
   overflow: hidden;
@@ -251,6 +270,16 @@
   background: var(--md-accent);
   border-left-color: var(--md-accent);
   color: var(--md-accent-contrast);
+}
+
+/*
+ * The divider on the far side of a pressed segment, too. A grey hairline against the accent
+ * fill reads as a gap between two buttons rather than as one control with a chosen option —
+ * which is the whole difference between a segmented control and two buttons standing next to
+ * each other.
+ */
+.md-segmented button[aria-pressed="true"] + button {
+  border-left-color: var(--md-accent);
 }
 
 /* ------------------------------------------------------------------- layout */
@@ -860,9 +889,13 @@
   cursor: pointer;
 }
 
-.md-root input[type="text"],
-.md-root input[type="number"],
-.md-root input[type="file"],
+/*
+ * Matched by exclusion rather than by listing "text", because an <input> with no type
+ * attribute is a text input that `input[type="text"]` does not select — and it then falls all
+ * the way back to the user agent's own field: an inset 2px border and hard-coded black text,
+ * invisible on a dark background. Colour and checkbox keep their own rules below.
+ */
+.md-root input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]),
 .md-root textarea,
 .md-root select {
   width: 100%;
@@ -1291,24 +1324,39 @@
   background: var(--md-bg-subtle);
 }
 
-/* The name is the document's identity, so it is edited where it is read. */
+/*
+ * The name is the document's identity, so it is edited where it is read.
+ *
+ * Which means it has to keep reading as a heading. Outlining 14px semibold text with a 1px
+ * grey rectangle on hover turns the title into a form field — the affordance should say "you
+ * can type here" without saying "widget". So the border never appears at all: a soft chip
+ * fills in under the pointer, focus lifts the chip to the page colour, and the editor's own
+ * focus ring does the rest. Nothing moves at any point, because nothing about the box changes
+ * size.
+ */
 .md-docname {
   min-width: 8ch;
   max-width: 34ch;
-  padding: 4px 7px !important;
-  border-color: transparent !important;
+  padding: 5px 8px !important;
+  border: 0 !important;
+  border-radius: var(--md-radius) !important;
   background: transparent !important;
   font-size: 14px !important;
   font-weight: 600;
+  cursor: text;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
-.md-docname:hover {
-  border-color: var(--md-border) !important;
+/* Mixed from the text colour rather than a fixed grey, so it lands in both colour schemes. */
+.md-docname:hover:not(:focus) {
+  background: color-mix(in srgb, var(--md-text) 8%, transparent) !important;
 }
 
 .md-docname:focus {
-  border-color: var(--md-accent) !important;
   background: var(--md-bg) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--md-text) 14%, transparent);
 }
 
 .md-docbar-spacer {

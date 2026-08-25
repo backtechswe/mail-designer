@@ -109,6 +109,7 @@ function Fields({
             return (
               <li key={key}>
                 <input
+                  type="text"
                   className="md-mono"
                   value={key}
                   aria-label={t("data.fieldName")}
@@ -116,6 +117,7 @@ function Fields({
                   onChange={(e) => rename(key, e.target.value)}
                 />
                 <input
+                  type="text"
                   value={value}
                   aria-label={t("data.fieldValue")}
                   placeholder={t("data.noValue")}

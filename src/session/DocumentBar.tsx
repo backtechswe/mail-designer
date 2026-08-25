@@ -67,6 +67,7 @@ export function DocumentBar({
       {/* The name is the document's identity, so it is edited in place rather than behind a
           rename dialog. */}
       <input
+        type="text"
         className="md-docname"
         value={draftName ?? status.name}
         aria-label={t("session.name")}
