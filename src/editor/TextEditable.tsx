@@ -36,6 +36,15 @@ export interface TextEditableProps {
   active: boolean;
   /** False renders the text as plain output — the application owns these words. */
   editable?: boolean;
+  /**
+   * Plain text, not rich text: the value is read and written as `textContent`.
+   *
+   * A button's label is a string in the document model, and the renderer escapes it into the
+   * `<a>`. Letting the same editor produce `<b>` here would put markup in a field that has
+   * nowhere to render it — so bold, links and colour are gone, Enter is refused, and paste
+   * arrives as text. Data fields stay, because `[Namn]` in a button label is ordinary.
+   */
+  plain?: boolean;
 }
 
 export function TextEditable({
@@ -46,6 +55,7 @@ export function TextEditable({
   as = "div",
   active,
   editable = true,
+  plain = false,
 }: TextEditableProps) {
   const { t, dataFields, endEdit } = useEditor();
   const ref = useRef<HTMLElement | null>(null);
@@ -72,18 +82,21 @@ export function TextEditable({
     const el = ref.current;
     if (!el) return;
     if (domHtml.current === html) return;
-    el.innerHTML = html;
+    if (plain) el.textContent = html;
+    else el.innerHTML = html;
     domHtml.current = html;
-  }, [html]);
+  }, [html, plain]);
 
   const emit = useCallback(() => {
     const el = ref.current;
     if (!el) return;
-    const next = sanitizeInline(el.innerHTML);
+    // A plain field reads back what it shows. Anything a browser may have inserted —
+    // a <div> from Enter, a <span> from a paste — never becomes part of the value.
+    const next = plain ? (el.textContent ?? "") : sanitizeInline(el.innerHTML);
     if (next === domHtml.current) return;
     domHtml.current = next;
     onChange(next);
-  }, [onChange]);
+  }, [onChange, plain]);
 
   /**
    * Places the toolbar, and decides whether the field picker should be open.
@@ -190,7 +203,7 @@ export function TextEditable({
     (event: React.ClipboardEvent) => {
       event.preventDefault();
       const clipboard = event.clipboardData;
-      const asHtml = clipboard.getData("text/html");
+      const asHtml = plain ? "" : clipboard.getData("text/html");
       if (asHtml) {
         // Sanitising here is what stops a Word paste from carrying its stylesheet along.
         document.execCommand("insertHTML", false, sanitizeInline(asHtml));
@@ -199,32 +212,55 @@ export function TextEditable({
       }
       emit();
     },
-    [emit],
+    [emit, plain],
   );
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    // The picker owns arrows, Enter, Tab and Escape while it is open; it captures them at the
-    // document, so all this has to do is stay out of the way.
-    if (event.key === "Escape") {
-      (event.target as HTMLElement).blur();
-      return;
-    }
-    // Alt+arrow moves the *block*, not the caret, so it belongs to the canvas even while
-    // text has focus. Everything else stays here — Backspace must delete a character, not
-    // the block the caret is sitting in.
-    if (event.altKey && event.key.startsWith("Arrow")) return;
-    event.stopPropagation();
-  }, []);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+        // The picker owns arrows, Enter, Tab and Escape while it is open; it captures them at
+      // the document, so all this has to do is stay out of the way.
+      if (event.key === "Escape") {
+        (event.target as HTMLElement).blur();
+        return;
+      }
+      // Alt+arrow moves the *block*, not the caret, so it belongs to the canvas even while
+      // text has focus. Everything else stays here — Backspace must delete a character, not
+      // the block the caret is sitting in.
+      if (event.altKey && event.key.startsWith("Arrow")) return;
+      // One line means one line: Enter in a button label would otherwise leave a <div> in a
+      // field whose value is a string.
+      if (plain && event.key === "Enter") event.preventDefault();
+      event.stopPropagation();
+    },
+    [plain],
+  );
 
   const Tag = as as "div";
-  const isEmpty = !html || html === "<br>" || sanitizeInline(html).replace(/<[^>]*>/g, "").trim() === "";
+  const isEmpty = plain
+    ? html.trim() === ""
+    : !html || html === "<br>" || sanitizeInline(html).replace(/<[^>]*>/g, "").trim() === "";
 
   return (
-    <div className="md-texteditable" style={{ position: "relative" }}>
+    /*
+     * A plain field does not position the toolbar itself: it is nested inside whatever it
+     * labels — a button, with its own padding — so anchoring there puts the toolbar inside
+     * that padding. Static lets the host element be the anchor instead.
+     */
+    <div className="md-texteditable" style={{ position: plain ? "static" : "relative" }}>
       {editable && active && toolbar ? (
-        <div className="md-floating-toolbar" style={{ top: toolbar.top, left: toolbar.left }}>
+        <div
+          /*
+           * A plain field is one line inside something else — a button, with its own padding
+           * — so the caret arithmetic that works in a text block lands the toolbar on top of
+           * the label. Anchoring it to the field's own box instead needs no arithmetic at all.
+           */
+          className={plain ? "md-floating-toolbar md-floating-toolbar--above" : "md-floating-toolbar"}
+          style={plain ? { left: 0 } : { top: toolbar.top, left: toolbar.left }}
+        >
           {linkDraft === null ? (
             <>
+              {plain ? null : (
+                <>
               <ToolbarButton label={t("text.bold")} icon="bold" onClick={() => exec("bold")} />
               <ToolbarButton label={t("text.italic")} icon="italic" onClick={() => exec("italic")} />
               <ToolbarButton
@@ -246,6 +282,8 @@ export function TextEditable({
                   aria-label={t("text.color")}
                 />
               </label>
+                </>
+              )}
               {dataFields.length > 0 ? (
                 <button
                   type="button"

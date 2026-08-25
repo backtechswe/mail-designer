@@ -103,3 +103,34 @@ test("fitScale survives being measured before layout", () => {
   assert.equal(fitScale("tablet", { width: 0, height: 0 }), 1);
   assert.equal(fitScale("tablet", { width: -8, height: -8 }), 1);
 });
+
+/* ------------------------------------------------------- image compression, headless */
+
+import { compressImage, formatBytes } from "../dist/editor/compress.js";
+
+test("compression is a no-op outside a browser rather than a crash", async () => {
+  // The renderer entry is used on servers; the editor entry must at least not throw there.
+  const file = { size: 5_000_000, type: "image/jpeg", name: "x.jpg", lastModified: 0 };
+  const result = await compressImage(file);
+  assert.equal(result.changed, false);
+  assert.equal(result.reason, "unsupported");
+  assert.equal(result.file, file, "the original is handed back untouched");
+});
+
+test("formats that a canvas would destroy are passed through", async () => {
+  for (const type of ["image/gif", "image/svg+xml", "image/avif", "application/pdf"]) {
+    const result = await compressImage({ size: 5_000_000, type, name: "x", lastModified: 0 });
+    assert.equal(result.changed, false, type);
+  }
+});
+
+test("a file already small enough is left alone", async () => {
+  const result = await compressImage({ size: 12_000, type: "image/jpeg", name: "x.jpg", lastModified: 0 });
+  assert.equal(result.reason, "smaller-already");
+});
+
+test("formatBytes says something a person can read", () => {
+  assert.equal(formatBytes(900), "900 B");
+  assert.equal(formatBytes(180_000), "176 kB");
+  assert.equal(formatBytes(3_558_842), "3.4 MB");
+});

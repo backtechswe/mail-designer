@@ -329,7 +329,7 @@ function LeafView({ block, active }: { block: LeafBlock; active: boolean }) {
     case "image":
       return <ImageView block={block} />;
     case "button":
-      return <ButtonView block={block} />;
+      return <ButtonView block={block} active={active} />;
     case "divider":
       return <DividerView block={block} />;
     case "spacer":

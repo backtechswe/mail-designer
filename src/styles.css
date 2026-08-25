@@ -2649,3 +2649,34 @@
   padding: 5px 4px;
   font-size: 11.5px;
 }
+
+/*
+ * The button's label is a contenteditable inside the button itself. It must not draw a box
+ * of its own — the button is already the box — and it must not add a line of its own height,
+ * or the button would grow the moment it became editable.
+ */
+/*
+ * inline-block, not inline: the floating toolbar is positioned against this element, and an
+ * inline box gives it the geometry of the text run rather than of the field — which put the
+ * toolbar on top of the label instead of above it.
+ */
+.md-buttonview {
+  /* The anchor for the label's floating toolbar — see TextEditable's `plain` mode. */
+  position: relative;
+}
+
+.md-buttonview .md-texteditable {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.md-buttonview .md-editable {
+  display: inline-block;
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.md-floating-toolbar--above {
+  top: auto;
+  bottom: calc(100% + 8px);
+}

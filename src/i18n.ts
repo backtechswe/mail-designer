@@ -101,6 +101,7 @@ export const sv = {
   "inspector.mailHint": "Gäller hela mejlet. Ett enskilt block kan ha ett eget värde som går före.",
   "inspector.blockHint": "Tomma fält ärver från mejlet.",
   "field.upload": "Ladda upp",
+  "field.compressed": "Komprimerad: {{before}} → {{after}} ({{width}} px bred)",
   "field.uploading": "Laddar upp …",
 
   "align.left": "Vänster",
@@ -359,6 +360,7 @@ export const en: Record<keyof typeof sv, string> = {
   "inspector.mailHint": "Applies to the whole email. A block with its own value overrides it.",
   "inspector.blockHint": "Empty fields inherit from the email.",
   "field.upload": "Upload",
+  "field.compressed": "Compressed: {{before}} → {{after}} ({{width}} px wide)",
   "field.uploading": "Uploading …",
 
   "align.left": "Left",

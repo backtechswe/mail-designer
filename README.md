@@ -130,6 +130,36 @@ It reaches the output twice, as `valign="middle"` and as `vertical-align:middle`
 Word engine ignores the CSS property and honours the attribute, and modern clients do the
 opposite.
 
+### Editing on the thing itself
+
+Headings and text are edited in place, and so is a **button's label** — it is the one piece of
+copy people most often want to change, and routing it through the side panel meant writing a
+call to action while looking somewhere other than the button it belongs to. The label stays a
+plain string: the model has nowhere to put markup and the renderer escapes the value, so bold,
+links and colour are absent there and Enter is refused. Data fields are not — `[Namn]` in a
+button label is ordinary.
+
+### Image compression
+
+Pictures are shrunk before `onUploadImage` sees them. The person adding one is holding a
+4000px photo from a phone, the column is 600px wide, and nothing between those two facts fixes
+itself — image weight is the main reason a mail is slow on mobile data, and for `data:` URIs it
+is what pushes a message past Gmail's clipping limit.
+
+Canvas and `createImageBitmap`, so no dependency. Two decisions in it are about email rather
+than about images:
+
+- **A PNG with an alpha channel stays a PNG.** Flattening it onto white is exactly the bug that
+  turns a logo into a glowing white box in dark mode. Transparency is measured, not guessed
+  from the file type.
+- **Everything else becomes JPEG, not WebP.** Outlook on Windows still does not render WebP.
+
+Animated GIF and SVG pass through untouched, a file already small enough is left alone, and a
+re-encode that came out *bigger* is discarded in favour of the original. The default width is
+twice the mail's own, which is what a retina screen uses. `imageCompression={false}` turns it
+off; `imageCompression={{ maxWidth: 1600, quality: 0.9 }}` tunes it. `compressImage` is
+exported for hosts that want it elsewhere.
+
 ### Data fields
 
 Text can carry `[Bracketed]` tokens — a **data field** — replaced per recipient at send time.

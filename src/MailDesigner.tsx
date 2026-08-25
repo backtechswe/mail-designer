@@ -37,6 +37,8 @@ import { Inspector } from "./editor/Inspector.js";
 import { PreviewFrame } from "./editor/PreviewFrame.js";
 import { CodeView } from "./editor/CodeView.js";
 import { DEVICES } from "./editor/devices.js";
+import { compressImage } from "./editor/compress.js";
+import type { CompressOptions, CompressResult } from "./editor/compress.js";
 import { ConfirmDialog } from "./editor/ConfirmDialog.js";
 import type { ConfirmRequest } from "./editor/ConfirmDialog.js";
 import { ShortcutsPanel } from "./editor/ShortcutsPanel.js";
@@ -123,6 +125,15 @@ export interface MailDesignerProps {
   resetTo?: MailDocument;
   /** Enables the file picker on image blocks. Without it, only a URL field is offered. */
   onUploadImage?: (file: File) => Promise<string>;
+
+  /**
+   * Shrink images before `onUploadImage` sees them. On by default.
+   *
+   * The person adding a picture is holding a 4000px photo and the column is 600px wide, and
+   * nothing between those facts fixes itself. `false` hands the original file straight
+   * through — right when the host wants to do its own processing server-side.
+   */
+  imageCompression?: false | CompressOptions;
   /** Fills in a social icon URL from a network name, so users need not paste URLs. */
   resolveSocialIcon?: (network: string) => string;
 
@@ -191,6 +202,7 @@ export function MailDesigner({
   resetTo,
   onUploadImage,
   resolveSocialIcon,
+  imageCompression,
   previewIdentity,
   toolbarExtra,
   onHistoryChange,
@@ -241,6 +253,20 @@ export function MailDesigner({
 
   // One i18next instance per locale/overrides pair, never the global singleton.
   const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
+
+  /*
+   * Bound to the mail's own width: twice the content width is what a retina screen uses, and
+   * anything past that is bytes nobody sees. Rebuilt when the width changes, so widening the
+   * mail widens what new uploads keep.
+   */
+  const compress = useMemo(() => {
+    if (imageCompression === false) return undefined;
+    const options: CompressOptions = {
+      maxWidth: value.settings.width * 2,
+      ...(imageCompression ?? {}),
+    };
+    return (file: File): Promise<CompressResult> => compressImage(file, options);
+  }, [imageCompression, value.settings.width]);
 
   const identity = useMemo(
     () => ({
@@ -480,6 +506,7 @@ export function MailDesigner({
       permissions,
       capabilities: (block) => blockCapabilities(block, permissions),
       onUploadImage,
+      compressImage: compress,
       resolveSocialIcon,
       update: (id, patch) => {
         const found = findBlock(value, id);
@@ -537,6 +564,7 @@ export function MailDesigner({
     t,
     dataFields,
     onUploadImage,
+    compress,
     resolveSocialIcon,
     commit,
     history,

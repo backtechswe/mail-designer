@@ -23,6 +23,7 @@ import { computeWidths } from "../render/html/columns.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import { Breadcrumb } from "./Breadcrumb.js";
+import { formatBytes } from "./compress.js";
 import {
   AlignField,
   VerticalAlignField,
@@ -597,11 +598,13 @@ function TextFields({ block, labels }: { block: TextBlock; labels: Record<Align,
 }
 
 function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Align, string> }) {
-  const { update, onUploadImage, capabilities, t } = useEditor();
+  const { update, onUploadImage, compressImage, capabilities, t } = useEditor();
   const caps = capabilities(block);
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** What the last upload saved, so the shrinking is something the user can see happening. */
+  const [saved, setSaved] = useState<string | null>(null);
 
   return (
     <>
@@ -614,7 +617,7 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
         />
       ) : null}
       {onUploadImage && caps.editContent ? (
-        <Field label={t("field.upload")} hint={error ?? undefined}>
+        <Field label={t("field.upload")} hint={error ?? saved ?? undefined}>
           <input
             ref={fileInput}
             type="file"
@@ -625,9 +628,22 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
               if (!file) return;
               setUploading(true);
               setError(null);
+              setSaved(null);
               try {
-                const url = await onUploadImage(file);
+                // Shrink first, upload second: the host's callback should never see the
+                // 4000px original when the column is 600px wide.
+                const result = compressImage ? await compressImage(file) : null;
+                const url = await onUploadImage(result?.file ?? file);
                 update(block.id, { src: url });
+                if (result?.changed) {
+                  setSaved(
+                    t("field.compressed", {
+                      before: formatBytes(result.before),
+                      after: formatBytes(result.after),
+                      width: result.width,
+                    }),
+                  );
+                }
               } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
               } finally {

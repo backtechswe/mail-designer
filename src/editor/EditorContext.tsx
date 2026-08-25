@@ -6,6 +6,7 @@ import type { Translate } from "../i18n.js";
 import type { HistoryControls } from "./useHistory.js";
 import type { ConfirmRequest } from "./ConfirmDialog.js";
 import type { BlockCapabilities, ResolvedPermissions } from "../permissions.js";
+import type { CompressResult } from "./compress.js";
 
 /**
  * Everything a panel needs, in one place.
@@ -32,6 +33,11 @@ export interface EditorApi {
   /** What may be done to one block, after its own locks. */
   capabilities: (block: Block) => BlockCapabilities;
   onUploadImage?: ((file: File) => Promise<string>) | undefined;
+  /**
+   * Shrinks a picked file before it is uploaded, already carrying the mail's own width.
+   * Undefined when the host turned it off.
+   */
+  compressImage?: ((file: File) => Promise<CompressResult>) | undefined;
   resolveSocialIcon?: ((network: string) => string) | undefined;
 
   /**
