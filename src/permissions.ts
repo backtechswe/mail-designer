@@ -43,7 +43,7 @@ export interface Permissions {
    * copy and download.
    *
    * `false` removes it — right where the layout is the user's business and the markup is not,
-   * the Booksmart case, where the application owns everything downstream of the design. The
+   * the case where the application owns everything downstream of the design. The
    * object form picks the tabs: `{ html: true, json: false }` hands over markup for an ESP
    * while keeping the document, which is the template itself, out of reach.
    */

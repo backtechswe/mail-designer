@@ -132,7 +132,7 @@ export function welcome(): MailDocument {
 
       footer({ muted, rule }, [
         "Du får det här mejlet för att du skapade ett konto hos oss.",
-        '<a href="[Avregistrera]">Avregistrera</a> · BäckTech AB · Kalmar',
+        '<a href="[Avregistrera]">Avregistrera</a> · Exempelbolaget AB · Exempelstad',
       ]),
     ],
     {

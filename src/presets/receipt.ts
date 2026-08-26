@@ -77,7 +77,7 @@ export function receipt(): MailDocument {
             gap: 20,
             padding: [0, 0, 20, 0],
           }),
-          columns([detail("Hos", "Anna Lind"), detail("Plats", "Storgatan 12, Kalmar")], {
+          columns([detail("Hos", "Anna Lind"), detail("Plats", "Exempelgatan 12, Exempelstad")], {
             gap: 20,
             padding: [0, 0, 0, 0],
           }),
@@ -106,7 +106,7 @@ export function receipt(): MailDocument {
       footer(
         { muted, rule: panel },
         [
-          "Klippoteket · Storgatan 12 · 392 32 Kalmar · 0480-123 45",
+          "Salong Exempel · Exempelgatan 12 · 123 45 Exempelstad · 010-123 45 67",
           "Det här är en bekräftelse och går inte att svara på.",
         ],
         "left",
@@ -121,7 +121,7 @@ export function receipt(): MailDocument {
       lineHeight: 1.6,
       textColor: ink,
       linkColor: accent,
-      preheader: "Tisdag 14 april, 10.30 hos Anna Lind. Storgatan 12, Kalmar.",
+      preheader: "Tisdag 14 april, 10.30 hos Anna Lind. Exempelgatan 12, Exempelstad.",
     },
   );
 }

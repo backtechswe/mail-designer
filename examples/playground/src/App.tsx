@@ -66,14 +66,15 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
 const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" });
 
 /**
- * Two profiles, to exercise the permission model from both ends. "Booksmart" is the locked
- * case: the application owns the copy and the data, the user arranges the layout.
+ * Two profiles, to exercise the permission model from both ends. The locked one is the case
+ * the model exists for: the application owns the copy and the data, the user arranges the
+ * layout and nothing else.
  */
 const PROFILES: { id: string; label: string; permissions?: Permissions; data?: Record<string, string> }[] = [
   { id: "full", label: "Full åtkomst" },
   {
-    id: "booksmart",
-    label: "Booksmart (låst)",
+    id: "locked",
+    label: "Låst innehåll",
     permissions: {
       content: false,
       data: "readonly",
@@ -200,7 +201,7 @@ export function App() {
             : {})}
           onHistoryChange={(h) => setDepth(h.depth)}
           // Handing the editor a store turns on the document session: name bar, autosave,
-          // switcher, and the prompts that go with them. Here it is localStorage; in Utskick
+          // switcher, and the prompts that go with them. Here it is localStorage; a real host
           // it will be Firestore.
           store={store}
           autosaveMs={800}
@@ -209,7 +210,7 @@ export function App() {
           {...(profile.permissions ? { permissions: profile.permissions } : {})}
           resetTo={builtInPresets[0]!.document}
           // The menu is part of the package and speaks only the TemplateStore contract —
-          // here backed by localStorage, in Utskick it will be Firestore.
+          // here backed by localStorage; a real host would use its own database.
           // Presets only: saved documents live in the document bar now, and offering them
           // in two places would invite opening one in a way that does not switch to it.
           toolbarExtra={<TemplateMenu />}

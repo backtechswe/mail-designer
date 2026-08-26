@@ -57,7 +57,7 @@ export function campaign(): MailDocument {
 
   return doc(
     [
-      masthead("Kafé Nord", "Nyhetsbrev", { ink, muted }, { padding: [26, 32, 22, 32] }),
+      masthead("Kafé Exempel", "Nyhetsbrev", { ink, muted }, { padding: [26, 32, 22, 32] }),
 
       section([image(photo("icedCoffee", { w: 1200, h: 840 }), "Iskaffe i högt glas")], {
         padding: [0, 0, 0, 0],
@@ -118,7 +118,7 @@ export function campaign(): MailDocument {
       ),
 
       footer({ muted, rule }, [
-        "Kafé Nord · Storgatan 12 · 392 32 Kalmar · Öppet 07–18 alla dagar",
+        "Kafé Exempel · Exempelgatan 12 · 123 45 Exempelstad · Öppet 07–18 alla dagar",
         '<a href="[Avregistrera]">Avregistrera</a>',
       ]),
     ],

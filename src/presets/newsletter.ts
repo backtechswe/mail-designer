@@ -143,7 +143,7 @@ export function newsletter(): MailDocument {
       footer({ muted, rule }, [
         "Du får det här brevet för att du prenumererar på Nyhetsbrevet.",
         '<a href="[Avregistrera]">Avsluta prenumerationen</a> · <a href="https://">Uppdatera dina uppgifter</a>',
-        "BäckTech AB · Storgatan 4 · 392 32 Kalmar",
+        "Exempelbolaget AB · Exempelgatan 4 · 123 45 Exempelstad",
       ]),
     ],
     {

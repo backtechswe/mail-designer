@@ -54,7 +54,7 @@ export function invitation(): MailDocument {
             align: "center",
             padding: [0, 0, 18, 0],
           }),
-          text("<p>Fredag 12 juni · 18.00 · Storgatan 4, Kalmar</p>", {
+          text("<p>Fredag 12 juni · 18.00 · Exempelgatan 4, Exempelstad</p>", {
             align: "center",
             color: "#d5cce8",
             fontSize: 17,
@@ -99,7 +99,7 @@ export function invitation(): MailDocument {
             ]),
             column([
               eyebrow("Var", muted, { fontSize: 11 }),
-              text("<p>Festvåningen<br />Storgatan 4, Kalmar</p>", {
+              text("<p>Festvåningen<br />Exempelgatan 4, Exempelstad</p>", {
                 fontSize: 15,
                 lineHeight: 1.6,
                 padding: [0, 0, 0, 0],
@@ -133,7 +133,7 @@ export function invitation(): MailDocument {
       lineHeight: 1.65,
       textColor: ink,
       linkColor: accent,
-      preheader: "Fredag 12 juni, 18.00 — Storgatan 4 i Kalmar. Anmäl dig senast 5 juni.",
+      preheader: "Fredag 12 juni, 18.00 — Exempelgatan 4 i Exempelstad. Anmäl dig senast 5 juni.",
     },
   );
 }

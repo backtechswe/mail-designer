@@ -7,7 +7,7 @@
  *
  * The obvious objection to `@` is email addresses, and there is a settled answer used by every
  * app that does this: **only trigger when the `@` follows a word boundary.** In
- * `niklas@ninetech.com` the `@` follows `s`, so nothing opens. In `Hej @` it follows a space,
+ * `anna@exempel.se` the `@` follows `a`, so nothing opens. In `Hej @` it follows a space,
  * so it does. That one rule removes almost the whole problem; a second `@` inside the query
  * closes it again, which covers the rest.
  *
