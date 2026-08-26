@@ -7,6 +7,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  // GitHub Pages serves a project site from /<repo>/, so the built asset URLs need the
+  // prefix. Set by the deploy workflow; empty locally, where the dev server serves from /.
+  base: process.env.PAGES_BASE ?? "/",
   server: { port: 7788 },
   resolve: {
     alias: {

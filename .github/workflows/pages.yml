@@ -1,0 +1,52 @@
+name: Playground
+
+# A running demo carries more weight than any amount of prose for someone deciding whether to
+# use this, and the playground already aliases straight at the source — so what deploys is the
+# actual editor, not a recording of it that can quietly go out of date.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and never cancel one halfway: a half-published site is worse than a
+# stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The playground imports the package's source through a Vite alias, but the CLI and the
+      # tests do not — build first so a broken package cannot ship a working demo.
+      - run: npm run build
+      - run: npm --prefix examples/playground ci
+      - run: npm --prefix examples/playground run build
+        env:
+          PAGES_BASE: /mail-designer/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: examples/playground/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

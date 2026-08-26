@@ -11,8 +11,9 @@ npm install @backtech/mail-designer
 MIT licensed. ESM-only, Node 20 or newer. A CommonJS backend can reach the renderer with a
 dynamic `import()`; Node 22.12 and newer can `require()` it directly.
 
-![The editor: editing a heading, dragging a block, previewing at mobile width, and the whole
-chrome restyled by one theme prop](docs/media/mail-designer-demo.gif)
+**[Try the editor →](https://backtechswe.github.io/mail-designer/)** — the playground runs the
+real thing, aliased straight at the source: every block type, the permission profiles, the code
+view, and a switch that restyles the whole chrome through `customise`.
 
 ```tsx
 import { MailDesigner, emptyDocument } from "@backtech/mail-designer";
