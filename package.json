@@ -60,7 +60,11 @@
       "default": "./dist/render/index.js"
     },
     "./styles.css": "./dist/styles.css",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locales/*": {
+      "types": "./dist/locales/*.d.ts",
+      "default": "./dist/locales/*.js"
+    }
   },
   "bin": {
     "mail-designer": "bin/mail-designer.mjs"

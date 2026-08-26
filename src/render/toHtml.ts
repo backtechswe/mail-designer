@@ -46,7 +46,7 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
     .join("\n");
 
   const html = wrapDocument(settings, body, {
-    lang: options.lang ?? "sv",
+    lang: options.lang ?? "en",
     title: options.title ?? "",
     stackGaps,
     mobilePaddings,

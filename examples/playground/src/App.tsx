@@ -1,4 +1,14 @@
 import { useMemo, useState } from "react";
+import { de } from "@backtech/mail-designer/locales/de";
+import { fr } from "@backtech/mail-designer/locales/fr";
+import { es } from "@backtech/mail-designer/locales/es";
+import { sv } from "@backtech/mail-designer/locales/sv";
+
+/**
+ * Only English is in the package's main bundle; the rest are separate entries you import.
+ * This map is what a host app writes — four imports and a lookup.
+ */
+const LOCALES: Record<string, Record<string, string> | undefined> = { en: undefined, sv, de, fr, es };
 
 /** Stands in for a host's own icon set — see the `customise.icons` prop below. */
 function DemoTrashIcon({ size = 16 }: { size?: number }) {
@@ -148,6 +158,9 @@ export function App() {
             <em>locale</em>
             <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
               <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="fr">Français</option>
+              <option value="es">Español</option>
               <option value="sv">Svenska</option>
             </select>
           </label>
@@ -198,6 +211,7 @@ export function App() {
           theme={active.theme}
           colorScheme={active.scheme}
           locale={locale}
+          {...(LOCALES[locale] ? { strings: LOCALES[locale] } : {})}
           // Demonstrates the upload contract without needing a backend: the file becomes a
           // data: URI. Real hosts return a hosted URL — Gmail blocks data: images.
           onUploadImage={async (file) =>

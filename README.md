@@ -593,10 +593,37 @@ spec, and a ready-to-paste Firestore adapter.
 
 ## Other languages
 
-`schema/mail-document.v1.json` plus `test/fixtures/` and `test/golden/` are the complete
-specification. A renderer in another language is correct exactly when it turns those
-fixtures into those files. See **[docs/backend-dotnet.md](./docs/backend-dotnet.md)** for
-whether a .NET port is worth it at all (usually it is not — serve the REST contract instead).
+Five locales: **English**, **German**, **French**, **Spanish** and **Swedish**. English is the
+default and the fallback, and the only one in the main bundle — the rest are separate entries,
+so a package that sells on size does not make every consumer carry four languages they never
+show.
+
+```tsx
+import { de } from "@backtech/mail-designer/locales/de";
+
+<MailDesigner locale="de" strings={de} />;
+```
+
+No new prop: `strings` has always taken a partial override, and a full locale is the same shape
+at full size. Anything a resource leaves out falls back to English, so a key added to the
+editor never shows up as `field.newThing` in front of a user.
+
+Each locale is typed as `Record<StringKey, string>` against the English resource, which means a
+missing key is a compile error rather than a silent fallback. Tests cover the rest of what rots:
+placeholders kept, both plural forms present, and nothing still sitting in English.
+
+Two things worth knowing if you are reviewing the translations:
+
+- **They address the user informally** — *du*, *tu*, *tú*. That is the register the tools people
+  compare this with use, and it is applied consistently. Spanish takes *tú*; if your audience
+  expects *usted*, only the imperatives change, so a variant is a small file rather than a
+  rewrite.
+- **A handful of terms want a native eye**, and each locale names its own at the top of the
+  file: mostly *preheader*, *merge field*, *padding* and *inherited*, where the email industry
+  has settled conventions per market that this is only fairly confident about.
+
+To go further, pass your own resource — `strings` accepts any complete map, and
+`StringKey` is exported so you can type it.
 
 ## Development
 

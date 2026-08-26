@@ -227,7 +227,10 @@ export function MailDesigner({
   onChange,
   theme,
   colorScheme = "system",
-  locale = "sv",
+  // English by default: the fallback, the documentation's language, and the only resource in
+  // the main bundle. A Swedish default meant every consumer who set nothing shipped a Swedish
+  // editor and `<html lang="sv">` on every mail.
+  locale = "en",
   strings,
   data: dataProp,
   onDataChange,

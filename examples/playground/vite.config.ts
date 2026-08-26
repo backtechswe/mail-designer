@@ -16,6 +16,7 @@ export default defineConfig({
       // Point straight at the source so edits show up without a rebuild. Consumers get
       // dist/ through the exports map; the playground gets hot reload.
       "@backtech/mail-designer/render": resolve(here, "../../src/render/index.ts"),
+      "@backtech/mail-designer/locales": resolve(here, "../../src/locales"),
       "@backtech/mail-designer/styles.css": resolve(here, "../../src/styles.css"),
       "@backtech/mail-designer": resolve(here, "../../src/index.ts"),
     },

@@ -283,7 +283,12 @@ export interface DesignerTheme {
 }
 
 export type ColorScheme = "light" | "dark" | "system";
-export type Locale = "sv" | "en";
+/**
+ * A BCP 47 tag. Open on purpose: only English ships in the main bundle, so a closed union
+ * would exclude every language the package can be given through `strings` — see
+ * `@backtech/mail-designer/locales/*`. The two spelled out are the ones that need no import.
+ */
+export type Locale = "en" | "sv" | (string & {});
 
 export interface MailPreset {
   id: string;
