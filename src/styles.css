@@ -983,12 +983,21 @@
 }
 
 /*
+ * Fields that are a box with text in them.
+ *
  * Matched by exclusion rather than by listing "text", because an <input> with no type
  * attribute is a text input that `input[type="text"]` does not select — and it then falls all
  * the way back to the user agent's own field: an inset 2px border and hard-coded black text,
- * invisible on a dark background. Colour and checkbox keep their own rules below.
+ * invisible on a dark background.
+ *
+ * Everything with a native shape of its own is excluded here rather than styled and then
+ * un-styled again further down. A range is the clearest case: its track *is* the control, and
+ * this rule's padding and border stopped the thumb from ever reaching either end of it — the
+ * minimum and the maximum both sat a few pixels inside the box. The selector out-specifies any
+ * single-class override, so fighting it per component is a losing game.
  */
-.md-root input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]),
+.md-root
+  input:not([type="color"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="range"]),
 .md-root textarea,
 .md-root select {
   width: 100%;
