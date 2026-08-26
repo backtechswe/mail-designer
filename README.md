@@ -4,6 +4,13 @@ Block-based email designer for React. Zero runtime dependencies beyond i18next, 
 table-based email HTML renderer, and themeable entirely through CSS custom properties so it
 drops into any host app.
 
+```bash
+npm install @backtech/mail-designer
+```
+
+MIT licensed. ESM-only, Node 20 or newer. A CommonJS backend can reach the renderer with a
+dynamic `import()`; Node 22.12 and newer can `require()` it directly.
+
 ![The editor: editing a heading, dragging a block, previewing at mobile width, and the whole
 chrome restyled by one theme prop](docs/media/mail-designer-demo.gif)
 
@@ -601,3 +608,12 @@ only accepts icons Font Awesome's own metadata marks as free (CC BY 4.0) and fai
 Pro-only one, so the package carries nothing that cannot be redistributed.
 
 Icons by [Font Awesome](https://fontawesome.com), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+## Licence
+
+MIT — see [LICENSE](LICENSE). Icons are Font Awesome Free under CC BY 4.0, with the path data
+modified; [NOTICE](NOTICE) is the attribution and states the modification.
+
+Security reports go through GitHub's private vulnerability reporting — [SECURITY.md](SECURITY.md)
+also sets out what the renderer defends against and what `sanitizeEmailHtml` is and is not.
+Contributions are welcome: [CONTRIBUTING.md](CONTRIBUTING.md).

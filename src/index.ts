@@ -35,7 +35,13 @@ export { hasUnsavedWork, statusReducer, initialStatus, generateName } from "./se
 export type { SessionStatus, SessionEvent, SaveState } from "./session/status.js";
 export type { HistoryControls, CommitOptions } from "./editor/useHistory.js";
 export type { HistoryEntry, HistoryState } from "./editor/history.js";
-export { Icon, iconPaths } from "./editor/icons.js";
+/*
+ * `Icon` and `IconName`, not `iconPaths`. Exporting the paths would make the exact SVG geometry
+ * of sixty-two icons a stable public contract that a regeneration against a new Font Awesome
+ * release would break — and it is CC BY-encumbered data. `customise.icons` is the supported
+ * way to change a glyph.
+ */
+export { Icon } from "./editor/icons.js";
 export { compressImage, formatBytes } from "./editor/compress.js";
 export type {
   EditorClassNames,
@@ -67,7 +73,6 @@ export {
   parentOf,
   removeBlock,
   sameContainer,
-  setIdFactory,
   updateBlock,
   updateColumn,
   updateSettings,

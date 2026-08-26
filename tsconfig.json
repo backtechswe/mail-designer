@@ -8,8 +8,12 @@
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    // No maps in the published package. Both kinds pointed at ../src, which `files` does not
+    // ship, so go-to-definition 404'd and half the tarball was sourcesContent — a full copy of
+    // the TypeScript inlined into JSON. The source is on GitHub, which is where anyone reading
+    // it should be.
+    "declarationMap": false,
+    "sourceMap": false,
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,

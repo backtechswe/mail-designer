@@ -8,7 +8,18 @@
 export { toHtml } from "./toHtml.js";
 export { toPlainText } from "./toPlainText.js";
 export { applyDataValues, extractDataFields, DATA_TOKEN } from "./dataFields.js";
-export { sanitize, sanitizeInline, sanitizeBlock, stripTags } from "./sanitize.js";
+/*
+ * Named for what they are, not for what someone might hope they are.
+ *
+ * A function called `sanitize` on a package's public surface invites use as a general XSS
+ * shield, and this is not one: it is a whitelist over a hand-written tokeniser, sized for the
+ * subset of HTML an email client renders. The general form and `stripTags` stay internal for
+ * the same reason. See SECURITY.md.
+ */
+export {
+  sanitizeBlock as sanitizeEmailHtml,
+  sanitizeInline as sanitizeInlineHtml,
+} from "./sanitize.js";
 export { computeWidths } from "./html/columns.js";
 export { formatHtml } from "./format.js";
 export { inspectEmail, emailSize, GMAIL_CLIP_BYTES } from "./inspect.js";

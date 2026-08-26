@@ -1,21 +1,47 @@
 {
   "name": "@backtech/mail-designer",
   "version": "0.1.0",
-  "description": "Block-based email designer for React. Zero-dependency table-based email HTML renderer, themeable via CSS variables.",
-  "license": "UNLICENSED",
-  "private": true,
+  "description": "Block-based email designer for React. Zero-dependency table-based email HTML renderer, themeable via CSS variables, with a CLI and an MCP server.",
+  "license": "MIT",
+  "author": "B\u00e4ckTech AB",
+  "keywords": [
+    "email",
+    "email-builder",
+    "email-editor",
+    "email-template",
+    "email-html",
+    "react",
+    "mjml-alternative",
+    "drag-and-drop",
+    "wysiwyg",
+    "newsletter",
+    "outlook",
+    "mcp"
+  ],
   "type": "module",
   "sideEffects": [
-    "*.css"
+    "**/*.css"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "bin",
     "schema",
     "docs/authoring.md",
     "docs/theming.md",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/styles.css",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -25,16 +51,21 @@
       "types": "./dist/render/index.d.ts",
       "default": "./dist/render/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "mail-designer": "bin/mail-designer.mjs"
   },
   "scripts": {
-    "build": "tsc && cp src/styles.css dist/styles.css",
+    "build": "tsc && cp src/styles.css dist/styles.css && node scripts/post-build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test 'test/*.test.mjs'",
     "icons": "node scripts/build-icons.mjs",
     "dev": "npm --prefix examples/playground run dev",
     "clean": "rm -rf dist",
-    "cli": "node bin/mail-designer.mjs"
+    "cli": "node bin/mail-designer.mjs",
+    "prepublishOnly": "npm run clean && npm test"
   },
   "dependencies": {
     "i18next": "^25.0.0"
@@ -45,8 +76,5 @@
   "devDependencies": {
     "@types/react": "^19.0.7",
     "typescript": "^5.7.3"
-  },
-  "bin": {
-    "mail-designer": "bin/mail-designer.mjs"
   }
 }

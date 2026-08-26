@@ -1,0 +1,24 @@
+# Third-party notices
+
+## Font Awesome Free — icons
+
+`src/editor/icons.tsx` and the built `dist/editor/icons.js` contain SVG path data from
+Font Awesome Free.
+
+- Source: https://fontawesome.com
+- Licence: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+- Copyright: Fonticons, Inc.
+
+**The path data is modified.** `scripts/build-icons.mjs` extracts each icon's `viewBox` and its
+`d` attribute and discards the surrounding `<svg>` wrapper, so what ships is a fragment of the
+original file rather than the file. CC BY 4.0 requires that such changes be stated, and this is
+the statement.
+
+Only icons that Font Awesome's own metadata marks as free are included. The generator reads
+`metadata/icons.json` and fails rather than vendoring a Pro-only glyph, which may not be
+redistributed. See the header of `scripts/build-icons.mjs`.
+
+## Everything else
+
+The rest of this package is original work under the MIT licence in `LICENSE`. It has one
+runtime dependency, i18next (MIT), and React as a peer dependency (MIT).

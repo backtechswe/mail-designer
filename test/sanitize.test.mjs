@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { sanitizeInline, sanitizeBlock, stripTags } from "../dist/render/index.js";
+// Straight from the module: these are internals, and the public entry deliberately exposes
+// only the two named forms. See src/render/index.ts.
+import { sanitizeInline, sanitizeBlock, stripTags } from "../dist/render/sanitize.js";
 
 test("script, style and iframe are removed with their contents", () => {
   assert.equal(sanitizeBlock("a<script>alert(1)</script>b"), "ab");

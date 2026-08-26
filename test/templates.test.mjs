@@ -11,8 +11,8 @@ import {
   emptyDocument,
   createSection,
   createBlock,
-  setIdFactory,
 } from "../dist/index.js";
+import { setIdFactory } from "../dist/document.js";
 
 setIdFactory((() => { let n = 0; return () => `t${++n}`; })());
 
