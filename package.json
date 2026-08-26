@@ -18,6 +18,14 @@
     "outlook",
     "mcp"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backtechswe/mail-designer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/backtechswe/mail-designer/issues"
+  },
+  "homepage": "https://github.com/backtechswe/mail-designer#readme",
   "type": "module",
   "sideEffects": [
     "**/*.css"

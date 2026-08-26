@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://backtech.se/schema/mail-document.v1.json",
+  "$id": "https://raw.githubusercontent.com/backtechswe/mail-designer/main/schema/mail-document.v1.json",
   "title": "MailDocument v1",
   "description": "The mail-designer document model. Language-agnostic on purpose: this schema plus test/golden/ is the full specification a non-JavaScript renderer needs.",
   "type": "object",
