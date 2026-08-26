@@ -12,10 +12,13 @@
  * *Vorschautext* is a gloss, not the label. *Innenabstand* for padding matches localised design
  * tooling.
  *
- * Still unverified and worth a native eye: *Datenfeld* (the German ecosystem says *Merge-Tag*,
- * which is the jargon this package avoids in English too, or the generic *Platzhalter* — this
- * keeps *Datenfeld* for coherence with the *Daten* panel), *Trennlinie* for divider, and
- * *Geerbt* for an inherited value.
+ * *Trennlinie* and *Abstandhalter* are the block names Stripo's German uses, and the second
+ * of those fixed a real bug: *Abstand* was the spacer block *and* the column gap, two controls
+ * with one word.
+ *
+ * One deliberate departure: the German email world says *Merge-Tag* for a data field. This
+ * says *Datenfeld*, for the same reason the English says "data field" and not "merge field" —
+ * it is the jargon, not the thing. *Platzhalter* would have been the other plain option.
  */
 import type { Locale } from "./en.js";
 
@@ -28,7 +31,7 @@ export const de: Locale = {
   "block.columns": "Spalten",
   "block.social": "Social-Links",
   "block.divider": "Trennlinie",
-  "block.spacer": "Abstand",
+  "block.spacer": "Abstandhalter",
   "block.html": "HTML",
 
   "palette.title": "Blöcke",

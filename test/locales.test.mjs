@@ -102,3 +102,50 @@ test("no interpolated sentence asks a participle to agree with a noun", () => {
     }
   }
 });
+
+/**
+ * Two different controls must not carry the same label.
+ *
+ * This is the part of translation review that needs no native speaker: it is a logic error,
+ * visible in any language. It found four real ones — German called both the spacer block and
+ * the column gap *Abstand*, French used *marge intérieure* for a block's padding and a
+ * button's inner padding in the same panel, Spanish said *Subir* for both "upload" and "move
+ * up", and Swedish — the original, written first — had the spacer/gap clash too, plus one word
+ * for vertical middle and horizontal centre.
+ */
+const SAME_THING_TWICE = [
+  // The block and the field that counts them. Both are about columns; no ambiguity.
+  ["block.columns", "field.columnCount"],
+  // Three places that all mean the markup language.
+  ["block.html", "field.html", "code.html"],
+  // The panel and the button that opens it.
+  ["data.panel", "data.open"],
+  /*
+   * French undo and French cancel are both "Annuler", which is what macOS does and what a
+   * French user expects. They never appear together — one is a toolbar tooltip, the other a
+   * dialog button — so the alternative would be an unusual word for a familiar action.
+   */
+  ["toolbar.undo", "action.cancel"],
+];
+
+const allowed = (keys) =>
+  SAME_THING_TWICE.some((group) => keys.every((key) => group.includes(key)));
+
+for (const [name, locale] of Object.entries({ en, ...LOCALES })) {
+  test(`${name} gives two different controls two different names`, () => {
+    // Short strings only: a control's name, where a duplicate is a genuine ambiguity, rather
+    // than two hints that happen to share a sentence.
+    const labels = Object.entries(locale).filter(
+      ([key, value]) => value.length <= 22 && /^(block|field|align|toolbar|action|data|code)\./.test(key),
+    );
+    const byValue = new Map();
+    for (const [key, value] of labels) {
+      const seen = byValue.get(value.toLowerCase()) ?? [];
+      byValue.set(value.toLowerCase(), [...seen, key]);
+    }
+    const clashes = [...byValue.entries()]
+      .filter(([, keys]) => keys.length > 1 && !allowed(keys))
+      .map(([value, keys]) => `"${value}" is both ${keys.join(" and ")}`);
+    assert.deepEqual(clashes, [], clashes.join("; "));
+  });
+}

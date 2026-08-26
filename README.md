@@ -625,8 +625,13 @@ Two things worth knowing if you are reviewing the translations:
   *marge intérieure* matches Figma's French, and the preheader has no settled French label at
   all — Brevo's own material switches between *preheader* and *pré-header* without translating
   it. Each locale's header records what was verified and against what.
-- **What is still unverified is named as such**, in the same place: mostly the word for a data
-  field, *divider*, and *inherited*. Those are the ones to put in front of a native speaker.
+- **Block names come from the localised builders** — Stripo's German and French palettes gave
+  *Trennlinie*, *Abstandhalter*, *séparateur* and *espaceur*.
+- **A test refuses to let two controls share a label.** That part of review needs no native
+  speaker: it is a logic error, visible in any language. It found four — German called the
+  spacer block and the column gap the same word, French used one term for a block's padding and
+  a button's inner padding in the same panel, Spanish said *Subir* for both "upload" and "move
+  up", and Swedish, written first and longest, had two of its own.
 
 To go further, pass your own resource — `strings` accepts any complete map, and
 `StringKey` is exported so you can type it.

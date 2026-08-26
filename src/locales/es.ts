@@ -16,8 +16,9 @@
  * interno* was a coinage of mine. And *texto de vista previa* for the preheader, matching
  * Mailchimp's own "preview text" rather than the descriptive *preencabezado*.
  *
- * Still unverified and worth a native eye: *campo de datos*, *separador* for divider,
- * *heredado* for an inherited value, and *Apilar* for the mobile stacking of columns.
+ * *Subir* means both "upload" and "move up", so the move actions say where they move —
+ * *Mover arriba*, *Mover abajo* — and *Subir* is left to the upload, which is the idiomatic
+ * one. The spacer block is *Espaciador*, the object, with *Espaciado* freed up for the gap.
  *
  * The four history entries use the impersonal *se*: a past participle would have to agree
  * with the block name interpolated into it, and the gender varies — *la imagen*, *el botón*.
@@ -34,7 +35,7 @@ export const es: Locale = {
   "block.columns": "Columnas",
   "block.social": "Enlaces sociales",
   "block.divider": "Separador",
-  "block.spacer": "Espaciado",
+  "block.spacer": "Espaciador",
   "block.html": "HTML",
 
   "palette.title": "Bloques",
@@ -90,7 +91,7 @@ export const es: Locale = {
   "field.fullWidthSection": "Fondo de ancho completo",
   "field.thickness": "Grosor",
   "field.height": "Altura",
-  "field.gap": "Separación",
+  "field.gap": "Espaciado",
   "field.stackOnMobile": "Apilar en móvil",
   "field.verticalAlign": "Alineación vertical",
   "field.verticalAlignHint": "Solo se nota si las columnas tienen alturas distintas.",
@@ -232,8 +233,8 @@ export const es: Locale = {
 
   "action.delete": "Eliminar",
   "action.duplicate": "Duplicar",
-  "action.moveUp": "Subir",
-  "action.moveDown": "Bajar",
+  "action.moveUp": "Mover arriba",
+  "action.moveDown": "Mover abajo",
   "action.add": "Añadir",
   "action.close": "Cerrar",
   "action.cancel": "Cancelar",

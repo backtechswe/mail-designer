@@ -15,8 +15,14 @@
  * says *texte de prévisualisation* — so *texte d'aperçu* is the short form of the descriptive
  * one rather than the borrowed word.
  *
- * Still unverified and worth a native eye: *champ de données* (Brevo's template language calls
- * these *variables*), *séparateur* for divider, and *hérité* for an inherited value.
+ * *Séparateur* and *espaceur* are the block names Stripo's French uses. The button's inner
+ * padding is *marge du bouton* rather than a second *marge intérieure*, which is what it was
+ * until a duplicate-label check caught the two sitting in the same panel.
+ *
+ * *Annuler* is both undo and cancel here, which is what macOS does in French and what a user
+ * expects; they never appear together. And *champ de données* stands even though Brevo's
+ * template language says *variables* — the panel is *Données*, so the field is a *champ de
+ * données*.
  *
  * A past participle would have to agree with the block name interpolated into it, and the
  * gender varies — *une image*, *un bouton*, *une section*. The four history entries are built
@@ -33,7 +39,7 @@ export const fr: Locale = {
   "block.columns": "Colonnes",
   "block.social": "Liens sociaux",
   "block.divider": "Séparateur",
-  "block.spacer": "Espacement",
+  "block.spacer": "Espaceur",
   "block.html": "HTML",
 
   "palette.title": "Blocs",
@@ -81,7 +87,7 @@ export const fr: Locale = {
   "field.href": "Lien",
   "field.label": "Libellé",
   "field.borderRadius": "Rayon des angles",
-  "field.innerPadding": "Marge intérieure",
+  "field.innerPadding": "Marge du bouton",
   "field.buttonWidth": "Largeur du bouton",
   "field.buttonWidthHint":
     "Les angles arrondis exigent une largeur fixe dans Outlook. Sans elle, le bouton y reste carré et arrondi ailleurs.",

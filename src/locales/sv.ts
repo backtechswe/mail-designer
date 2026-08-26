@@ -57,7 +57,7 @@ export const sv: Locale = {
   "field.alt": "Alt-text",
   "field.altHint": "Beskriv bilden. Visas när bilder är blockerade — vilket de är som standard i många klienter.",
   "field.href": "Länk",
-  "field.label": "Text",
+  "field.label": "Etikett",
   "field.borderRadius": "Hörnradie",
   "field.innerPadding": "Innermarginal",
   "field.buttonWidth": "Knappbredd",
@@ -66,7 +66,7 @@ export const sv: Locale = {
   "field.fullWidthSection": "Bakgrund i hela bredden",
   "field.thickness": "Tjocklek",
   "field.height": "Höjd",
-  "field.gap": "Mellanrum",
+  "field.gap": "Avstånd",
   "field.stackOnMobile": "Stapla på mobil",
   "field.verticalAlign": "Vertikal justering",
   "field.verticalAlignHint": "Syns när kolumnerna är olika höga.",
@@ -101,7 +101,7 @@ export const sv: Locale = {
   "field.uploading": "Laddar upp …",
 
   "align.left": "Vänster",
-  "align.center": "Mitten",
+  "align.center": "Centrerat",
   "align.right": "Höger",
 
   "session.untitled": "Utkast {{date}}",
@@ -260,7 +260,7 @@ export const sv: Locale = {
   "confirm.resetTitle": "Återställ till standardmejlet?",
   "confirm.resetBody": "Allt du ändrat i det här dokumentet ersätts. Du kan ångra med Cmd+Z direkt efteråt.",
   "confirm.resetOk": "Återställ",
-  "data.title": "Datafält",
+  "data.title": "Tillgängliga datafält",
   "data.hint": "Sätts in som [Fält] och ersätts med mottagarens uppgifter.",
   "data.none": "Inga datafält angivna.",
 
