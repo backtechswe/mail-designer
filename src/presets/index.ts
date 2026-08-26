@@ -22,18 +22,18 @@ function blank() {
   return doc([
     section([
       heading("Rubrik", { level: 1, fontSize: 30, padding: [0, 0, 14, 0] }),
-      text("<p>Skriv din text här.</p>", { padding: [0, 0, 0, 0] }),
+      text("<p>Write your text here.</p>", { padding: [0, 0, 0, 0] }),
     ]),
   ]);
 }
 
 export const builtInPresets: MailPreset[] = [
-  { id: "newsletter", name: "Nyhetsbrev", document: newsletter() },
-  { id: "invitation", name: "Inbjudan", document: invitation() },
-  { id: "campaign", name: "Kampanj", document: campaign() },
-  { id: "welcome", name: "Välkomstmejl", document: welcome() },
-  { id: "receipt", name: "Bekräftelse", document: receipt() },
-  { id: "blank", name: "Tomt", document: blank() },
+  { id: "newsletter", name: "Newsletter", document: newsletter() },
+  { id: "invitation", name: "Invitation", document: invitation() },
+  { id: "campaign", name: "Campaign", document: campaign() },
+  { id: "welcome", name: "Welcome", document: welcome() },
+  { id: "receipt", name: "Confirmation", document: receipt() },
+  { id: "blank", name: "Blank", document: blank() },
 ];
 
 export function findPreset(presetId: string, presets: MailPreset[] = builtInPresets) {

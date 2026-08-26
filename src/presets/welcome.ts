@@ -67,31 +67,31 @@ export function welcome(): MailDocument {
 
   return doc(
     [
-      masthead("Utskick", "Kom igång", { ink, muted }),
+      masthead("Sendly", "Getting started", { ink, muted }),
 
-      section([image(photo("homeOffice", { w: 1200, h: 620 }), "Ljust hemmakontor")], {
+      section([image(photo("homeOffice", { w: 1200, h: 620 }), "A bright home office")], {
         padding: [0, 0, 0, 0],
       }),
 
       section([
-        eyebrow("Välkommen", accent),
-        heading("Kul att du är här, [Namn]", {
+        eyebrow("Welcome", accent),
+        heading("Glad you are here, [Name]", {
           level: 1,
           fontSize: 30,
           lineHeight: 1.22,
           padding: [0, 0, 14, 0],
         }),
         text(
-          "<p>Ditt konto är klart. Tre korta steg så har du skickat ditt första utskick — " +
-            "det tar ungefär tio minuter, och du behöver inte göra dem i ett svep.</p>",
+          "<p>Your account is ready. Three short steps and your first mailing is out — " +
+            "about ten minutes in all, and you need not do them in one sitting.</p>",
           { color: muted, lineHeight: 1.7, padding: [0, 0, 26, 0] },
         ),
 
-        step(1, "Lägg in dina mottagare", "Ladda upp en Excel-fil eller klistra in en lista. Vi städar dubbletter och trasiga nummer åt dig."),
-        step(2, "Skriv meddelandet", "Använd [Namn] och andra kolumner för att göra varje utskick personligt utan att skriva det flera gånger."),
-        step(3, "Förhandsgranska och skicka", "Se exakt vad varje mottagare får innan något lämnar systemet."),
+        step(1, "Add your recipients", "Upload a spreadsheet or paste a list. We clear out duplicates and broken numbers for you."),
+        step(2, "Write the message", "Use [Name] and your other columns to make every mail personal without writing it twice."),
+        step(3, "Preview and send", "See exactly what each recipient gets before anything leaves the building."),
 
-        button("Gör ditt första utskick", {
+        button("Send your first mailing", {
           backgroundColor: accent,
           borderRadius: 6,
           width: 250,
@@ -104,8 +104,8 @@ export function welcome(): MailDocument {
           divider({ color: rule, padding: [0, 0, 20, 0] }),
           columns([
             column([
-              heading("Fastnat?", { level: 3, fontSize: 15, padding: [0, 0, 6, 0] }),
-              text('<p>Svara på det här mejlet. Det går till en människa.</p>', {
+              heading("Stuck?", { level: 3, fontSize: 15, padding: [0, 0, 6, 0] }),
+              text('<p>Reply to this email. It reaches a person.</p>', {
                 fontSize: 14,
                 color: muted,
                 lineHeight: 1.6,
@@ -113,12 +113,12 @@ export function welcome(): MailDocument {
               }),
             ]),
             column([
-              heading("Vill du se hur andra gör?", {
+              heading("Want to see how others do it?", {
                 level: 3,
                 fontSize: 15,
                 padding: [0, 0, 6, 0],
               }),
-              text('<p><a href="https://">Läs tre korta exempel →</a></p>', {
+              text('<p><a href="https://">Read three short examples →</a></p>', {
                 fontSize: 14,
                 color: muted,
                 lineHeight: 1.6,
@@ -131,8 +131,8 @@ export function welcome(): MailDocument {
       ),
 
       footer({ muted, rule }, [
-        "Du får det här mejlet för att du skapade ett konto hos oss.",
-        '<a href="[Avregistrera]">Avregistrera</a> · Exempelbolaget AB · Exempelstad',
+        "You are getting this because you created an account with us.",
+        '<a href="[Unsubscribe]">Unsubscribe</a> · Example Company Ltd · Exampleton',
       ]),
     ],
     {
@@ -144,7 +144,7 @@ export function welcome(): MailDocument {
       lineHeight: 1.65,
       textColor: ink,
       linkColor: accent,
-      preheader: "Tre steg till ditt första utskick. Tar ungefär tio minuter.",
+      preheader: "Three steps to your first mailing. About ten minutes.",
     },
   );
 }

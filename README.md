@@ -567,7 +567,7 @@ raised as a protocol error.
 
 ## Starting points
 
-Six built-in presets — **Nyhetsbrev**, **Inbjudan**, **Kampanj**, **Välkomstmejl**,
+Six built-in presets — **Newsletter**, **Invitation**, **Campaign**, **Welcome**,
 **Bekräftelse**, **Tomt** — each designed as its own piece rather than one layout recoloured:
 its own palette, measure and typography. A user who opens a template and finds something
 worth keeping edits it; one who finds a grey skeleton starts over, and the template has cost

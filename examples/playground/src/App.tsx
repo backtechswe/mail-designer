@@ -34,7 +34,7 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
   { id: "default", label: "Standard", scheme: "light" },
   {
     id: "plum",
-    label: "Plommon",
+    label: "Plum",
     scheme: "light",
     theme: {
       accent: "#7b2fbe",
@@ -48,7 +48,7 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
   },
   {
     id: "forest",
-    label: "Skog",
+    label: "Forest",
     scheme: "light",
     theme: {
       accent: "#1f7a4d",
@@ -59,7 +59,7 @@ const THEMES: { id: string; label: string; theme?: DesignerTheme; scheme: ColorS
       fontFamily: "Georgia, 'Times New Roman', serif",
     },
   },
-  { id: "dark", label: "Mörkt", scheme: "dark" },
+  { id: "dark", label: "Dark", scheme: "dark" },
   { id: "system", label: "System", scheme: "system" },
 ];
 
@@ -71,19 +71,19 @@ const store = createLocalStorageTemplateStore({ key: "mail-designer:playground" 
  * layout and nothing else.
  */
 const PROFILES: { id: string; label: string; permissions?: Permissions; data?: Record<string, string> }[] = [
-  { id: "full", label: "Full åtkomst" },
+  { id: "full", label: "Full access" },
   {
     id: "locked",
-    label: "Låst innehåll",
+    label: "Locked content",
     permissions: {
       content: false,
       data: "readonly",
       manageDocuments: false,
       templates: false,
       blocks: ["text", "heading", "image", "divider", "spacer", "columns"],
-      requiredFields: ["Namn", "Datum", "Tid"],
+      requiredFields: ["Name", "Date", "Time"],
     },
-    data: { Namn: "Anna Lind", Datum: "14 april", Tid: "10.30", Plats: "Storgatan 12" },
+    data: { Name: "Anna Lind", Date: "14 April", Time: "10:30", Where: "12 Example Street" },
   },
 ];
 
@@ -92,12 +92,12 @@ export function App() {
   const [depth, setDepth] = useState(0);
   const [profileId, setProfileId] = useState("full");
   const [data, setData] = useState<Record<string, string>>({
-    Namn: "Anna Lind",
-    Ort: "Kalmar",
-    Datum: "14 april",
+    Name: "Anna Lind",
+    City: "Exampleton",
+    Date: "14 April",
   });
   const [themeId, setThemeId] = useState("default");
-  const [locale, setLocale] = useState<Locale>("sv");
+  const [locale, setLocale] = useState<Locale>("en");
   const [customised, setCustomised] = useState(false);
 
   const active = THEMES.find((t) => t.id === themeId) ?? THEMES[0]!;
@@ -108,58 +108,88 @@ export function App() {
 
   return (
     <div className="pg">
-      <div className="pg-bar">
-        <strong>mail-designer</strong>
+      <header className="pg-bar">
+        <div className="pg-id">
+          <strong>@backtech/mail-designer</strong>
+          <span>
+            A block editor for email, with its own renderer. This page runs the package itself —
+            everything you change here goes through the same code an application would import.
+          </span>
+        </div>
 
-        <label>
-          Profil
-          <select value={profileId} onChange={(e) => setProfileId(e.target.value)}>
-            {PROFILES.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {/*
+          Each control names the prop it drives. Without that this row is a set of unexplained
+          switches; with it, the demo is a tour of the API.
+        */}
+        <div className="pg-controls">
+          <label>
+            <em>permissions</em>
+            <select value={profileId} onChange={(e) => setProfileId(e.target.value)}>
+              {PROFILES.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label>
-          Tema
-          <select value={themeId} onChange={(e) => setThemeId(e.target.value)}>
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label>
+            <em>theme</em>
+            <select value={themeId} onChange={(e) => setThemeId(e.target.value)}>
+              {THEMES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label>
-          Språk
-          <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
-            <option value="sv">Svenska</option>
-            <option value="en">English</option>
-          </select>
-        </label>
+          <label>
+            <em>locale</em>
+            <select value={locale} onChange={(e) => setLocale(e.target.value as Locale)}>
+              <option value="en">English</option>
+              <option value="sv">Svenska</option>
+            </select>
+          </label>
 
-        <label className="pg-field">
-          <input
-            type="checkbox"
-            checked={customised}
-            onChange={(e) => setCustomised(e.target.checked)}
-          />
-          Egen design
-        </label>
+          <label className="pg-field">
+            <em>customise</em>
+            <span>
+              <input
+                type="checkbox"
+                checked={customised}
+                onChange={(e) => setCustomised(e.target.checked)}
+              />
+              own classes
+            </span>
+          </label>
 
-        {/* Replaces the document from *outside* the editor, the way a host app's own
-            "new mail" button would. The editor records it as a history step rather than
-            discarding what came before. */}
-        <button type="button" className="pg-reset" onClick={() => setDoc(emptyDocument())}>
-          Nytt mejl (utifrån)
-        </button>
+          {/* Replaces the document from *outside* the editor, the way a host app's own
+              "new mail" button would. The editor records it as a history step rather than
+              discarding what came before. */}
+          <button type="button" className="pg-reset" onClick={() => setDoc(emptyDocument())}>
+            Replace from outside
+          </button>
+        </div>
 
-        <span className="pg-note">Historik: {depth} steg</span>
-        <span className="pg-note">Fält i mejlet: {usedInDoc.join(", ") || "inga"}</span>
-      </div>
+        <nav className="pg-links">
+          <a href="https://github.com/backtechswe/mail-designer">GitHub</a>
+          <a href="https://www.npmjs.com/package/@backtech/mail-designer">npm</a>
+        </nav>
+      </header>
+
+      <p className="pg-hint">
+        Worth a look: <strong>Code</strong> shows the HTML it produces, the device frame in
+        <strong> Preview</strong> puts it inside a mail client, and <em>permissions</em> above
+        switches to a profile where the application owns the copy and the reader only arranges
+        the layout. History: {depth} steps · fields used: {usedInDoc.join(", ") || "none"}
+      </p>
+
+      <p className="pg-narrow">
+        The editor wants about 900px. On a phone it collapses to one column and the canvas
+        scrolls, but it is not built for a small screen and this page is not the place to
+        pretend otherwise.
+      </p>
 
       <div className="pg-editor">
         <MailDesigner
@@ -174,13 +204,13 @@ export function App() {
             await new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => resolve(String(reader.result));
-              reader.onerror = () => reject(new Error("Kunde inte läsa filen."));
+              reader.onerror = () => reject(new Error("Could not read the file."));
               reader.readAsDataURL(file);
             })
           }
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
           // Shown only in the device mock's sender line — never rendered into the mail.
-          previewIdentity={{ name: "Nyhetsbrevet", email: "utskick@exempel.se" }}
+          previewIdentity={{ name: "The Newsletter", email: "mail@example.com" }}
           // Demonstrates the customise surface. A real host would put its own design system's
           // classes here; the playground defines .demo-* in index.css so the effect is visible
           // without pulling in Tailwind.

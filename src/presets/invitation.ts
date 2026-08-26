@@ -37,8 +37,8 @@ export function invitation(): MailDocument {
     [
       section(
         [
-          eyebrow("Du är inbjuden", "#a89bc7", { align: "center", padding: [0, 0, 14, 0] }),
-          heading("Vårfesten 2026", {
+          eyebrow("You are invited", "#a89bc7", { align: "center", padding: [0, 0, 14, 0] }),
+          heading("Spring Party 2026", {
             level: 1,
             align: "center",
             color: "#ffffff",
@@ -54,7 +54,7 @@ export function invitation(): MailDocument {
             align: "center",
             padding: [0, 0, 18, 0],
           }),
-          text("<p>Fredag 12 juni · 18.00 · Exempelgatan 4, Exempelstad</p>", {
+          text("<p>Friday 12 June · 6pm · 4 Example Street, Exampleton</p>", {
             align: "center",
             color: "#d5cce8",
             fontSize: 17,
@@ -64,19 +64,19 @@ export function invitation(): MailDocument {
         { fullWidth: true, backgroundColor: night, padding: [60, 40, 60, 40] },
       ),
 
-      section([image(photo("staircase", { w: 1200, h: 640 }), "Trappan i festvåningen")], {
+      section([image(photo("staircase", { w: 1200, h: 640 }), "The staircase at the venue")], {
         padding: [0, 0, 0, 0],
       }),
 
       section([
         text(
-          "<p>Hej [Namn],</p>" +
-            "<p>Det har gått ett år sedan sist, och vi tycker att det är dags igen. " +
-            "Mat, musik och ett kort tal som vi lovar att hålla kort.</p>" +
-            "<p>Säg till senast <b>5 juni</b> så vi vet hur många vi blir.</p>",
+          "<p>Hi [Name],</p>" +
+            "<p>It has been a year since the last one, and we think it is time again. " +
+            "Food, music, and a short speech we promise to keep short.</p>" +
+            "<p>Let us know by <b>5 June</b> so we know how many we will be.</p>",
           { lineHeight: 1.7, padding: [0, 0, 22, 0] },
         ),
-        button("Anmäl mig", {
+        button("Count me in", {
           align: "center",
           backgroundColor: accent,
           borderRadius: 26,
@@ -90,24 +90,24 @@ export function invitation(): MailDocument {
           divider({ color: rule, padding: [0, 0, 24, 0] }),
           columns([
             column([
-              eyebrow("När", muted, { fontSize: 11 }),
-              text("<p>Fredag 12 juni<br />18.00 – sent</p>", {
+              eyebrow("When", muted, { fontSize: 11 }),
+              text("<p>Friday 12 June<br />6pm until late</p>", {
                 fontSize: 15,
                 lineHeight: 1.6,
                 padding: [0, 0, 0, 0],
               }),
             ]),
             column([
-              eyebrow("Var", muted, { fontSize: 11 }),
-              text("<p>Festvåningen<br />Exempelgatan 4, Exempelstad</p>", {
+              eyebrow("Where", muted, { fontSize: 11 }),
+              text("<p>The venue<br />4 Example Street, Exampleton</p>", {
                 fontSize: 15,
                 lineHeight: 1.6,
                 padding: [0, 0, 0, 0],
               }),
             ]),
             column([
-              eyebrow("Klädsel", muted, { fontSize: 11 }),
-              text("<p>Ledigt men<br />gärna lite festligt</p>", {
+              eyebrow("Dress", muted, { fontSize: 11 }),
+              text("<p>Relaxed, but<br />a little festive</p>", {
                 fontSize: 15,
                 lineHeight: 1.6,
                 padding: [0, 0, 0, 0],
@@ -120,8 +120,8 @@ export function invitation(): MailDocument {
       ),
 
       footer({ muted, rule }, [
-        "Frågor? Svara på det här mejlet så hör vi av oss.",
-        '<a href="[Avregistrera]">Vill du inte ha fler inbjudningar?</a>',
+        "Questions? Reply to this email and we will get back to you.",
+        '<a href="[Unsubscribe]">Would you rather not get invitations?</a>',
       ]),
     ],
     {
@@ -133,7 +133,7 @@ export function invitation(): MailDocument {
       lineHeight: 1.65,
       textColor: ink,
       linkColor: accent,
-      preheader: "Fredag 12 juni, 18.00 — Exempelgatan 4 i Exempelstad. Anmäl dig senast 5 juni.",
+      preheader: "Friday 12 June, 6pm — 4 Example Street, Exampleton. Reply by 5 June.",
     },
   );
 }

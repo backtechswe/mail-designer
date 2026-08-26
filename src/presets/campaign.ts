@@ -57,16 +57,16 @@ export function campaign(): MailDocument {
 
   return doc(
     [
-      masthead("Kafé Exempel", "Nyhetsbrev", { ink, muted }, { padding: [26, 32, 22, 32] }),
+      masthead("Café Example", "Newsletter", { ink, muted }, { padding: [26, 32, 22, 32] }),
 
-      section([image(photo("icedCoffee", { w: 1200, h: 840 }), "Iskaffe i högt glas")], {
+      section([image(photo("icedCoffee", { w: 1200, h: 840 }), "Iced coffee in a tall glass")], {
         padding: [0, 0, 0, 0],
       }),
 
       section(
         [
-          eyebrow("Nyhet", accent, { align: "center" }),
-          heading("Sommarens iskaffe är här", {
+          eyebrow("New", accent, { align: "center" }),
+          heading("The summer iced coffee is here", {
             level: 1,
             align: "center",
             fontSize: 32,
@@ -74,11 +74,11 @@ export function campaign(): MailDocument {
             padding: [0, 0, 14, 0],
           }),
           text(
-            "<p>Långsamt bryggd över natten, serverad över is med en skvätt havregrädde. " +
-              "Finns i baren från och med på fredag — och i butiken som flaska att ta med hem.</p>",
+            "<p>Brewed slowly overnight, served over ice with a splash of oat cream. " +
+              "At the bar from Friday — and bottled in the shop to take home.</p>",
             { align: "center", color: muted, lineHeight: 1.7, padding: [0, 0, 22, 0] },
           ),
-          button("Se hela menyn", {
+          button("See the whole menu", {
             align: "center",
             backgroundColor: accent,
             borderRadius: 4,
@@ -92,12 +92,12 @@ export function campaign(): MailDocument {
       section(
         [
           divider({ color: rule, padding: [0, 0, 26, 0] }),
-          eyebrow("Passar bra till", muted, { align: "center", fontSize: 11 }),
+          eyebrow("Goes well with", muted, { align: "center", fontSize: 11 }),
           columns(
             [
-              product("Havrebulle", "32 kr", photo("coffeeCake", { w: 480, h: 480 }), "Kaffebröd på fat"),
-              product("Äppelpaj", "45 kr", photo("pie", { w: 480, h: 480 }), "Bit av äppelpaj"),
-              product("Frukostskål", "68 kr", photo("breakfastBowl", { w: 480, h: 480 }), "Frukostskål ovanifrån"),
+              product("Oat bun", "£3.20", photo("coffeeCake", { w: 480, h: 480 }), "Pastry on a plate"),
+              product("Apple pie", "£4.50", photo("pie", { w: 480, h: 480 }), "A slice of apple pie"),
+              product("Breakfast bowl", "£6.80", photo("breakfastBowl", { w: 480, h: 480 }), "A breakfast bowl from above"),
             ],
             { gap: 16 },
           ),
@@ -107,7 +107,7 @@ export function campaign(): MailDocument {
 
       section(
         [
-          text("<p><b>Fri leverans över 300 kr</b> · Hämta i butik samma dag</p>", {
+          text("<p><b>Free delivery over £30</b> · Same-day collection in store</p>", {
             align: "center",
             color: "#ffffff",
             fontSize: 15,
@@ -118,8 +118,8 @@ export function campaign(): MailDocument {
       ),
 
       footer({ muted, rule }, [
-        "Kafé Exempel · Exempelgatan 12 · 123 45 Exempelstad · Öppet 07–18 alla dagar",
-        '<a href="[Avregistrera]">Avregistrera</a>',
+        "Café Example · 12 Example Street · Exampleton · Open 7–18 every day",
+        '<a href="[Unsubscribe]">Unsubscribe</a>',
       ]),
     ],
     {
@@ -131,7 +131,7 @@ export function campaign(): MailDocument {
       lineHeight: 1.65,
       textColor: ink,
       linkColor: accent,
-      preheader: "Långsamt bryggd över natten. I baren från på fredag.",
+      preheader: "Brewed slowly overnight. At the bar from Friday.",
     },
   );
 }

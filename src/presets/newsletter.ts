@@ -36,16 +36,16 @@ export function newsletter(): MailDocument {
 
   return doc(
     [
-      masthead("Nyhetsbrevet", "Mars 2026 · Nr 14", { ink, muted }),
+      masthead("The Newsletter", "March 2026 · No. 14", { ink, muted }),
 
       // No padding: the hero runs to the edges of the content column.
-      section([image(photo("officeTeam", { w: 1280, h: 720 }), "Teamet på kontoret")], {
+      section([image(photo("officeTeam", { w: 1280, h: 720 }), "The team at the office")], {
         padding: [0, 0, 0, 0],
       }),
 
       section([
-        eyebrow("Månadens rapport", accent),
-        heading("Vad vi lärde oss av 4 000 utskick", {
+        eyebrow("Report of the month", accent),
+        heading("What 4,000 sends taught us", {
           level: 1,
           fontSize: 34,
           lineHeight: 1.18,
@@ -53,11 +53,11 @@ export function newsletter(): MailDocument {
           padding: [0, 0, 16, 0],
         }),
         text(
-          "<p>Vi gick igenom varje utskick vi gjort sedan i höstas och letade efter mönster. " +
-            "Tre av dem visade sig gälla nästan överallt — och ett av dem gick tvärt emot vad vi trodde.</p>",
+          "<p>We went through every mailing we have sent since the autumn, looking for patterns. " +
+            "Three of them held almost everywhere — and one went straight against what we expected.</p>",
           { fontSize: 18, lineHeight: 1.65, color: muted, fontFamily: serif, padding: [0, 0, 20, 0] },
         ),
-        button("Läs hela rapporten", {
+        button("Read the full report", {
           backgroundColor: ink,
           borderRadius: 4,
           width: 220,
@@ -70,11 +70,11 @@ export function newsletter(): MailDocument {
           divider({ color: rule, padding: [0, 0, 28, 0] }),
           columns([
             column([
-              image(photo("desk", { w: 560, h: 380 }), "Skrivbord ovanifrån", {
+              image(photo("desk", { w: 560, h: 380 }), "A desk from above", {
                 padding: [0, 0, 14, 0],
               }),
               eyebrow("Timing", accent, { fontSize: 11 }),
-              heading("Tisdag morgon är en myt", {
+              heading("Tuesday morning is a myth", {
                 level: 3,
                 fontSize: 20,
                 lineHeight: 1.3,
@@ -82,17 +82,17 @@ export function newsletter(): MailDocument {
                 padding: [0, 0, 8, 0],
               }),
               text(
-                "<p>Skillnaden mellan bästa och sämsta utskicksdag var mindre än tre procent. " +
-                  '<a href="https://">Läs varför →</a></p>',
+                "<p>The gap between the best and worst day to send was under three per cent. " +
+                  '<a href="https://">Read why →</a></p>',
                 { fontSize: 15, lineHeight: 1.6, color: muted, padding: [0, 0, 0, 0] },
               ),
             ]),
             column([
-              image(photo("laptopTable", { w: 560, h: 380 }), "Händer vid en laptop", {
+              image(photo("laptopTable", { w: 560, h: 380 }), "Hands at a laptop", {
                 padding: [0, 0, 14, 0],
               }),
-              eyebrow("Ämnesrader", accent, { fontSize: 11 }),
-              heading("Kortare vinner inte alltid", {
+              eyebrow("Subject lines", accent, { fontSize: 11 }),
+              heading("Shorter does not always win", {
                 level: 3,
                 fontSize: 20,
                 lineHeight: 1.3,
@@ -100,8 +100,8 @@ export function newsletter(): MailDocument {
                 padding: [0, 0, 8, 0],
               }),
               text(
-                "<p>Konkret slår kort. Sex ord som säger något slår fyra som inte gör det. " +
-                  '<a href="https://">Se exemplen →</a></p>',
+                "<p>Concrete beats short. Six words that say something beat four that do not. " +
+                  '<a href="https://">See the examples →</a></p>',
                 { fontSize: 15, lineHeight: 1.6, color: muted, padding: [0, 0, 0, 0] },
               ),
             ]),
@@ -113,7 +113,7 @@ export function newsletter(): MailDocument {
       // Full width: the colour bleeds edge to edge and closes the letter.
       section(
         [
-          heading("Kom och lyssna live", {
+          heading("Hear it live", {
             level: 2,
             align: "center",
             color: "#ffffff",
@@ -121,13 +121,13 @@ export function newsletter(): MailDocument {
             fontFamily: serif,
             padding: [0, 0, 10, 0],
           }),
-          text("<p>Vi går igenom hela rapporten den 24 april, klockan 15.00.</p>", {
+          text("<p>We walk through the whole report on 24 April at 3pm.</p>", {
             align: "center",
             color: "#aab4c2",
             fontSize: 15,
             padding: [0, 0, 20, 0],
           }),
-          button("Anmäl dig", {
+          button("Save a seat", {
             align: "center",
             backgroundColor: "#ffffff",
             textColor: ink,
@@ -141,8 +141,8 @@ export function newsletter(): MailDocument {
       ),
 
       footer({ muted, rule }, [
-        "Du får det här brevet för att du prenumererar på Nyhetsbrevet.",
-        '<a href="[Avregistrera]">Avsluta prenumerationen</a> · <a href="https://">Uppdatera dina uppgifter</a>',
+        "You are getting this because you subscribe to The Newsletter.",
+        '<a href="[Unsubscribe]">Avsluta prenumerationen</a> · <a href="https://">Uppdatera dina uppgifter</a>',
         "Exempelbolaget AB · Exempelgatan 4 · 123 45 Exempelstad",
       ]),
     ],
@@ -155,7 +155,7 @@ export function newsletter(): MailDocument {
       lineHeight: 1.65,
       textColor: ink,
       linkColor: accent,
-      preheader: "Tre saker vi lärt oss av 4 000 utskick — och en inbjudan till den 24 april.",
+      preheader: "Three things 4,000 sends taught us — and an invitation for 24 April.",
     },
   );
 }

@@ -54,13 +54,13 @@ export function receipt(): MailDocument {
 
       section(
         [
-          heading("Tack, [Namn]!", {
+          heading("Thank you, [Name]!", {
             level: 1,
             fontSize: 28,
             lineHeight: 1.25,
             padding: [0, 0, 10, 0],
           }),
-          text("<p>Din tid är bokad. Vi har lagt in den här nedan — spara gärna mejlet.</p>", {
+          text("<p>Your appointment is booked. The details are below — worth keeping this email.</p>", {
             color: muted,
             lineHeight: 1.65,
             padding: [0, 0, 0, 0],
@@ -73,11 +73,11 @@ export function receipt(): MailDocument {
       // more thing for a client to render differently.
       section(
         [
-          columns([detail("Datum", "Tisdag 14 april"), detail("Tid", "10.30 – 11.15")], {
+          columns([detail("Date", "Tuesday 14 April"), detail("Tid", "10:30 – 11:15")], {
             gap: 20,
             padding: [0, 0, 20, 0],
           }),
-          columns([detail("Hos", "Anna Lind"), detail("Plats", "Exempelgatan 12, Exempelstad")], {
+          columns([detail("With", "Anna Lind"), detail("Where", "12 Example Street, Exampleton")], {
             gap: 20,
             padding: [0, 0, 0, 0],
           }),
@@ -87,7 +87,7 @@ export function receipt(): MailDocument {
 
       section(
         [
-          button("Ändra eller avboka", {
+          button("Change or cancel", {
             backgroundColor: accent,
             borderRadius: 6,
             width: 220,
@@ -95,7 +95,7 @@ export function receipt(): MailDocument {
             padding: [0, 0, 16, 0],
           }),
           text(
-            "<p>Behöver du avboka? Gör det senast 24 timmar innan, annars debiteras halva priset.</p>",
+            "<p>Need to cancel? Do it at least 24 hours ahead, or half the price is charged.</p>",
             { fontSize: 13, lineHeight: 1.6, color: muted, padding: [0, 0, 0, 0] },
           ),
           divider({ color: rule, padding: [22, 0, 0, 0] }),
@@ -106,8 +106,8 @@ export function receipt(): MailDocument {
       footer(
         { muted, rule: panel },
         [
-          "Salong Exempel · Exempelgatan 12 · 123 45 Exempelstad · 010-123 45 67",
-          "Det här är en bekräftelse och går inte att svara på.",
+          "Salon Example · 12 Example Street · Exampleton · 020 7946 0123",
+          "This is a confirmation and cannot be replied to.",
         ],
         "left",
       ),
@@ -121,7 +121,7 @@ export function receipt(): MailDocument {
       lineHeight: 1.6,
       textColor: ink,
       linkColor: accent,
-      preheader: "Tisdag 14 april, 10.30 hos Anna Lind. Exempelgatan 12, Exempelstad.",
+      preheader: "Tuesday 14 April, 10:30 with Anna Lind. 12 Example Street, Exampleton.",
     },
   );
 }
