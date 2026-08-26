@@ -37,6 +37,11 @@ export type { HistoryControls, CommitOptions } from "./editor/useHistory.js";
 export type { HistoryEntry, HistoryState } from "./editor/history.js";
 export { Icon, iconPaths } from "./editor/icons.js";
 export { compressImage, formatBytes } from "./editor/compress.js";
+export type {
+  EditorClassNames,
+  EditorCustomisation,
+  EditorSlot,
+} from "./editor/customise.js";
 export type { CompressOptions, CompressResult } from "./editor/compress.js";
 export type { IconName, IconProps } from "./editor/icons.js";
 export { sv, en, createI18n, createTranslate } from "./i18n.js";

@@ -3,6 +3,7 @@ import { useId, useState } from "react";
 import type { Align, Spacing, VerticalAlign } from "../../types.js";
 import { Icon } from "../icons.js";
 import { useEditor } from "../EditorContext.js";
+import { useSlot } from "../customise.js";
 
 /**
  * Inspector controls built on native form elements.
@@ -43,10 +44,11 @@ export function Field({
   inherit?: Inherit;
   children: ReactNode;
 }) {
+  const slot = useSlot();
   return (
-    <div className="md-field">
+    <div className={slot("field", "md-field")}>
       <div className="md-field-head">
-        <label className="md-field-label" htmlFor={htmlFor}>
+        <label className={slot("label", "md-field-label")} htmlFor={htmlFor}>
           {label}
         </label>
         {inherit ? (
@@ -99,11 +101,13 @@ export function TextField({
 }) {
   const id = useId();
   const { endEdit } = useEditor();
+  const slot = useSlot();
   return (
     <Field label={label} hint={hint} htmlFor={id}>
       <input
         id={id}
         type="text"
+        className={slot("input")}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
@@ -268,10 +272,12 @@ export function SelectField<T extends string | number>({
   onChange: (value: T) => void;
 }) {
   const id = useId();
+  const slot = useSlot();
   return (
     <Field label={label} hint={hint} htmlFor={id} inherit={inherit}>
       <select
         id={id}
+        className={slot("select")}
         value={String(value)}
         onChange={(e) => {
           const match = options.find((o) => String(o.value) === e.target.value);

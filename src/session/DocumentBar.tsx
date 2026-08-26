@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DocumentSession } from "./useDocumentSession.js";
 import { useEditor } from "../editor/EditorContext.js";
 import { Icon } from "../editor/icons.js";
+import { useSlot } from "../editor/customise.js";
 
 /**
  * Which document is open, whether it is saved, and how to get to another one.
@@ -34,6 +35,7 @@ export function DocumentBar({
   canManage?: boolean;
 }) {
   const { t } = useEditor();
+  const slot = useSlot();
   const { status } = session;
   const [open, setOpen] = useState(false);
   const [draftName, setDraftName] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function DocumentBar({
     : "";
 
   return (
-    <div className="md-docbar">
+    <div className={slot("documentBar", "md-docbar")}>
       {/* The name is the document's identity, so it is edited in place rather than behind a
           rename dialog. */}
       <input

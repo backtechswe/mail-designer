@@ -40,6 +40,7 @@ import {
 } from "./fields/index.js";
 import type { Inherit } from "./fields/index.js";
 import type { Translate } from "../i18n.js";
+import { useSlot } from "./customise.js";
 
 /**
  * The right-hand panel. Two tabs, because there are genuinely two subjects: the email as a
@@ -48,13 +49,14 @@ import type { Translate } from "../i18n.js";
  */
 export function Inspector() {
   const { doc, selectedId, permissions, t } = useEditor();
+  const slot = useSlot();
   const [tab, setTab] = useState<"mail" | "block">("block");
   const found = selectedId ? findBlock(doc, selectedId) : undefined;
   const wanted = permissions.mailSettings ? tab : "block";
   const active = found && wanted === "block" ? "block" : wanted === "mail" ? "mail" : "block";
 
   return (
-    <aside className="md-inspector">
+    <aside className={slot("inspector", "md-inspector")}>
       <div className="md-tabs" role="tablist">
         <button
           type="button"

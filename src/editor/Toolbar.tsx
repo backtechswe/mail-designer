@@ -2,6 +2,7 @@ import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
 import { HistoryBar } from "./HistoryBar.js";
 import type { ReactNode } from "react";
+import { useSlot } from "./customise.js";
 
 export type ViewMode = "edit" | "preview" | "code";
 export type Viewport = "desktop" | "tablet" | "phone";
@@ -39,17 +40,27 @@ export function Toolbar({
 }) {
   const { t } = useEditor();
 
+  const slot = useSlot();
+  /* aria-pressed marks the chosen segment, so the host's active slot follows it. */
+  const seg = (on: boolean): string => slot(on ? ["button", "buttonActive"] : "button");
+
   return (
-    <div className="md-toolbar">
+    <div className={slot("toolbar", "md-toolbar")}>
       {showHistory ? <HistoryBar /> : null}
 
       <div className="md-toolbar-group md-segmented">
-        <button type="button" aria-pressed={view === "edit"} onClick={() => onViewChange("edit")}>
+        <button
+          type="button"
+          className={seg(view === "edit")}
+          aria-pressed={view === "edit"}
+          onClick={() => onViewChange("edit")}
+        >
           <Icon name="edit" size={12} />
           {t("toolbar.edit")}
         </button>
         <button
           type="button"
+          className={seg(view === "preview")}
           aria-pressed={view === "preview"}
           onClick={() => onViewChange("preview")}
         >
@@ -59,6 +70,7 @@ export function Toolbar({
         {showCode ? (
           <button
             type="button"
+            className={seg(view === "code")}
             aria-pressed={view === "code"}
             onClick={() => onViewChange("code")}
           >
@@ -85,6 +97,7 @@ export function Toolbar({
           <button
             key={id}
             type="button"
+            className={seg(viewport === id)}
             aria-pressed={viewport === id}
             title={t(label)}
             aria-label={t(label)}

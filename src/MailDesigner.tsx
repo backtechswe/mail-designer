@@ -38,6 +38,8 @@ import { PreviewFrame } from "./editor/PreviewFrame.js";
 import { CodeView } from "./editor/CodeView.js";
 import { DEVICES } from "./editor/devices.js";
 import { compressImage } from "./editor/compress.js";
+import { CustomisationProvider } from "./editor/customise.js";
+import type { EditorCustomisation } from "./editor/customise.js";
 import type { CompressOptions, CompressResult } from "./editor/compress.js";
 import { ConfirmDialog } from "./editor/ConfirmDialog.js";
 import type { ConfirmRequest } from "./editor/ConfirmDialog.js";
@@ -54,7 +56,8 @@ import { Toolbar } from "./editor/Toolbar.js";
 import type { ViewMode, Viewport } from "./editor/Toolbar.js";
 import { useDragSort } from "./editor/dnd/useDragSort.js";
 
-
+/** Stable empty object, so an omitted `customise` prop does not re-render every consumer. */
+const EMPTY_CUSTOMISATION: EditorCustomisation = {};
 
 /** 1 / 2 / 3 switch viewport, left to right, in the same order as the toolbar's own buttons. */
 const VIEWPORT_KEYS: Record<string, Viewport | undefined> = {
@@ -64,7 +67,15 @@ const VIEWPORT_KEYS: Record<string, Viewport | undefined> = {
 };
 
 /** Fields whose change is content the reader will see, rather than styling. */
-const CONTENT_FIELDS = new Set(["html", "label", "src", "alt", "href", "items", "level"]);
+const CONTENT_FIELDS = new Set([
+  "html",
+  "label",
+  "src",
+  "alt",
+  "href",
+  "items",
+  "level",
+]);
 
 function describeUpdate(patch: object): "history.edit" | "history.style" {
   return Object.keys(patch).some((key) => CONTENT_FIELDS.has(key))
@@ -78,7 +89,12 @@ function isNoOp(target: object, patch: object): boolean {
   return Object.entries(patch).every(([key, next]) => {
     const now = current[key];
     if (now === next) return true;
-    if (typeof now === "object" && typeof next === "object" && now !== null && next !== null) {
+    if (
+      typeof now === "object" &&
+      typeof next === "object" &&
+      now !== null &&
+      next !== null
+    ) {
       return JSON.stringify(now) === JSON.stringify(next);
     }
     return false;
@@ -146,6 +162,23 @@ export interface MailDesignerProps {
    */
   previewIdentity?: { name?: string; email?: string; date?: string };
 
+  /**
+   * Make it look like your application.
+   *
+   * `classNames` attaches your classes to a named part — Tailwind's utilities land here — and
+   * `icons` swaps a glyph for your own. Our classes stay and yours are appended, so a single
+   * class of yours beats the corresponding rule in styles.css: the base rules are wrapped in
+   * `:where()` for exactly that reason, and nothing here needs `!important`.
+   *
+   * ```tsx
+   * customise={{
+   *   classNames: { button: "rounded-md bg-indigo-600 text-white", panel: "shadow-xl" },
+   *   icons: { trash: MyTrashIcon },
+   * }}
+   * ```
+   */
+  customise?: EditorCustomisation;
+
   /** Replaces the built-in starting points. */
   presets?: MailPreset[];
   /** Rendered at the right end of the toolbar — where a template menu belongs. */
@@ -203,6 +236,7 @@ export function MailDesigner({
   onUploadImage,
   resolveSocialIcon,
   imageCompression,
+  customise,
   previewIdentity,
   toolbarExtra,
   onHistoryChange,
@@ -216,13 +250,20 @@ export function MailDesigner({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<ViewMode>("edit");
   const [viewport, setViewport] = useState<Viewport>("desktop");
-  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(null);
+  const [confirmRequest, setConfirmRequest] = useState<ConfirmRequest | null>(
+    null,
+  );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [ownData, setOwnData] = useState<Record<string, string>>(dataProp ?? {});
+  const [ownData, setOwnData] = useState<Record<string, string>>(
+    dataProp ?? {},
+  );
   const [dataOpen, setDataOpen] = useState(false);
   const [mockup, setMockup] = useState(false);
 
-  const permissions = useMemo(() => resolvePermissions(permissionsProp), [permissionsProp]);
+  const permissions = useMemo(
+    () => resolvePermissions(permissionsProp),
+    [permissionsProp],
+  );
   const data = dataProp ?? ownData;
   const setData = onDataChange ?? setOwnData;
 
@@ -249,10 +290,15 @@ export function MailDesigner({
   // would on the device. Desktop without a frame is the mail's own width, because a bare
   // preview has no client around it to be a fraction of.
   const viewportWidth =
-    viewport === "desktop" && !mockup ? value.settings.width : DEVICES[viewport].content;
+    viewport === "desktop" && !mockup
+      ? value.settings.width
+      : DEVICES[viewport].content;
 
   // One i18next instance per locale/overrides pair, never the global singleton.
-  const t = useMemo(() => createTranslate(createI18n(locale, strings)), [locale, strings]);
+  const t = useMemo(
+    () => createTranslate(createI18n(locale, strings)),
+    [locale, strings],
+  );
 
   /*
    * Bound to the mail's own width: twice the content width is what a retina screen uses, and
@@ -265,7 +311,8 @@ export function MailDesigner({
       maxWidth: value.settings.width * 2,
       ...(imageCompression ?? {}),
     };
-    return (file: File): Promise<CompressResult> => compressImage(file, options);
+    return (file: File): Promise<CompressResult> =>
+      compressImage(file, options);
   }, [imageCompression, value.settings.width]);
 
   const identity = useMemo(
@@ -392,7 +439,10 @@ export function MailDesigner({
         event.preventDefault();
         event.stopPropagation();
         commit(duplicateFor(value, selectedId), {
-          label: stepLabel("history.duplicate", findBlock(value, selectedId)?.block),
+          label: stepLabel(
+            "history.duplicate",
+            findBlock(value, selectedId)?.block,
+          ),
         });
         return;
       }
@@ -404,7 +454,8 @@ export function MailDesigner({
     };
 
     root.addEventListener("keydown", onKeyDown, { capture: true });
-    return () => root.removeEventListener("keydown", onKeyDown, { capture: true });
+    return () =>
+      root.removeEventListener("keydown", onKeyDown, { capture: true });
   }, [
     history,
     session,
@@ -423,10 +474,18 @@ export function MailDesigner({
    * because after a removal there is nothing left to name.
    */
   const stepLabel = useCallback(
-    (key: "history.insert" | "history.remove" | "history.duplicate" | "history.move",
-     block: Block | BlockType | undefined) => {
+    (
+      key:
+        | "history.insert"
+        | "history.remove"
+        | "history.duplicate"
+        | "history.move",
+      block: Block | BlockType | undefined,
+    ) => {
       const type = typeof block === "string" ? block : block?.type;
-      return t(key, { block: type ? t(`block.${type}` as StringKey) : t("block.section") });
+      return t(key, {
+        block: type ? t(`block.${type}` as StringKey) : t("block.section"),
+      });
     },
     [t],
   );
@@ -453,7 +512,8 @@ export function MailDesigner({
       const block = findBlock(value, id)?.block;
       // A locked block is not draggable: refusing here means no drop indicator ever appears
       // for it, rather than a drag that silently does nothing on release.
-      if (!block || !blockCapabilities(block, permissions).move) return undefined;
+      if (!block || !blockCapabilities(block, permissions).move)
+        return undefined;
       return block;
     },
     onMove: (id, container, index) =>
@@ -469,8 +529,15 @@ export function MailDesigner({
   });
 
   const api = useMemo<EditorApi>(() => {
-    const apply = (next: MailDocument, label: string, coalesceKey?: string): void =>
-      commit(next, coalesceKey === undefined ? { label } : { label, coalesceKey });
+    const apply = (
+      next: MailDocument,
+      label: string,
+      coalesceKey?: string,
+    ): void =>
+      commit(
+        next,
+        coalesceKey === undefined ? { label } : { label, coalesceKey },
+      );
     return {
       doc: value,
       selectedId,
@@ -529,23 +596,35 @@ export function MailDesigner({
           `settings:${Object.keys(patch).sort().join(",")}`,
         );
       },
-      updateColumn: (columnId, patch: Partial<Omit<MailColumn, "id" | "children">>) =>
+      updateColumn: (
+        columnId,
+        patch: Partial<Omit<MailColumn, "id" | "children">>,
+      ) =>
         apply(
           updateColumnIn(value, columnId, patch),
           t("history.column"),
           `column:${columnId}:${Object.keys(patch).sort().join(",")}`,
         ),
       insert: (block: Block, position: Position) =>
-        apply(insertBlock(value, block, position), stepLabel("history.insert", block)),
+        apply(
+          insertBlock(value, block, position),
+          stepLabel("history.insert", block),
+        ),
       remove: (id) =>
-        apply(removeBlock(value, id), stepLabel("history.remove", findBlock(value, id)?.block)),
+        apply(
+          removeBlock(value, id),
+          stepLabel("history.remove", findBlock(value, id)?.block),
+        ),
       duplicate: (id) =>
         apply(
           duplicateBlockIn(value, id),
           stepLabel("history.duplicate", findBlock(value, id)?.block),
         ),
       move: (id, position) =>
-        apply(moveBlock(value, id, position), stepLabel("history.move", findBlock(value, id)?.block)),
+        apply(
+          moveBlock(value, id, position),
+          stepLabel("history.move", findBlock(value, id)?.block),
+        ),
       replaceDocument: (next) => apply(next, t("history.replace")),
       endEdit: history.breakRun,
       confirm: setConfirmRequest,
@@ -581,104 +660,122 @@ export function MailDesigner({
   return (
     <div
       ref={rootRef}
-      className={`md-root${className ? ` ${className}` : ""}`}
+      className={`md-root${className ? ` ${className}` : ""}${
+        customise?.classNames?.root ? ` ${customise.classNames.root}` : ""
+      }`}
       data-color-scheme={resolveColorScheme(colorScheme)}
       style={themeToStyle(theme)}
     >
-      <EditorProvider api={api}>
-        {store ? (
-          <DocumentBar
-            session={session}
-            onNew={() =>
-              guard(
-                {
-                  title: t("confirm.newDocumentTitle"),
-                  body: t("confirm.newDocumentBody"),
-                  confirmLabel: t("confirm.newDocumentOk"),
-                  onConfirm: () => session.startNew(emptyDocument()),
-                },
-                session.hasUnsavedWork,
-              )
-            }
-            onOpen={(id, name) =>
-              guard(
-                {
-                  title: t("confirm.switchDocumentTitle", { name }),
-                  body: t("confirm.switchDocumentBody"),
-                  confirmLabel: t("confirm.switchDocumentOk"),
-                  onConfirm: () => void session.open(id),
-                },
-                session.hasUnsavedWork,
-              )
-            }
-            {...(resetTo
-              ? {
-                  onReset: () =>
-                    setConfirmRequest({
-                      title: t("confirm.resetTitle"),
-                      body: t("confirm.resetBody"),
-                      confirmLabel: t("confirm.resetOk"),
-                      onConfirm: () => {
-                        commit(structuredClone(resetTo), { label: t("session.reset") });
-                        setSelectedId(null);
-                      },
-                    }),
-                }
-              : {})}
-            canManage={permissions.manageDocuments}
-            onDelete={(id, name) =>
-              setConfirmRequest({
-                title: t("confirm.deleteDocumentTitle", { name }),
-                body: t("confirm.deleteDocumentBody"),
-                confirmLabel: t("confirm.deleteDocumentOk"),
-                destructive: true,
-                onConfirm: () => void session.remove(id),
-              })
-            }
-          />
-        ) : null}
-        <Toolbar
-          view={view}
-          onViewChange={setView}
-          viewport={viewport}
-          onViewportChange={setViewport}
-          showHistory={showHistory && permissions.history}
-          onOpenShortcuts={() => setShortcutsOpen(true)}
-          {...(permissions.data === "hidden"
-            ? {}
-            : { dataOpen, onToggleData: () => setDataOpen((v) => !v) })}
-          showCode={permissions.code.html || permissions.code.text || permissions.code.json}
-          {...(view === "preview"
-            ? { mockup, onToggleMockup: () => setMockup((v) => !v) }
-            : {})}
-          extra={permissions.templates ? toolbarExtra : null}
-        />
-        {/* Preview renders a single child, so the three-column grid has to collapse with it
-            — otherwise the frame lands in the 176px palette column. */}
-        <div className={`md-layout${view === "edit" ? "" : " md-layout--preview"}`}>
-          {view === "edit" ? <Palette onDragStart={startCreate} /> : null}
-          {view === "edit" ? (
-            <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
-          ) : view === "code" ? (
-            <CodeView />
-          ) : (
-            <PreviewFrame
-              doc={value}
-              width={viewportWidth}
-              data={data}
-              viewport={viewport}
-              mockup={mockup}
-              identity={identity}
+      <CustomisationProvider value={customise ?? EMPTY_CUSTOMISATION}>
+        <EditorProvider api={api}>
+          {store ? (
+            <DocumentBar
+              session={session}
+              onNew={() =>
+                guard(
+                  {
+                    title: t("confirm.newDocumentTitle"),
+                    body: t("confirm.newDocumentBody"),
+                    confirmLabel: t("confirm.newDocumentOk"),
+                    onConfirm: () => session.startNew(emptyDocument()),
+                  },
+                  session.hasUnsavedWork,
+                )
+              }
+              onOpen={(id, name) =>
+                guard(
+                  {
+                    title: t("confirm.switchDocumentTitle", { name }),
+                    body: t("confirm.switchDocumentBody"),
+                    confirmLabel: t("confirm.switchDocumentOk"),
+                    onConfirm: () => void session.open(id),
+                  },
+                  session.hasUnsavedWork,
+                )
+              }
+              {...(resetTo
+                ? {
+                    onReset: () =>
+                      setConfirmRequest({
+                        title: t("confirm.resetTitle"),
+                        body: t("confirm.resetBody"),
+                        confirmLabel: t("confirm.resetOk"),
+                        onConfirm: () => {
+                          commit(structuredClone(resetTo), {
+                            label: t("session.reset"),
+                          });
+                          setSelectedId(null);
+                        },
+                      }),
+                  }
+                : {})}
+              canManage={permissions.manageDocuments}
+              onDelete={(id, name) =>
+                setConfirmRequest({
+                  title: t("confirm.deleteDocumentTitle", { name }),
+                  body: t("confirm.deleteDocumentBody"),
+                  confirmLabel: t("confirm.deleteDocumentOk"),
+                  destructive: true,
+                  onConfirm: () => void session.remove(id),
+                })
+              }
             />
-          )}
-          {view === "edit" ? <Inspector /> : null}
-        </div>
-        {dataOpen && permissions.data !== "hidden" ? (
-          <DataPanel onClose={() => setDataOpen(false)} />
-        ) : null}
-        <ConfirmDialog request={confirmRequest} onCancel={() => setConfirmRequest(null)} />
-        <ShortcutsPanel open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
-      </EditorProvider>
+          ) : null}
+          <Toolbar
+            view={view}
+            onViewChange={setView}
+            viewport={viewport}
+            onViewportChange={setViewport}
+            showHistory={showHistory && permissions.history}
+            onOpenShortcuts={() => setShortcutsOpen(true)}
+            {...(permissions.data === "hidden"
+              ? {}
+              : { dataOpen, onToggleData: () => setDataOpen((v) => !v) })}
+            showCode={
+              permissions.code.html ||
+              permissions.code.text ||
+              permissions.code.json
+            }
+            {...(view === "preview"
+              ? { mockup, onToggleMockup: () => setMockup((v) => !v) }
+              : {})}
+            extra={permissions.templates ? toolbarExtra : null}
+          />
+          {/* Preview renders a single child, so the three-column grid has to collapse with it
+            — otherwise the frame lands in the 176px palette column. */}
+          <div
+            className={`md-layout${view === "edit" ? "" : " md-layout--preview"}`}
+          >
+            {view === "edit" ? <Palette onDragStart={startCreate} /> : null}
+            {view === "edit" ? (
+              <Canvas canvasRef={canvasRef} dropTarget={drag?.target ?? null} />
+            ) : view === "code" ? (
+              <CodeView />
+            ) : (
+              <PreviewFrame
+                doc={value}
+                width={viewportWidth}
+                data={data}
+                viewport={viewport}
+                mockup={mockup}
+                identity={identity}
+              />
+            )}
+            {view === "edit" ? <Inspector /> : null}
+          </div>
+          {dataOpen && permissions.data !== "hidden" ? (
+            <DataPanel onClose={() => setDataOpen(false)} />
+          ) : null}
+          <ConfirmDialog
+            request={confirmRequest}
+            onCancel={() => setConfirmRequest(null)}
+          />
+          <ShortcutsPanel
+            open={shortcutsOpen}
+            onClose={() => setShortcutsOpen(false)}
+          />
+        </EditorProvider>
+      </CustomisationProvider>
     </div>
   );
 }

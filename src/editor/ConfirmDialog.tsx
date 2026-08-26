@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useEditor } from "./EditorContext.js";
+import { useSlot } from "./customise.js";
 
 export interface ConfirmRequest {
   title: string;
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   onCancel: () => void;
 }) {
   const { t } = useEditor();
+  const slot = useSlot();
   const panel = useRef<HTMLDivElement | null>(null);
   const confirm = useRef<HTMLButtonElement | null>(null);
 
@@ -68,7 +70,7 @@ export function ConfirmDialog({
   return (
     <div className="md-dialog-scrim" onClick={onCancel}>
       <div
-        className="md-dialog"
+        className={slot("panel", "md-dialog")}
         role="dialog"
         aria-modal="true"
         aria-label={request.title}

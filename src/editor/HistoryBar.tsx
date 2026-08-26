@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { HistoryStep } from "./history.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
+import { useSlot } from "./customise.js";
 
 /** How long the pointer must rest on a button before its menu opens. */
 const OPEN_DELAY_MS = 400;
@@ -96,6 +97,7 @@ function HistoryButton({
   onStep: (count: number) => void;
 }) {
   const { t } = useEditor();
+  const slot = useSlot();
   const timer = useRef<number | null>(null);
   const menu = useRef<HTMLDivElement | null>(null);
   const disabled = steps.length === 0;
@@ -160,7 +162,7 @@ function HistoryButton({
 
       {open ? (
         <div className="md-history-menu" ref={menu} onKeyDown={onMenuKeyDown}>
-          <div className="md-history-panel" role="menu" aria-label={heading}>
+          <div className={slot("panel", "md-history-panel")} role="menu" aria-label={heading}>
             <h4>{heading}</h4>
             {/* Every step above the one under the pointer is going too, and the highlight
                 says so — see the `:has(~ li:hover)` rule, which does it without a render. */}

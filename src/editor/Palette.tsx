@@ -5,6 +5,7 @@ import { useEditor } from "./EditorContext.js";
 import { allowsBlockType } from "../permissions.js";
 import { Icon } from "./icons.js";
 import type { IconName } from "./icons.js";
+import { useSlot } from "./customise.js";
 
 const PALETTE: { type: BlockType; icon: IconName }[] = [
   { type: "section", icon: "section" },
@@ -26,6 +27,7 @@ export function Palette({
   onDragStart?: (type: BlockType, event: React.PointerEvent) => void;
 }) {
   const { doc, selectedId, insert, select, permissions, t } = useEditor();
+  const slot = useSlot();
   const offered = PALETTE.filter(({ type }) => allowsBlockType(permissions, type));
   if (!permissions.structure || offered.length === 0) return null;
 
@@ -76,7 +78,7 @@ export function Palette({
   };
 
   return (
-    <aside className="md-palette">
+    <aside className={slot("palette", "md-palette")}>
       <h3>{t("palette.title")}</h3>
       <p className="md-palette-hint">{t("palette.hint")}</p>
       <div className="md-palette-list">
@@ -84,7 +86,7 @@ export function Palette({
           <button
             key={type}
             type="button"
-            className="md-palette-item"
+            className={slot("button", "md-palette-item")}
             onClick={() => add(type)}
             onPointerDown={onDragStart ? (e) => onDragStart(type, e) : undefined}
           >

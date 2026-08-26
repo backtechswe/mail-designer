@@ -5,6 +5,7 @@ import { builtInPresets } from "../presets/index.js";
 import { cloneBlock } from "../document.js";
 import { useEditor } from "./EditorContext.js";
 import { Icon } from "./icons.js";
+import { useSlot } from "./customise.js";
 
 /**
  * Templates menu, ready to drop into `toolbarExtra`.
@@ -25,6 +26,7 @@ export function TemplateMenu({
   presets?: MailPreset[];
 }) {
   const { doc, replaceDocument, select, confirm, t } = useEditor();
+  const slot = useSlot();
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState<MailTemplateSummary[]>([]);
   const [name, setName] = useState("");
@@ -104,7 +106,7 @@ export function TemplateMenu({
       </button>
 
       {open ? (
-        <div className="md-menu-panel" role="menu">
+        <div className={slot("panel", "md-menu-panel")} role="menu">
           <p className="md-menu-warning">{t("templates.replaceWarning")}</p>
 
           <h4>{t("templates.presets")}</h4>

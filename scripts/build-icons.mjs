@@ -184,6 +184,7 @@ const output = `/**
  * Only icons Font Awesome marks as free are vendored here; the generator refuses
  * Pro-only glyphs, which may not be redistributed.
  */
+import { useCustomisation } from "./customise.js";
 
 export const iconPaths = {
 ${body}
@@ -208,6 +209,10 @@ export interface IconProps {
  * text, so a theme change needs no icon change.
  */
 export function Icon({ name, size = 16, title, className }: IconProps) {
+  // A host's own glyph wins, so an application with an icon set does not end up with two.
+  const Replacement = useCustomisation().icons?.[name];
+  if (Replacement) return <Replacement size={size} className={className} />;
+
   const [viewBox, path] = iconPaths[name];
   return (
     <svg

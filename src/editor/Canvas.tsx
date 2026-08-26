@@ -24,6 +24,7 @@ import { DividerView } from "../blocks/divider.js";
 import { SpacerView } from "../blocks/spacer.js";
 import { SocialView } from "../blocks/social.js";
 import { HtmlView } from "../blocks/html.js";
+import { useSlot } from "./customise.js";
 
 /**
  * The editing surface.
@@ -47,6 +48,7 @@ export function Canvas({
     doc, select, selectedId, insert, remove, move, isDragging, viewportWidth,
     permissions, capabilities, t,
   } = useEditor();
+  const slot = useSlot();
 
   /**
    * Alt+arrows are the keyboard equivalent of dragging. Not a nicety: drag-and-drop is
@@ -95,7 +97,7 @@ export function Canvas({
   return (
     <div
       ref={canvasRef}
-      className={`md-canvas${isDragging ? " is-dragging" : ""}`}
+      className={slot("canvas", `md-canvas${isDragging ? " is-dragging" : ""}`)}
       tabIndex={0}
       onKeyDown={handleKeyDown}
       onClick={(e) => {

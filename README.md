@@ -81,6 +81,39 @@ extra.
 Import `/render` on a server. It is deliberately free of React so a Cloud Function or queue
 worker can render without pulling the editor in.
 
+## Making it look like your application
+
+Three mechanisms, and [docs/theming.md](docs/theming.md) has the full account:
+
+- **Tokens.** Fifteen CSS custom properties draw the entire chrome, set through the `theme`
+  prop. Light and dark follow `prefers-color-scheme`, and the root declares `color-scheme` so
+  scrollbars and native controls follow too.
+- **`classNames`.** Your own classes on thirteen named parts — toolbar, canvas, panel, button,
+  input, label and the rest. This is where Tailwind's utilities go, as-is: every rule that backs
+  a slot is wrapped in `:where()` and weighs nothing, so your single class always wins and never
+  needs `!important` or `@apply`. Without that the winner would be decided by import order.
+- **`icons`.** Replace one glyph or all sixty-two.
+
+```tsx
+<MailDesigner
+  theme={{ accent: "#f97316", radius: 12 }}
+  customise={{
+    classNames: { toolbar: "bg-slate-900", buttonActive: "bg-orange-500 text-slate-900" },
+    icons: { trash: MyTrashIcon },
+  }}
+/>
+```
+
+There is deliberately no slot for every element and no way to replace whole panels: both would
+make the editor's internals a public contract, and a class map plus tokens covers what a design
+system actually owns.
+
+**Nothing leaks in either direction.** Every selector is scoped under `.md-root`, and a scoped
+reset covers the elements a global stylesheet is likely to touch — without it a host's
+`button { text-transform: uppercase }`, or Tailwind's Preflight, would reach every button in the
+editor. And layout responds to the editor's own width through `@container`, so an editor in a
+700px panel on a 1600px page collapses properly instead of overflowing.
+
 ## Two levels of appearance, kept apart
 
 This is the distinction to internalise before styling anything:

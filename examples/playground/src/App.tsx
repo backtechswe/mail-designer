@@ -1,4 +1,13 @@
 import { useMemo, useState } from "react";
+
+/** Stands in for a host's own icon set — see the `customise.icons` prop below. */
+function DemoTrashIcon({ size = 16 }: { size?: number }) {
+  return (
+    <span style={{ fontSize: size, lineHeight: 1, display: "block" }} aria-hidden>
+      ✕
+    </span>
+  );
+}
 import {
   MailDesigner,
   TemplateMenu,
@@ -88,6 +97,7 @@ export function App() {
   });
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("sv");
+  const [customised, setCustomised] = useState(false);
 
   const active = THEMES.find((t) => t.id === themeId) ?? THEMES[0]!;
   const profile = PROFILES.find((p) => p.id === profileId) ?? PROFILES[0]!;
@@ -130,6 +140,15 @@ export function App() {
           </select>
         </label>
 
+        <label className="pg-field">
+          <input
+            type="checkbox"
+            checked={customised}
+            onChange={(e) => setCustomised(e.target.checked)}
+          />
+          Egen design
+        </label>
+
         {/* Replaces the document from *outside* the editor, the way a host app's own
             "new mail" button would. The editor records it as a history step rather than
             discarding what came before. */}
@@ -161,6 +180,24 @@ export function App() {
           resolveSocialIcon={(network) => `https://cdn.simpleicons.org/${network}`}
           // Shown only in the device mock's sender line — never rendered into the mail.
           previewIdentity={{ name: "Nyhetsbrevet", email: "utskick@exempel.se" }}
+          // Demonstrates the customise surface. A real host would put its own design system's
+          // classes here; the playground defines .demo-* in index.css so the effect is visible
+          // without pulling in Tailwind.
+          {...(customised
+            ? {
+                customise: {
+                  classNames: {
+                    toolbar: "demo-toolbar",
+                    button: "demo-button",
+                    buttonActive: "demo-button-active",
+                    panel: "demo-panel",
+                    input: "demo-input",
+                    label: "demo-label",
+                  },
+                  icons: { trash: DemoTrashIcon },
+                },
+              }
+            : {})}
           onHistoryChange={(h) => setDepth(h.depth)}
           // Handing the editor a store turns on the document session: name bar, autosave,
           // switcher, and the prompts that go with them. Here it is localStorage; in Utskick
