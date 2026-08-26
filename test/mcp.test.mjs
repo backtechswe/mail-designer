@@ -191,3 +191,54 @@ test("a malformed line does not take the session down", async () => {
   assert.ok(ids.includes(3), "the session continued past the bad line");
   assert.ok(responses.some((response) => response.error?.code === -32700));
 });
+
+/* ------------------------------------------ the three the commit message claimed were tested */
+
+test("a response larger than the pipe buffer arrives whole", async () => {
+  // The failure this guards: `process.exit` on stdin end discards whatever stdout still has
+  // queued. Measured at 65 361 bytes of a 245 kB response, with exit code 0 — so a client saw
+  // a truncated message and a clean shutdown. Email HTML passes 64 kB routinely.
+  const src = (await import("../dist/presets/index.js")).builtInPresets[0].document;
+  const blocks = [];
+  for (let i = 0; i < 16; i += 1) {
+    for (const block of src.blocks) blocks.push({ ...structuredClone(block), id: `${block.id}_${i}` });
+  }
+  const document = { ...src, blocks };
+
+  const { responses } = await session([init, call(2, "render_document", { document })]);
+  const html = payload(responses[1]);
+  assert.ok(html.length > 100_000, `response was only ${html.length} bytes`);
+  assert.match(html, /<\/html>\s*$/, "the HTML is complete, not cut off mid-document");
+});
+
+test("no branch answers a notification", async () => {
+  // Three of six used to reply unconditionally, and JSON.stringify drops an undefined id — so
+  // the client received a message with neither an id nor a method.
+  const notifications = [
+    { jsonrpc: "2.0", method: "initialize", params: {} },
+    { jsonrpc: "2.0", method: "tools/list" },
+    { jsonrpc: "2.0", method: "tools/call", params: { name: "list_presets", arguments: {} } },
+    { jsonrpc: "2.0", method: "notifications/initialized" },
+    { jsonrpc: "2.0", method: "ping" },
+  ];
+  const { responses } = await session([init, ...notifications]);
+  assert.equal(responses.length, 1, "only the initialize *request* may be answered");
+  for (const response of responses) {
+    assert.ok(response.id !== undefined && response.id !== null, "every message carries an id");
+  }
+});
+
+test("a batch is refused rather than dropped", async () => {
+  // Batching is legal in every version this server advertises and is not implemented. Silence
+  // left a batching client waiting forever.
+  const { responses } = await session([init, [call(2, "list_presets"), call(3, "list_presets")]]);
+  assert.ok(responses.some((r) => r.error?.code === -32600));
+});
+
+test("tools/call without a tool name is a protocol error, not a tool error", async () => {
+  const { responses } = await session([
+    init,
+    { jsonrpc: "2.0", id: 2, method: "tools/call", params: { arguments: {} } },
+  ]);
+  assert.equal(responses[1].error.code, -32602);
+});

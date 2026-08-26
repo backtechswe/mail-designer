@@ -184,8 +184,31 @@ async function callTool(name, args) {
   }
 }
 
+/**
+ * Writes are counted so the process can wait for them.
+ *
+ * `process.stdout` to a pipe is asynchronous, and an MCP client shuts a server down by closing
+ * its stdin and waiting for it to exit. Calling `process.exit` on that signal discards whatever
+ * is still queued: measured over a real pipe, a 245 kB response came out as 65 361 bytes — the
+ * pipe buffer — with exit code 0, so the client saw a truncated message and a clean exit.
+ * Email HTML passes 64 kB routinely; this package's own Gmail limit is 102 kB.
+ */
+let inFlight = 0;
+let ending = false;
+
 function send(message) {
-  process.stdout.write(`${JSON.stringify(message)}\n`);
+  inFlight += 1;
+  process.stdout.write(`${JSON.stringify(message)}\n`, () => {
+    inFlight -= 1;
+    if (ending && inFlight === 0) finish();
+  });
+}
+
+function finish() {
+  // Nothing left to flush. Setting the code and returning lets Node exit on its own once the
+  // event loop is empty — `process.exit` is the thing that lost the data.
+  process.exitCode = 0;
+  process.stdin.pause();
 }
 
 function reply(id, result) {
@@ -197,12 +220,25 @@ function replyError(id, code, message) {
 }
 
 async function handle(message) {
+  // Batches are legal in every protocol version this server advertises, and it does not
+  // implement them. Refusing is honest; dropping them silently left a client hanging.
+  if (Array.isArray(message)) {
+    replyError(null, -32600, "Batch requests are not supported");
+    return;
+  }
+
   const { id, method, params } = message;
-  // Notifications have no id and must not be answered at all.
+  /*
+   * Notifications have no id and must not be answered at all. Every branch below checks this,
+   * which it did not: three of six replied unconditionally, and `JSON.stringify` drops an
+   * `undefined` id — so what reached the client was a message with neither an `id` nor a
+   * `method`, which is neither a response nor a request. Both SDKs reject that or lose sync.
+   */
   const isRequest = id !== undefined && id !== null;
 
   switch (method) {
     case "initialize": {
+      if (!isRequest) return;
       const asked = params?.protocolVersion;
       reply(id, {
         protocolVersion: KNOWN.has(asked) ? asked : PROTOCOL,
@@ -221,11 +257,18 @@ async function handle(message) {
       return;
 
     case "tools/list":
+      if (!isRequest) return;
       reply(id, { tools: TOOLS });
       return;
 
     case "tools/call": {
+      if (!isRequest) return;
       const name = params?.name;
+      // A call with no tool named is a bad request, not a tool that failed.
+      if (typeof name !== "string" || name === "") {
+        replyError(id, -32602, "tools/call requires params.name");
+        return;
+      }
       try {
         const value = await callTool(name, params?.arguments ?? {});
         const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -269,6 +312,9 @@ export function serve() {
       });
     }
   });
-  process.stdin.on("end", () => process.exit(0));
+  process.stdin.on("end", () => {
+    ending = true;
+    if (inFlight === 0) finish();
+  });
   process.stderr.write(`mail-designer ${version} — MCP server on stdio\n`);
 }

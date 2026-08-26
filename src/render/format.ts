@@ -6,6 +6,7 @@
  * produced. This puts the structure back without touching the content.
  *
  * The rule that keeps it safe: **whitespace is only ever added between block-level tags.**
+ * Between them and nowhere else — not around a comment, not inside a run of inline elements.
  * A newline inside inline content collapses to a space in the mail, so `<a>Läs</a>,` must
  * never become `<a>Läs</a>\n,` — that renders as "Läs ," in every client. So a line that has
  * picked up any content stays one line until its block closes, and `<td>Hej</td>` comes out
@@ -114,11 +115,26 @@ export function formatHtml(html: string): string {
   for (const token of tokenize(html)) {
     switch (token.kind) {
       case "doctype":
-      case "comment":
-        // MSO conditionals wrap whole tables; on their own line they read as the structural
-        // markers they are rather than as noise inside a row.
         own(token.raw, depth);
         afterBlock = true;
+        break;
+
+      case "comment":
+        /*
+         * A comment never takes a line of its own, and never changes whether the position
+         * counts as "between blocks".
+         *
+         * Both halves matter. `<td>Hej<!-- x -->då</td>` broken across lines renders as
+         * "Hej då" in the mail, because a newline in inline content collapses to a space —
+         * and `<!--[if !mso]><!-->text<!--<![endif]-->`, the downgrade-revealing Outlook
+         * pattern, is exactly that shape. So: append.
+         *
+         * And a comment is not content, so whitespace beside it is as insignificant as
+         * whitespace beside whatever sits on its other side. Leaving `afterBlock` alone is
+         * what makes formatting idempotent: otherwise a second pass treated the newline this
+         * pass had just added as the document's own and kept it.
+         */
+        append(token.raw);
         break;
 
       case "open":
