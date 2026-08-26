@@ -1,7 +1,7 @@
 import type { MailSettings } from "../../types.js";
 import { escAttr, escText } from "../esc.js";
 import { TABLE_RESET, css, px } from "../style.js";
-import { headCss } from "./css.js";
+import { DARK_LINK, DARK_PAGE, DARK_TEXT, headCss } from "./css.js";
 
 export interface SkeletonOptions {
   lang: string;
@@ -23,6 +23,25 @@ export function wrapDocument(
   options: SkeletonOptions,
 ): string {
   const preheader = settings.preheader ? renderPreheader(settings.preheader) : "";
+  /*
+   * Hooks for the dark rules in headCss, emitted only when the document has a dark treatment —
+   * an unused class in every mail is noise, and bytes count against Gmail's clipping limit.
+   *
+   * bgcolor on the page table alongside the CSS is unrelated to dark mode and was missing: a
+   * comment in columns.ts says older Outlook and some gateways drop background-color from a
+   * cell but honour the attribute, and the page background is exactly the one that fell back
+   * to white in those clients.
+   */
+  const dark = settings.dark;
+  // One class per colour the document actually defines. A class with no rule behind it is
+  // markup in every mail that does nothing.
+  const bodyHooks = [
+    dark?.backgroundColor ? DARK_PAGE : "",
+    dark?.textColor ? DARK_TEXT : "",
+    dark?.linkColor ? DARK_LINK : "",
+  ].filter(Boolean);
+  const bodyClass = bodyHooks.length > 0 ? ` class="${bodyHooks.join(" ")}"` : "";
+  const pageClass = dark?.backgroundColor ? ` class="${DARK_PAGE}"` : "";
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${escAttr(options.lang)}">
@@ -32,7 +51,15 @@ export function wrapDocument(
 <!-- Stops Apple Mail from re-flowing the layout on its own. -->
 <meta name="x-apple-disable-message-reformatting" />
 <!-- Stops iOS from auto-linking phone numbers, dates and addresses. -->
-<meta name="format-detection" content="telephone=no,date=no,address=no,email=no" />
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no" />${
+    settings.dark
+      ? `
+<!-- Both are needed: without them Apple Mail treats the message as light-only and applies
+     its own inversion instead of honouring the dark rules below. -->
+<meta name="color-scheme" content="light dark" />
+<meta name="supported-color-schemes" content="light dark" />`
+      : ""
+  }
 <title>${escText(options.title)}</title>
 <!--[if mso]>
 <xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
@@ -41,7 +68,7 @@ export function wrapDocument(
 ${headCss(settings, options.stackGaps, options.mobilePaddings)}
 </style>
 </head>
-<body id="body" style="${escAttr(
+<body id="body"${bodyClass} style="${escAttr(
     css({
       margin: 0,
       padding: 0,
@@ -53,7 +80,7 @@ ${headCss(settings, options.stackGaps, options.mobilePaddings)}
     }),
   )}">
 ${preheader}
-<table${TABLE_RESET} width="100%" style="${escAttr(
+<table${TABLE_RESET} width="100%"${pageClass} bgcolor="${escAttr(settings.backgroundColor)}" style="${escAttr(
     css({ width: "100%", "background-color": settings.backgroundColor }),
   )}">
 <tr><td align="center" style="padding:0">

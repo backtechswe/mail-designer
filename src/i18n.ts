@@ -230,6 +230,10 @@ export const sv = {
   "text.linkPrompt": "Adress",
 
   "locked.content": "Innehållet i det här blocket sätts av appen.",
+  "field.darkMode": "Mörkt läge",
+  "field.darkModeOn": "Egna färger i mörkt läge",
+  "field.darkModeHint": "Utan dem inverterar Apple Mail och Outlook.com mejlet på egen hand.",
+  "field.darkModeImages": "Bilder inverteras inte. En logotyp med vit bakgrund blir en lysande vit fyrkant — använd en med transparens.",
   "warn.title": "Att titta på innan utskick",
   "warn.gmail-clipping": "Mejlet är {{kb}} kB. Gmail klipper över 100 kB och gömmer resten bakom en länk.",
   "warn.data-uri-image": "En inbäddad bild ({{count}}) — Gmail vägrar visa den. Ladda upp den och länka i stället.",
@@ -238,6 +242,7 @@ export const sv = {
   "warn.no-preheader": "Ingen förhandsvisningstext. Inkorgen visar början av brödtexten i stället.",
   "warn.wide-content": "{{width}} px är brett — flera förhandsvisningsrutor är smalare än så.",
   "warn.no-plain-text": "Ingen textversion. Det räknas emot dig i skräppostfilter.",
+  "warn.no-dark-mode": "Inga mörka färger satta. Apple Mail och Outlook.com inverterar då själva — och en logotyp med vit bakgrund blir en lysande vit fyrkant.",
   "data.pickerHint": "Välj ett fält · piltangenter och Enter",
   "data.noMatch": "Inget fält matchar \"{{query}}\"",
   "data.insert": "Datafält",
@@ -494,6 +499,10 @@ export const en: Record<keyof typeof sv, string> = {
   "text.linkPrompt": "URL",
 
   "locked.content": "This block's content is set by the application.",
+  "field.darkMode": "Dark mode",
+  "field.darkModeOn": "Own colours in dark mode",
+  "field.darkModeHint": "Without them Apple Mail and Outlook.com invert the mail on their own.",
+  "field.darkModeImages": "Images are not inverted. A logo on a white background becomes a glowing white rectangle — use one with transparency.",
   "warn.title": "Worth checking before you send",
   "warn.gmail-clipping": "The email is {{kb}} kB. Gmail clips anything over 100 kB and hides the rest behind a link.",
   "warn.data-uri-image": "An embedded image ({{count}}) — Gmail refuses to show it. Upload it and link instead.",
@@ -502,6 +511,8 @@ export const en: Record<keyof typeof sv, string> = {
   "warn.no-preheader": "No preview text. The inbox will show the start of the body instead.",
   "warn.wide-content": "{{width}}px is wide — several preview panes are narrower than that.",
   "warn.no-plain-text": "No plain-text part. That counts against you in spam filters.",
+  "warn.no-dark-mode":
+    "No dark colours set. Apple Mail and Outlook.com will invert the mail themselves — and a logo on a white background becomes a glowing white rectangle.",
   "data.pickerHint": "Pick a field · arrows and Enter",
   "data.noMatch": "No field matches \"{{query}}\"",
   "data.insert": "Data field",

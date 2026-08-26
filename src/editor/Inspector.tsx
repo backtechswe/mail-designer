@@ -257,7 +257,70 @@ function MailSettingsPanel() {
           onChange={(preheader) => patch({ preheader })}
         />
       </Section>
+
+      <DarkModeSection />
     </>
+  );
+}
+
+/**
+ * Dark mode as an opt-in with a sensible starting point.
+ *
+ * Off by default and not silently on: turning it on is a decision about how the mail looks to a
+ * large share of readers, and the four colours are the author's to pick. The defaults invert
+ * the light ones rather than guessing at a palette — a dark page, a slightly lifted surface,
+ * near-white text, and a link colour that survives on both.
+ *
+ * The checkbox writes and clears `settings.dark` wholesale, so a document with no dark section
+ * stays exactly as it was: no unused classes, no extra bytes against Gmail's limit.
+ */
+function DarkModeSection() {
+  const { doc, updateSettings, t } = useEditor();
+  const dark = doc.settings.dark;
+
+  const DEFAULTS = {
+    backgroundColor: "#0b0f14",
+    contentBackgroundColor: "#151b23",
+    textColor: "#e6edf3",
+    linkColor: "#7cc2ff",
+  };
+
+  return (
+    <Section title={t("field.darkMode")}>
+      <CheckboxField
+        label={t("field.darkModeOn")}
+        hint={t("field.darkModeHint")}
+        checked={dark !== undefined}
+        onChange={(on) => updateSettings({ dark: on ? DEFAULTS : undefined })}
+      />
+      {dark ? (
+        <>
+          <ColorField
+            label={t("field.backgroundColor")}
+            value={dark.backgroundColor ?? DEFAULTS.backgroundColor}
+            onChange={(v) => updateSettings({ dark: { ...dark, backgroundColor: v ?? undefined } })}
+          />
+          <ColorField
+            label={t("field.contentBackgroundColor")}
+            value={dark.contentBackgroundColor ?? DEFAULTS.contentBackgroundColor}
+            onChange={(v) =>
+              updateSettings({ dark: { ...dark, contentBackgroundColor: v ?? undefined } })
+            }
+          />
+          <ColorField
+            label={t("field.textColor")}
+            value={dark.textColor ?? DEFAULTS.textColor}
+            onChange={(v) => updateSettings({ dark: { ...dark, textColor: v ?? undefined } })}
+          />
+          <ColorField
+            label={t("field.linkColor")}
+            value={dark.linkColor ?? DEFAULTS.linkColor}
+            onChange={(v) => updateSettings({ dark: { ...dark, linkColor: v ?? undefined } })}
+          />
+          <p className="md-field-hint">{t("field.darkModeImages")}</p>
+        </>
+      ) : null}
+    </Section>
   );
 }
 

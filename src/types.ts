@@ -26,6 +26,30 @@ export interface MailSettings {
    * show the first words of the body, which is rarely what you want.
    */
   preheader?: string;
+  /**
+   * What the mail should look like when the reader is in dark mode.
+   *
+   * Omit it and clients decide for you, which they will do badly. Apple Mail and Outlook.com
+   * invert colours on their own: dark text on white becomes light text on dark, and a PNG logo
+   * with a white background does *not* invert — it stays a glowing white rectangle in the
+   * middle of a dark message. That is the most common dark-mode bug in email, and giving the
+   * client the four colours it needs is what prevents it.
+   *
+   * Anything left out keeps its light value.
+   */
+  dark?: DarkSettings;
+}
+
+/**
+ * The four colours dark mode actually turns on. Deliberately not a second copy of every
+ * setting: type, spacing and width do not change with the light, and a per-block dark colour
+ * is a promise no email client can keep consistently.
+ */
+export interface DarkSettings {
+  backgroundColor?: string;
+  contentBackgroundColor?: string;
+  textColor?: string;
+  linkColor?: string;
 }
 
 /**

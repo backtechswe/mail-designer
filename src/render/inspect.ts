@@ -16,7 +16,8 @@ export type WarningId =
   | "no-preheader"
   | "missing-alt"
   | "wide-content"
-  | "no-plain-text";
+  | "no-plain-text"
+  | "no-dark-mode";
 
 export interface EmailWarning {
   id: WarningId;
@@ -51,6 +52,14 @@ export function inspectEmail(doc: MailDocument, result: RenderResult): EmailWarn
 
   if (!doc.settings.preheader?.trim()) {
     warnings.push({ id: "no-preheader", level: "warning" });
+  }
+
+  if (!doc.settings.dark) {
+    // Apple Mail, iOS Mail and Outlook.com invert colours on their own when the reader is in
+    // dark mode, and they do it badly: text and backgrounds flip, but an image does not. A PNG
+    // logo on a white background stays a glowing white rectangle in the middle of a dark
+    // message. Four colours is all it takes to be asked instead of guessed at.
+    warnings.push({ id: "no-dark-mode", level: "warning" });
   }
 
   if (doc.settings.width > 640) {

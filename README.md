@@ -50,6 +50,21 @@ desktop value as their fallback.
 the preview: a mail past Gmail's ~102 kB clipping limit, a `data:` image Gmail will refuse, a
 section background Outlook will drop, images with no alt text, a missing preheader.
 
+### Dark mode
+
+`settings.dark` takes four colours — page, surface, text, link — and everything left out keeps
+its light value. Omit the whole block and nothing about dark mode is emitted at all.
+
+Doing it properly means three mechanisms, because the clients do three different things: a
+media query plus `color-scheme` and two meta tags for Apple Mail, `[data-ogsb]`/`[data-ogsc]`
+attribute selectors for Outlook.com, which rewrites the DOM and ignores media queries, and for
+Gmail simply having set the colours at all. `docs/email-compatibility.md` has the table.
+
+Without it the clients invert the mail themselves, and they do it badly: text and backgrounds
+flip but **images do not**, so a PNG logo on a white background becomes a glowing white
+rectangle in the middle of a dark message. That is the most common dark-mode bug in email, it
+cannot be fixed in CSS, and `inspectEmail` reports a mail that has not considered it.
+
 ### Mobile-specific padding
 
 Any block or section can carry `mobilePadding`, used instead of `padding` on narrow screens.

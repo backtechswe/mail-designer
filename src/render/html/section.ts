@@ -4,6 +4,7 @@ import { escAttr } from "../esc.js";
 import { TABLE_RESET, css, px, spacing } from "../style.js";
 import { renderColumns } from "./columns.js";
 import { renderLeaf } from "./leaf.js";
+import { DARK_SURFACE } from "./css.js";
 
 /**
  * One section becomes two nested tables: a full-width outer one, and a *fluid* inner one
@@ -46,13 +47,22 @@ export function renderSection(section: SectionBlock, ctx: RenderContext): string
   const body = renderChildren(section.children, { ...ctx, width: contentWidth });
 
   const sectionMobile = ctx.mobileClass(section.mobilePadding);
+  /*
+   * The surface hook, only where the surface colour actually comes from settings. A section
+   * that sets its own background has chosen it deliberately, and overriding that in dark mode
+   * would throw away the choice — a coloured band is usually the one thing meant to stay.
+   */
+  const surfaceClass =
+    settings.dark?.contentBackgroundColor && !section.fullWidth && !section.backgroundColor
+      ? ` class="${DARK_SURFACE}"`
+      : "";
 
   return (
     `<table${TABLE_RESET} width="100%" style="${escAttr(outerStyle)}"` +
     (outerBackground ? ` bgcolor="${escAttr(outerBackground)}"` : "") +
     `><tr><td align="center" style="padding:0">` +
     `<!--[if mso]><table${TABLE_RESET} align="center" width="${settings.width}"><tr><td style="padding:0"><![endif]-->` +
-    `<table${TABLE_RESET} align="center" width="100%" style="${escAttr(innerStyle)}"` +
+    `<table${TABLE_RESET} align="center" width="100%"${surfaceClass} style="${escAttr(innerStyle)}"` +
     (innerBackground ? ` bgcolor="${escAttr(innerBackground)}"` : "") +
     `><tr><td${sectionMobile} style="${escAttr(css({ padding: spacing(padding) }))}">` +
     body +

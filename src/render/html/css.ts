@@ -13,6 +13,77 @@ export function mobilePaddingClass(index: number): string {
   return `md-mp${index}`;
 }
 
+/** Marks the page background, the content surface, body text and links for dark mode. */
+export const DARK_PAGE = "md-dark-page";
+export const DARK_SURFACE = "md-dark-surface";
+export const DARK_TEXT = "md-dark-text";
+export const DARK_LINK = "md-dark-link";
+
+/**
+ * Dark mode, for the clients that have one.
+ *
+ * Three mechanisms, because the clients do three different things:
+ *
+ * - **Apple Mail, iOS Mail, Outlook for Mac** honour `prefers-color-scheme`, so a media query
+ *   with `!important` reaches them. They also require `color-scheme` on `:root` and the two
+ *   meta tags in the head; without those, Apple Mail decides the message is light-only and
+ *   applies its own inversion instead.
+ * - **Outlook.com** rewrites the DOM: it copies `bgcolor` to `data-ogsb` and colour styles to
+ *   `data-ogsc`, then restyles from those. Selecting on those attributes is the only way to
+ *   reach it, and it ignores media queries.
+ * - **Gmail** has no dark mode for HTML mail at all on desktop, and on Android inverts nothing
+ *   the author set explicitly. Setting the colours *is* the handling.
+ *
+ * What no mechanism fixes is an image: a PNG logo on white stays a white rectangle. That is
+ * the author's problem to solve with a transparent asset, and `inspectEmail` says so.
+ */
+function darkRules(settings: MailSettings): string[] {
+  const dark = settings.dark;
+  if (!dark) return [];
+
+  const declarations = (): string[] => {
+    const out: string[] = [];
+    if (dark.backgroundColor) {
+      out.push(`.${DARK_PAGE}{background-color:${dark.backgroundColor}!important}`);
+    }
+    if (dark.contentBackgroundColor) {
+      out.push(`.${DARK_SURFACE}{background-color:${dark.contentBackgroundColor}!important}`);
+    }
+    if (dark.textColor) {
+      // The descendant selector matters: headings and text blocks set their own colour inline,
+      // and inline beats a class unless the class is more specific and !important.
+      out.push(`.${DARK_TEXT},.${DARK_TEXT} *{color:${dark.textColor}!important}`);
+    }
+    if (dark.linkColor) out.push(`.${DARK_LINK} a{color:${dark.linkColor}!important}`);
+    return out;
+  };
+
+  const rules = declarations();
+  if (rules.length === 0) return [];
+
+  const ogsc: string[] = [];
+  if (dark.backgroundColor) {
+    ogsc.push(`[data-ogsb] .${DARK_PAGE}{background-color:${dark.backgroundColor}!important}`);
+  }
+  if (dark.contentBackgroundColor) {
+    ogsc.push(
+      `[data-ogsb] .${DARK_SURFACE}{background-color:${dark.contentBackgroundColor}!important}`,
+    );
+  }
+  if (dark.textColor) {
+    ogsc.push(`[data-ogsc] .${DARK_TEXT},[data-ogsc] .${DARK_TEXT} *{color:${dark.textColor}!important}`);
+  }
+  if (dark.linkColor) ogsc.push(`[data-ogsc] .${DARK_LINK} a{color:${dark.linkColor}!important}`);
+
+  return [
+    // Tells the client the mail has a dark treatment of its own, which is what stops Apple
+    // Mail applying its automatic inversion on top.
+    ":root{color-scheme:light dark;supported-color-schemes:light dark}",
+    `@media (prefers-color-scheme:dark){${rules.join("")}}`,
+    ...ogsc,
+  ];
+}
+
 /**
  * The only <style> block in the document.
  *
@@ -71,6 +142,8 @@ export function headCss(
         `}`,
     );
   }
+
+  rules.push(...darkRules(settings));
 
   return rules.join("\n");
 }

@@ -108,3 +108,27 @@ Innan en mall används i skarpt läge: skicka den till dig själv och titta i **
 iOS), Apple Mail, Outlook för Windows och Outlook.com**. Det är de fyra som täcker de olika
 renderingsmotorerna. `test/golden/*.html` går att öppna direkt i en webbläsare, men en
 webbläsare är inte en e-postklient.
+
+## Mörkt läge
+
+Tre mekanismer, för klienterna gör tre olika saker. Sätts via `settings.dark` med fyra
+färger: sidbakgrund, innehållets bakgrund, textfärg, länkfärg.
+
+| Klient | Vad som händer | Vad vi gör |
+|---|---|---|
+| Apple Mail, iOS Mail, Outlook för Mac | Följer `prefers-color-scheme`, men **bara** om mejlet också deklarerar `color-scheme` — annars beslutar Apple Mail att mejlet är ljust-bara och inverterar självt | Två meta-taggar i head, `:root{color-scheme:light dark}`, och en media query med `!important` |
+| Outlook.com | Ignorerar media queries. Skriver om DOM:en: kopierar `bgcolor` till `data-ogsb` och färgstilar till `data-ogsc`, och stylar sedan om utifrån dem | Selektorer på `[data-ogsb]` och `[data-ogsc]` |
+| Gmail | Har inget mörkt läge för HTML-mejl på desktop, och inverterar på Android inget som författaren satt uttryckligen | Att sätta färgerna *är* hanteringen |
+
+`!important` och en efterkommande-selektor (`.md-dark-text, .md-dark-text *`) är båda
+nödvändiga: rubriker och textblock sätter sin färg **inline**, och inline slår en klass om inte
+klassen är mer specifik och `!important`.
+
+**Bilder inverteras inte, av någon klient.** En PNG-logotyp på vit bakgrund blir en lysande vit
+fyrkant i ett mörkt mejl. Det är den vanligaste dark-mode-buggen i e-post och den går inte att
+lösa i CSS — använd en logotyp med transparens. Inspektorn säger det, och `inspectEmail` varnar
+med `no-dark-mode` för ett mejl som inte satt några mörka färger alls.
+
+**Ingenting emitteras för ett dokument utan `settings.dark`.** Inga meta-taggar, inga klasser,
+inga regler — varje byte räknas mot Gmails klippgräns, och en klass utan regel bakom sig är
+markup i varje mejl som inte gör något.
