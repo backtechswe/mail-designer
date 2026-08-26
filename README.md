@@ -618,9 +618,15 @@ Two things worth knowing if you are reviewing the translations:
   compare this with use, and it is applied consistently. Spanish takes *tú*; if your audience
   expects *usted*, only the imperatives change, so a variant is a small file rather than a
   rewrite.
-- **A handful of terms want a native eye**, and each locale names its own at the top of the
-  file: mostly *preheader*, *merge field*, *padding* and *inherited*, where the email industry
-  has settled conventions per market that this is only fairly confident about.
+- **The domain terms were checked against what the industry writes**, not guessed. German keeps
+  *Preheader* untranslated, because that is the word Brevo's German editor and the German
+  Mailchimp material use — *Vorschautext* is a gloss, not a label. Spanish says *relleno* for
+  padding, which is Figma's Spanish term; an earlier *espaciado interno* was a coinage. French
+  *marge intérieure* matches Figma's French, and the preheader has no settled French label at
+  all — Brevo's own material switches between *preheader* and *pré-header* without translating
+  it. Each locale's header records what was verified and against what.
+- **What is still unverified is named as such**, in the same place: mostly the word for a data
+  field, *divider*, and *inherited*. Those are the ones to put in front of a native speaker.
 
 To go further, pass your own resource — `strings` accepts any complete map, and
 `StringKey` is exported so you can type it.

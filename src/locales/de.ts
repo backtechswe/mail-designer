@@ -7,10 +7,15 @@
  * which the layout handles, but hints were shortened where the German said the same thing in
  * more words rather than translated word for word.
  *
- * Terms worth a native reviewer's eye, because the email industry has settled conventions this
- * file is only fairly confident about: *Vorschautext* (preheader), *Datenfeld* (merge field),
- * *Trennlinie* (divider), *Innenabstand* (padding), *Vorschau* used for both the inbox preview
- * text and the editor's preview mode, and *Geerbt* for an inherited value.
+ * Checked against what the industry actually writes: *Preheader* stays untranslated, because
+ * that is the word Brevo's German editor, rapidmail and the German Mailchimp material all use —
+ * *Vorschautext* is a gloss, not the label. *Innenabstand* for padding matches localised design
+ * tooling.
+ *
+ * Still unverified and worth a native eye: *Datenfeld* (the German ecosystem says *Merge-Tag*,
+ * which is the jargon this package avoids in English too, or the generic *Platzhalter* — this
+ * keeps *Datenfeld* for coherence with the *Daten* panel), *Trennlinie* for divider, and
+ * *Geerbt* for an inherited value.
  */
 import type { Locale } from "./en.js";
 
@@ -52,7 +57,7 @@ export const de: Locale = {
   "field.lineHeight": "Zeilenhöhe",
   "field.textColor": "Textfarbe",
   "field.linkColor": "Linkfarbe",
-  "field.preheader": "Vorschautext",
+  "field.preheader": "Preheader",
   "field.preheaderHint":
     "Erscheint im Postfach nach der Betreffzeile. Bleibt er leer, zeigen Clients den Anfang des Textes.",
   "field.padding": "Innenabstand",
@@ -175,7 +180,7 @@ export const de: Locale = {
   "client.time": "09:41",
   "client.search": "Suchen",
   "client.snippetFallback":
-    "Es ist kein Vorschautext gesetzt, also zeigt der Client hier den Anfang des Textes.",
+    "Es ist kein Preheader gesetzt, also zeigt der Client hier den Anfang des Textes.",
   "toolbar.code": "Code",
   "code.html": "HTML",
   "code.text": "Nur Text",
@@ -256,7 +261,7 @@ export const de: Locale = {
   "warn.missing-alt":
     "{{count}} Bild(er) ohne Alt-Text. Bilder sind in vielen Clients standardmäßig blockiert.",
   "warn.no-preheader":
-    "Kein Vorschautext. Das Postfach zeigt stattdessen den Anfang des Textes.",
+    "Kein Preheader. Das Postfach zeigt stattdessen den Anfang des Textes.",
   "warn.wide-content": "{{width}} px ist breit — mehrere Vorschaufenster sind schmaler.",
   "warn.no-plain-text": "Kein Nur-Text-Teil. Das rechnen Spamfilter dir an.",
   "warn.no-dark-mode":

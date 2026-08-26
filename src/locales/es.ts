@@ -11,9 +11,13 @@
  * *archivar* rather than *archivo* for the verb, and neither "ordenador" nor "computadora"
  * appears at all — the viewport is *Escritorio*.
  *
- * Terms worth a native reviewer's eye: *texto de vista previa* (preheader), *campo de datos*
- * (merge field), *espaciado interno* (padding), *heredado* for an inherited value, and
- * *Apilar* for the mobile stacking of columns.
+ * Checked against what the industry actually writes: *relleno* for padding, which is the term
+ * Figma's Spanish interface uses and what Spanish designers say — an earlier *espaciado
+ * interno* was a coinage of mine. And *texto de vista previa* for the preheader, matching
+ * Mailchimp's own "preview text" rather than the descriptive *preencabezado*.
+ *
+ * Still unverified and worth a native eye: *campo de datos*, *separador* for divider,
+ * *heredado* for an inherited value, and *Apilar* for the mobile stacking of columns.
  *
  * The four history entries use the impersonal *se*: a past participle would have to agree
  * with the block name interpolated into it, and the gender varies — *la imagen*, *el botón*.
@@ -62,9 +66,9 @@ export const es: Locale = {
   "field.preheader": "Texto de vista previa",
   "field.preheaderHint":
     "Aparece después del asunto en la bandeja de entrada. Si lo dejas vacío, los clientes muestran el principio del texto.",
-  "field.padding": "Espaciado interno",
-  "field.mobilePadding": "Espaciado en móvil",
-  "field.addMobilePadding": "Espaciado propio en móvil",
+  "field.padding": "Relleno",
+  "field.mobilePadding": "Relleno en móvil",
+  "field.addMobilePadding": "Relleno propio en móvil",
   "field.mobilePaddingHint":
     "Se entrega con una media query. Outlook de escritorio usa siempre el valor de escritorio, y algunos clientes eliminan <style> por completo — así que el valor de escritorio tiene que ser el que funcione.",
   "field.paddingLinked": "Vincular los cuatro lados",
@@ -78,7 +82,7 @@ export const es: Locale = {
   "field.href": "Enlace",
   "field.label": "Etiqueta",
   "field.borderRadius": "Radio de esquina",
-  "field.innerPadding": "Espaciado interior",
+  "field.innerPadding": "Relleno interior",
   "field.buttonWidth": "Ancho del botón",
   "field.buttonWidthHint":
     "Las esquinas redondeadas necesitan un ancho fijo en Outlook. Sin él, el botón sale recto en Outlook y redondeado en el resto.",

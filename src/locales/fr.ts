@@ -9,9 +9,14 @@
  * purpose: saying it in fewer words is better French than a faithful clause that wraps to four
  * lines in a 296px panel.
  *
- * Terms worth a native reviewer's eye: *texte d'aperçu* (preheader), *champ de données* (merge
- * field), *séparateur* (divider), *marge intérieure* (padding), *hérité* for an inherited
- * value, and *Empiler* for the mobile stacking of columns.
+ * Checked against what the industry actually writes: *marge intérieure* for padding, which is
+ * what Figma's French uses. The preheader has no settled French label — Brevo's own French
+ * material switches between *preheader* and *pré-header* without translating it, and Mailchimp
+ * says *texte de prévisualisation* — so *texte d'aperçu* is the short form of the descriptive
+ * one rather than the borrowed word.
+ *
+ * Still unverified and worth a native eye: *champ de données* (Brevo's template language calls
+ * these *variables*), *séparateur* for divider, and *hérité* for an inherited value.
  *
  * A past participle would have to agree with the block name interpolated into it, and the
  * gender varies — *une image*, *un bouton*, *une section*. The four history entries are built
