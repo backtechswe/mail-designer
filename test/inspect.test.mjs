@@ -18,7 +18,7 @@ function check(doc) {
 test("a clean mail with a preheader raises nothing but the expected nudges", () => {
   const doc = emptyDocument();
   doc.settings.preheader = "Kort förhandsvisning";
-  doc.blocks = [createSection([set(createBlock("text"), { html: "Hej." })])];
+  doc.blocks = [createSection([set(createBlock("text"), { html: "Hi." })])];
   const w = check(doc);
   assert.equal(ids(w, "gmail-clipping"), undefined);
   assert.equal(ids(w, "no-preheader"), undefined);
@@ -27,7 +27,7 @@ test("a clean mail with a preheader raises nothing but the expected nudges", () 
 
 test("a missing preheader is flagged, because the inbox will show body copy instead", () => {
   const doc = emptyDocument();
-  doc.blocks = [createSection([set(createBlock("text"), { html: "Hej." })])];
+  doc.blocks = [createSection([set(createBlock("text"), { html: "Hi." })])];
   assert.equal(ids(check(doc), "no-preheader").level, "warning");
 });
 

@@ -129,7 +129,7 @@ export interface MailDesignerProps {
    *
    * ```tsx
    * // The application owns the copy and the data; the user arranges the layout.
-   * permissions={{ content: false, data: "readonly", requiredFields: ["Datum", "Tid"] }}
+   * permissions={{ content: false, data: "readonly", requiredFields: ["Date", "Time"] }}
    * ```
    */
   permissions?: Permissions;

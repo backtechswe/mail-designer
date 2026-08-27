@@ -97,7 +97,7 @@ test("sanitising is idempotent", () => {
   // TextEditable writes innerHTML, reads it back and sanitises again on every edit, so a
   // transformation that is not stable would drift the document with each keystroke.
   const cases = [
-    "<p>Hej <b>du</b></p>",
+    "<p>Hi <b>du</b></p>",
     '<a href="https://example.com">x</a>',
     "<p>3 < 4</p>",
     '<img src=x onerror=alert(1) title=">',
@@ -132,7 +132,7 @@ test("an enum from a stored document cannot become markup", () => {
 test("out-of-range numbers cannot reach the output", () => {
   const html = toHtml(
     doc([
-      { id: "h", type: "heading", level: 9, html: "Hej", align: "left" },
+      { id: "h", type: "heading", level: 9, html: "Hi", align: "left" },
       { id: "s2", type: "spacer", height: Number.NaN },
       { id: "t2", type: "text", html: "<p>x</p>", align: "left", fontSize: "big" },
     ]),
@@ -211,8 +211,8 @@ test("neutraliseUrls leaves ordinary links alone", () => {
 });
 
 test("a data value is escaped into text, not injected as markup", () => {
-  const html = toHtml(doc([text("<p>Hej [Namn]</p>")]), {
-    data: { Namn: '<script>alert(1)</script>' },
+  const html = toHtml(doc([text("<p>Hi [Name]</p>")]), {
+    data: { Name: '<script>alert(1)</script>' },
   }).html;
   assert.doesNotMatch(html, /<script/i);
 });
@@ -223,7 +223,7 @@ test("the hostile document still satisfies every invariant the fixtures assert",
   const html = toHtml(
     doc([
       { id: "d", type: "divider", color: "#000", thickness: 1, width: 100, align: "nope" },
-      { id: "h", type: "heading", level: 9, html: '<h2 onclick="x">Hej</h2>', align: "left" },
+      { id: "h", type: "heading", level: 9, html: '<h2 onclick="x">Hi</h2>', align: "left" },
       text('<a href="javascript:alert(1)">x</a>'),
       { id: "x", type: "html", html: '<script>alert(1)</script><td onmouseover="x">y' },
     ]),

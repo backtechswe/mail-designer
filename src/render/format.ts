@@ -124,8 +124,8 @@ export function formatHtml(html: string): string {
          * A comment never takes a line of its own, and never changes whether the position
          * counts as "between blocks".
          *
-         * Both halves matter. `<td>Hej<!-- x -->då</td>` broken across lines renders as
-         * "Hej då" in the mail, because a newline in inline content collapses to a space —
+         * Both halves matter. `<td>Good<!-- x -->bye</td>` broken across lines renders as
+         * "Good bye" in the mail, because a newline in inline content collapses to a space —
          * and `<!--[if !mso]><!-->text<!--<![endif]-->`, the downgrade-revealing Outlook
          * pattern, is exactly that shape. So: append.
          *

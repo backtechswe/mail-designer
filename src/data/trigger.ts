@@ -3,11 +3,11 @@
  *
  * `@` is the gesture people already know from Slack, Notion, Teams and Google Docs, so it is
  * the primary trigger. `[` still works because it is the first character of the token itself,
- * and someone who has learned to type `[Namn]` by hand should keep getting help.
+ * and someone who has learned to type `[Name]` by hand should keep getting help.
  *
  * The obvious objection to `@` is email addresses, and there is a settled answer used by every
  * app that does this: **only trigger when the `@` follows a word boundary.** In
- * `anna@exempel.se` the `@` follows `a`, so nothing opens. In `Hej @` it follows a space,
+ * `anna@example.com` the `@` follows `a`, so nothing opens. In `Hi @` it follows a space,
  * so it does. That one rule removes almost the whole problem; a second `@` inside the query
  * closes it again, which covers the rest.
  *

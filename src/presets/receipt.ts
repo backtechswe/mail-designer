@@ -73,7 +73,7 @@ export function receipt(): MailDocument {
       // more thing for a client to render differently.
       section(
         [
-          columns([detail("Date", "Tuesday 14 April"), detail("Tid", "10:30 – 11:15")], {
+          columns([detail("Date", "Tuesday 14 April"), detail("Time", "10:30 – 11:15")], {
             gap: 20,
             padding: [0, 0, 20, 0],
           }),

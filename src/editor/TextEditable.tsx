@@ -42,7 +42,7 @@ export interface TextEditableProps {
    * A button's label is a string in the document model, and the renderer escapes it into the
    * `<a>`. Letting the same editor produce `<b>` here would put markup in a field that has
    * nowhere to render it — so bold, links and colour are gone, Enter is refused, and paste
-   * arrives as text. Data fields stay, because `[Namn]` in a button label is ordinary.
+   * arrives as text. Data fields stay, because `[Name]` in a button label is ordinary.
    */
   plain?: boolean;
 }

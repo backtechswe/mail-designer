@@ -98,7 +98,7 @@ export function parseTemplate(raw: unknown): MailTemplate | null {
   if (!validateDocument(document).ok) return null;
   const template: MailTemplate = {
     id,
-    name: typeof row.name === "string" && row.name ? row.name : "Namnlös mall",
+    name: typeof row.name === "string" && row.name ? row.name : "Untitled",
     document,
   };
   if (typeof row.createdAt === "string") template.createdAt = row.createdAt;
@@ -111,7 +111,7 @@ export function parseTemplate(raw: unknown): MailTemplate | null {
 
 /** Reject a structurally broken document before it reaches storage. */
 export function assertSavable(input: SaveTemplateInput): void {
-  if (!input.name?.trim()) throw new Error("En mall måste ha ett namn.");
+  if (!input.name?.trim()) throw new Error("A template must have a name.");
   const result = validateDocument(input.document);
   if (!result.ok) {
     const first = result.issues[0];
@@ -215,7 +215,7 @@ export function createLocalStorageTemplateStore(
     try {
       storage.setItem(key, JSON.stringify(rows));
     } catch {
-      throw new Error("Kunde inte spara mallen — webbläsarens lagring är full eller blockerad.");
+      throw new Error("Could not save the template — browser storage is full or blocked.");
     }
   };
 
@@ -321,7 +321,7 @@ export function createRestTemplateStore(options: RestTemplateStoreOptions): Temp
         ? await request(`/${encodeURIComponent(input.id)}`, { method: "PUT", body })
         : await request("", { method: "POST", body });
       const saved = parseTemplate(await response.json());
-      if (!saved) throw new Error("Mall-API returnerade ett svar som inte kunde tolkas.");
+      if (!saved) throw new Error("The template API returned a response that could not be parsed.");
       return saved;
     },
     async remove(id) {

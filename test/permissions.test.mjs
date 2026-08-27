@@ -2,7 +2,7 @@
  * Permissions and the data-coverage check.
  *
  * The coverage check is the one that earns its tests: a confirmation mail that has quietly
- * lost [Datum] does not throw, does not look broken, and reaches the recipient missing a
+ * lost [Date] does not throw, does not look broken, and reaches the recipient missing a
  * fact. Comparing the supplied data against the tokens actually present is the only way
  * anyone finds out before it is sent.
  */
@@ -101,36 +101,36 @@ function docWithTokens(...htmls) {
 }
 
 test("coverage separates what is shown from what was silently dropped", () => {
-  const doc = docWithTokens("<p>Hej [Namn], din tid är [Tid].</p>");
-  const c = dataCoverage(doc, { Namn: "Anna", Tid: "10.30", Datum: "14 april", Pris: "450 kr" });
+  const doc = docWithTokens("<p>Hi [Name], din tid är [Time].</p>");
+  const c = dataCoverage(doc, { Name: "Anna", Time: "10.30", Date: "14 april", Pris: "450 kr" });
 
-  assert.deepEqual(c.used.sort(), ["Namn", "Tid"]);
-  assert.deepEqual(c.unused.sort(), ["Datum", "Pris"], "supplied but never rendered");
+  assert.deepEqual(c.used.sort(), ["Name", "Time"]);
+  assert.deepEqual(c.unused.sort(), ["Date", "Pris"], "supplied but never rendered");
   assert.deepEqual(c.withoutValue, []);
 });
 
 test("coverage reports tokens the data has no value for", () => {
-  const doc = docWithTokens("<p>[Namn] — [Ort]</p>");
-  const c = dataCoverage(doc, { Namn: "Anna" });
-  assert.deepEqual(c.withoutValue, ["Ort"]);
+  const doc = docWithTokens("<p>[Name] — [City]</p>");
+  const c = dataCoverage(doc, { Name: "Anna" });
+  assert.deepEqual(c.withoutValue, ["City"]);
   assert.deepEqual(c.unused, []);
 });
 
 test("coverage matches case-insensitively, the way substitution does", () => {
-  const doc = docWithTokens("<p>[namn]</p>");
-  const c = dataCoverage(doc, { Namn: "Anna" });
-  assert.deepEqual(c.used, ["Namn"]);
+  const doc = docWithTokens("<p>[name]</p>");
+  const c = dataCoverage(doc, { Name: "Anna" });
+  assert.deepEqual(c.used, ["Name"]);
   assert.deepEqual(c.unused, []);
   assert.deepEqual(c.withoutValue, []);
 });
 
 test("a required field missing from the email is reported separately", () => {
-  const doc = docWithTokens("<p>Hej [Namn]</p>");
-  const c = dataCoverage(doc, { Namn: "Anna", Datum: "14 april" }, ["Namn", "Datum"]);
-  assert.deepEqual(c.missingRequired, ["Datum"], "this is the one that should block a send");
-  assert.deepEqual(c.unused, ["Datum"]);
+  const doc = docWithTokens("<p>Hi [Name]</p>");
+  const c = dataCoverage(doc, { Name: "Anna", Date: "14 april" }, ["Name", "Date"]);
+  assert.deepEqual(c.missingRequired, ["Date"], "this is the one that should block a send");
+  assert.deepEqual(c.unused, ["Date"]);
 
-  const ok = dataCoverage(docWithTokens("<p>[Namn] [Datum]</p>"), { Namn: "a", Datum: "b" }, ["Namn", "Datum"]);
+  const ok = dataCoverage(docWithTokens("<p>[Name] [Date]</p>"), { Name: "a", Date: "b" }, ["Name", "Date"]);
   assert.deepEqual(ok.missingRequired, []);
 });
 
@@ -138,9 +138,9 @@ test("coverage looks in button labels and URLs too", () => {
   const doc = emptyDocument();
   doc.blocks = [
     createSection([
-      set(createBlock("button"), { label: "Boka i [Ort]", href: "https://x.se?id=[Kundnr]" }),
+      set(createBlock("button"), { label: "Book in [City]", href: "https://x.se?id=[CustomerNo]" }),
     ]),
   ];
-  const c = dataCoverage(doc, { Ort: "Kalmar", Kundnr: "42" });
-  assert.deepEqual(c.used.sort(), ["Kundnr", "Ort"], "a token hiding in a URL still counts as shown");
+  const c = dataCoverage(doc, { City: "Kalmar", CustomerNo: "42" });
+  assert.deepEqual(c.used.sort(), ["City", "CustomerNo"], "a token hiding in a URL still counts as shown");
 });

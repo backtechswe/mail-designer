@@ -26,13 +26,13 @@ const [doc, setDoc] = useState(emptyDocument());
   value={doc}
   onChange={setDoc}
   theme={{ accent: "#2f54eb", radius: 8 }}
-  dataFields={["Namn", "Ort"]}
+  dataFields={["Name", "City"]}
   onUploadImage={uploadToStorage}
   previewIdentity={{ name: "Klubben", email: "utskick@klubben.se" }}
   locale="sv"
 />;
 
-const { html, text } = toHtml(doc, { data: { Namn: "Anna" } });
+const { html, text } = toHtml(doc, { data: { Name: "Anna" } });
 ```
 
 ## Email client compatibility
@@ -192,7 +192,7 @@ Headings and text are edited in place, and so is a **button's label** — it is 
 copy people most often want to change, and routing it through the side panel meant writing a
 call to action while looking somewhere other than the button it belongs to. The label stays a
 plain string: the model has nowhere to put markup and the renderer escapes the value, so bold,
-links and colour are absent there and Enter is refused. Data fields are not — `[Namn]` in a
+links and colour are absent there and Enter is refused. Data fields are not — `[Name]` in a
 button label is ordinary.
 
 ### Image compression
@@ -247,12 +247,12 @@ becomes insertable into the email — so the data and the available fields canno
 **Inserting a field**: type `@` while writing and a filtered list appears at the caret, each row
 showing the field's current sample value — arrows and Enter, no mouse. `@` because that is the
 gesture people already know from Slack, Notion, Teams and Google Docs; `[` works too, for
-anyone who has learned to type the token by hand. A labelled **Datafält** button opens the same
+anyone who has learned to type the token by hand. A labelled **Data field** button opens the same
 list, and exists to teach the gesture rather than to replace it.
 
 Email addresses do not trigger it. The rule every app doing this settles on is that `@` only
-counts **after a word boundary**: in `niklas@ninetech.com` it follows `s`, so nothing opens; in
-`Hej @` it follows a space, so it does. A second `@` inside the query closes it again, and the
+counts **after a word boundary**: in `anna@example.com` it follows `a`, so nothing opens; in
+`Hi @` it follows a space, so it does. A second `@` inside the query closes it again, and the
 list only opens when something actually matches — so a query that turns out to be prose
 disappears rather than hanging around empty. `findTrigger` is pure and has twelve tests,
 because an off-by-one here pops a menu over someone's address as they type it.
@@ -263,12 +263,12 @@ paste, so overriding it costs more than it gives. The caret is already the inser
 
 **Coverage is checked both ways.** A field supplied but not shown anywhere is reported, and so
 is a token the data has no value for. That check is the point of the panel: if the application
-supplies `Datum` and the user deletes the block containing `[Datum]`, nothing throws and
+supplies `Date` and the user deletes the block containing `[Date]`, nothing throws and
 nothing looks broken — the recipient just gets a confirmation with the date missing. List the
 ones that must never disappear in `permissions.requiredFields` and the editor says so loudly.
 
 ```tsx
-const { used, unused, withoutValue, missingRequired } = dataCoverage(doc, data, ["Datum"]);
+const { used, unused, withoutValue, missingRequired } = dataCoverage(doc, data, ["Date"]);
 ```
 
 Sample data is deliberately **not** part of the document: it is what you design against, while
@@ -288,9 +288,9 @@ Everything defaults to permitted. Restrict what a particular integration allows:
     templates: false,
     manageDocuments: false,
     blocks: ["heading", "text", "image", "columns", "divider", "spacer"],
-    requiredFields: ["Namn", "Datum", "Tid"],
+    requiredFields: ["Name", "Date", "Time"],
   }}
-  data={{ Namn: "Anna Lind", Datum: "14 april", Tid: "10.30" }}
+  data={{ Name: "Anna Lind", Date: "14 April", Time: "10:30" }}
   resetTo={confirmationTemplate}
 />
 ```
@@ -318,12 +318,12 @@ document and the bar offers a one-click way back to it — an edit, so it can be
 #### Locking individual blocks
 
 Some blocks should be fixed even when the rest is not — a legal footer, a logo, the line
-carrying `[Datum]`. That lock lives on the block, in the document, because a prop cannot say
+carrying `[Date]`. That lock lives on the block, in the document, because a prop cannot say
 "this block, not that one":
 
 ```ts
 { id: "footer", type: "text", html: "…", locked: true }
-{ id: "date", type: "text", html: "[Datum]", locked: { content: true, remove: true } }
+{ id: "date", type: "text", html: "[Date]", locked: { content: true, remove: true } }
 ```
 
 A lock can only take away. A locked block in a fully editable document is still locked, and an
@@ -507,20 +507,20 @@ button's URL.
 
 ## Getting the HTML out
 
-**Kod** is the third view, beside Redigera and Förhandsvisa. Three tabs, and the difference
+**Code** is the third view, beside Edit and Preview. Three tabs, and the difference
 between them is worth being clear about:
 
 - **HTML** — what the renderer produces. Copy it into an ESP's template field, or download it.
-- **Textversion** — the plain-text alternative that should be sent beside it. Every real
+- **Plain text** — the plain-text alternative that should be sent beside it. Every real
   mailing has one; spam filters expect it and some people read it.
-- **Dokument** — the `MailDocument` JSON. **This is the template.** The HTML is one of its
+- **Document** — the `MailDocument` JSON. **This is the template.** The HTML is one of its
   outputs; the document is the thing you store in Firestore, diff in a pull request, hand to
   an agent to modify, and render from a .NET backend. A template saved as HTML can only be
   sent again; a template saved as a document can be edited again.
 
-*Med exempeldata* decides whether `[Namn]` is substituted or left standing — keep the tokens
+*With sample data* decides whether `[Name]` is substituted or left standing — keep the tokens
 if Brevo or SendGrid will substitute them, replace them if you render per recipient yourself.
-*Formatera* indents the HTML for reading; what you see is what you copy. The renderer's own
+*Format* indents the HTML for reading; what you see is what you copy. The renderer's own
 output is compact on purpose, because every byte counts against Gmail's 102 kB clipping limit.
 
 The whole view is gated: `permissions={{ code: false }}` removes it, and the object form picks

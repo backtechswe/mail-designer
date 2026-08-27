@@ -75,23 +75,23 @@ test("render substitutes data when given some", () => {
       {
         id: "s",
         type: "section",
-        children: [{ id: "t", type: "text", html: "<p>Hej [Namn]</p>", align: "left" }],
+        children: [{ id: "t", type: "text", html: "<p>Hi [Name]</p>", align: "left" }],
       },
     ],
   });
-  const data = fixture("data.json", { Namn: "Anna" });
+  const data = fixture("data.json", { Name: "Anna" });
   const plain = run("render", doc).stdout;
   const filled = run("render", doc, "--data", data).stdout;
-  assert.match(plain, /\[Namn\]/);
-  assert.match(filled, /Hej Anna/);
-  assert.ok(!filled.includes("[Namn]"));
+  assert.match(plain, /\[Name\]/);
+  assert.match(filled, /Hi Anna/);
+  assert.ok(!filled.includes("[Name]"));
 });
 
 test("text renders the plain-text alternative, not markup", () => {
   const { code, stdout } = run("text", join(dir, "hello.json"));
   assert.equal(code, 0);
   assert.ok(!stdout.includes("<table"));
-  assert.match(stdout, /Hej \[Namn\]/);
+  assert.match(stdout, /Hi \[Name\]/);
 });
 
 test("an invalid document fails with readable issues and exit 1", () => {
@@ -144,7 +144,7 @@ test("--strict turns warnings into a failure", () => {
 test("fields lists the tokens the document uses, including in URLs", () => {
   const path = fixture("fields.json", {
     version: 1,
-    settings: { preheader: "Hej [Namn]" },
+    settings: { preheader: "Hi [Name]" },
     blocks: [
       {
         id: "s",
@@ -153,7 +153,7 @@ test("fields lists the tokens the document uses, including in URLs", () => {
           {
             id: "b",
             type: "button",
-            label: "Boka [Tid]",
+            label: "Book [Time]",
             href: "https://x/?id=[Id]",
             backgroundColor: "#000",
             textColor: "#fff",
@@ -168,7 +168,7 @@ test("fields lists the tokens the document uses, including in URLs", () => {
   });
   const { code, stdout } = run("fields", path, "--json");
   assert.equal(code, 0);
-  assert.deepEqual(JSON.parse(stdout).sort(), ["Id", "Namn", "Tid"]);
+  assert.deepEqual(JSON.parse(stdout).sort(), ["Id", "Name", "Time"]);
 });
 
 test("an unknown command says so and shows the usage", () => {

@@ -64,7 +64,7 @@ test("a memory store hands out copies, so a caller cannot mutate the stored docu
 });
 
 test("a nameless or structurally broken template is refused before it reaches storage", () => {
-  assert.throws(() => assertSavable({ name: "  ", document: emptyDocument() }), /måste ha ett namn/);
+  assert.throws(() => assertSavable({ name: "  ", document: emptyDocument() }), /must have a name/);
   assert.throws(
     () => assertSavable({ name: "A", document: { version: 1, settings: {}, blocks: [createBlock("text")] } }),
     /Top-level blocks must be sections/,
@@ -143,7 +143,7 @@ test("parseTemplate repairs what it can and rejects what it cannot", () => {
   assert.equal(parseTemplate({ name: "A" }), null, "no id means no template");
 
   const repaired = parseTemplate({ id: "x", document: { version: 1 } });
-  assert.equal(repaired.name, "Namnlös mall");
+  assert.equal(repaired.name, "Untitled");
   assert.deepEqual(repaired.document.blocks, []);
   assert.equal(repaired.document.settings.width, 600, "missing settings are defaulted");
 });

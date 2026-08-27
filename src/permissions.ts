@@ -29,7 +29,7 @@ export interface Permissions {
   blocks?: BlockType[];
   /**
    * Fields that must appear somewhere in the email. The editor warns when one does not — a
-   * confirmation mail that has quietly lost [Datum] is worse than one that looks wrong.
+   * confirmation mail that has quietly lost [Date] is worse than one that looks wrong.
    */
   requiredFields?: string[];
   /** Whether the user may create and delete documents. The store decides *which* exist. */
@@ -142,8 +142,8 @@ export interface DataCoverage {
 /**
  * Does the email actually show everything it was given?
  *
- * The check that matters for transactional mail. If the application supplies `Datum` and the
- * user has deleted the block containing `[Datum]`, nothing breaks and nothing complains — the
+ * The check that matters for transactional mail. If the application supplies `Date` and the
+ * user has deleted the block containing `[Date]`, nothing breaks and nothing complains — the
  * recipient just gets a confirmation with the date missing. Comparing the two sets is the
  * only way anyone finds out before it is sent.
  *

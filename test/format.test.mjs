@@ -24,7 +24,7 @@ function styleRanges(html) {
  * Every newline the formatter added is between `>` and `<`, or inside CSS.
  *
  * This replaces a normalisation that could not fail: the old check erased a newline plus any
- * following whitespace anywhere it appeared, so "Hej\n , då" and "Hej, då" came out
+ * following whitespace anywhere it appeared, so "Good\n bye" and "Goodbye" came out
  * identical — and the assertion passed for precisely the bug it existed to catch.
  */
 function assertBreaksBetweenTags(html, label) {
@@ -56,10 +56,10 @@ test("formatting every preset changes nothing but whitespace between tags", () =
 });
 
 test("a comment in inline content is never broken away from it", () => {
-  // <td>Hej<!-- x -->då</td> across lines renders as "Hej då": the newline collapses to a
+  // <td>Good<!-- x -->bye</td> across lines renders as "Good bye": the newline collapses to a
   // space. The commit that added this formatter claimed to guard the invariant and did not.
   const cases = [
-    "<td>Hej<!-- x -->då</td>",
+    "<td>Good<!-- x -->bye</td>",
     // The downgrade-revealing Outlook pattern, which is exactly this shape.
     "<td><!--[if !mso]><!-->text<!--<![endif]--></td>",
     "<td>a<!--[if !mso]><!--><b>b</b><!--<![endif]-->c</td>",
@@ -74,7 +74,7 @@ test("formatting is idempotent, comments included", () => {
   const cases = [
     "<td><!--[if mso]><table><![endif]--><div>x</div></td>",
     '<head><!-- k --><meta charset="utf-8" /></head>',
-    "<td>Hej<!-- x -->då</td>",
+    "<td>Good<!-- x -->bye</td>",
     ...builtInPresets.map((p) => toHtml(p.document).html),
   ];
   for (const html of cases) {
@@ -84,9 +84,9 @@ test("formatting is idempotent, comments included", () => {
 });
 
 test("inline content is never broken apart", () => {
-  const html = '<td><a href="#">Läs</a>, och <b>mer</b> text</td>';
+  const html = '<td><a href="#">Read</a>, and <b>more</b> text</td>';
   // One line: a break anywhere in here would render as an extra space.
-  assert.equal(formatHtml(html), '<td><a href="#">Läs</a>, och <b>mer</b> text</td>');
+  assert.equal(formatHtml(html), '<td><a href="#">Read</a>, and <b>more</b> text</td>');
 });
 
 test("a space between two inline elements survives", () => {
@@ -126,15 +126,15 @@ test("an MSO conditional stays on the line it was on", () => {
 });
 
 test("an image stays with the text it sits beside", () => {
-  const html = '<td>Före <img src="x.png" alt="" /> efter</td>';
+  const html = '<td>Before <img src="x.png" alt="" /> after</td>';
   assert.equal(formatHtml(html), html);
 });
 
 test("head elements each take a line", () => {
-  const html = '<head><meta charset="utf-8" /><title>Hej</title></head>';
+  const html = '<head><meta charset="utf-8" /><title>Hi</title></head>';
   assert.equal(
     formatHtml(html),
-    ["<head>", '  <meta charset="utf-8" />', "  <title>Hej</title>", "</head>"].join("\n"),
+    ["<head>", '  <meta charset="utf-8" />', "  <title>Hi</title>", "</head>"].join("\n"),
   );
 });
 

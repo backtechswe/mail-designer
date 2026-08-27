@@ -14,7 +14,7 @@ import { rankFields } from "./trigger.js";
  * the insertion point, so the picker belongs there — opened either by the button or, more
  * usefully, by typing the `[` that starts the token anyway.
  *
- * Each row shows the field's current sample value, because "Namn" alone does not tell you
+ * Each row shows the field's current sample value, because "Name" alone does not tell you
  * whether it holds the recipient's name or their company's.
  */
 export interface FieldPickerProps {

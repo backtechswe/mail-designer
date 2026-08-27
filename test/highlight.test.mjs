@@ -26,7 +26,7 @@ test("nothing survives unescaped", () => {
 
 test("highlighting is lossless: the visible text is the source", () => {
   const cases = [
-    '<table role="presentation" width="600"><tr><td>Hej</td></tr></table>',
+    '<table role="presentation" width="600"><tr><td>Hi</td></tr></table>',
     "<!--[if mso]><table><tr><td><![endif]-->",
     "<!DOCTYPE html>",
     "text with < and > and & in it",
@@ -60,16 +60,16 @@ test("a style attribute full of colons and semicolons stays one value", () => {
 });
 
 test("JSON keys, strings, numbers and literals are told apart", () => {
-  const out = highlightJson('{"width": 640, "fullWidth": true, "name": "Hej", "x": null}');
+  const out = highlightJson('{"width": 640, "fullWidth": true, "name": "Hi", "x": null}');
   assert.match(out, /<span class="md-hl-key">"width"<\/span>/);
   assert.match(out, /<span class="md-hl-number">640<\/span>/);
   assert.match(out, /<span class="md-hl-literal">true<\/span>/);
   assert.match(out, /<span class="md-hl-literal">null<\/span>/);
-  assert.match(out, /<span class="md-hl-value">"Hej"<\/span>/);
+  assert.match(out, /<span class="md-hl-value">"Hi"<\/span>/);
 });
 
 test("JSON highlighting is lossless, including markup inside strings", () => {
-  const source = JSON.stringify({ html: '<p>Hej <b>&amp; hej</b></p>', n: -1.5e3 }, null, 2);
+  const source = JSON.stringify({ html: '<p>Hi <b>&amp; hej</b></p>', n: -1.5e3 }, null, 2);
   assert.equal(plain(highlightJson(source)), source);
   assert.ok(!highlightJson(source).includes("<p>"), "markup in a string stays escaped");
 });

@@ -58,12 +58,12 @@ const payload = (response) => {
 
 const DOC = {
   version: 1,
-  settings: { preheader: "Hej [Namn]" },
+  settings: { preheader: "Hi [Name]" },
   blocks: [
     {
       id: "s",
       type: "section",
-      children: [{ id: "t", type: "text", html: "<p>Hej [Namn]</p>", align: "left" }],
+      children: [{ id: "t", type: "text", html: "<p>Hi [Name]</p>", align: "left" }],
     },
   ],
 };
@@ -151,13 +151,13 @@ test("render_document renders, and substitutes data when given some", async () =
   const { responses } = await session([
     init,
     call(2, "render_document", { document: DOC }),
-    call(3, "render_document", { document: DOC, data: { Namn: "Anna" } }),
+    call(3, "render_document", { document: DOC, data: { Name: "Anna" } }),
     call(4, "render_document", { document: DOC, format: "text" }),
   ]);
   const [, raw, filled, text] = responses;
   assert.match(payload(raw), /^<!DOCTYPE/);
-  assert.match(payload(raw), /\[Namn\]/);
-  assert.match(payload(filled), /Hej Anna/);
+  assert.match(payload(raw), /\[Name\]/);
+  assert.match(payload(filled), /Hi Anna/);
   assert.ok(!payload(text).includes("<table"));
 });
 
@@ -170,7 +170,7 @@ test("get_schema carries the authoring notes with it", async () => {
 
 test("extract_fields finds tokens, including in a preheader", async () => {
   const { responses } = await session([init, call(2, "extract_fields", { document: DOC })]);
-  assert.deepEqual(payload(responses[1]), ["Namn"]);
+  assert.deepEqual(payload(responses[1]), ["Name"]);
 });
 
 test("an unknown tool is a tool error, not a protocol error", async () => {

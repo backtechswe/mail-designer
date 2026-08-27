@@ -18,11 +18,11 @@ function docWith(blocks) {
 
 test("subject comes from the first heading", () => {
   const doc = docWith([
-    { ...createBlock("text"), html: "<p>Läs vidare</p>" },
-    { ...createBlock("heading"), html: "Månadens rapport" },
+    { ...createBlock("text"), html: "<p>Read on</p>" },
+    { ...createBlock("heading"), html: "Report of the month" },
     { ...createBlock("heading"), html: "Underrubrik" },
   ]);
-  assert.equal(messageSummary(doc).subject, "Månadens rapport");
+  assert.equal(messageSummary(doc).subject, "Report of the month");
 });
 
 test("no heading means no subject, and the caller decides what to show", () => {
@@ -31,28 +31,28 @@ test("no heading means no subject, and the caller decides what to show", () => {
 });
 
 test("the preheader is the snippet when it is set", () => {
-  let doc = docWith([{ ...createBlock("text"), html: "<p>Brödtext</p>" }]);
-  doc = updateSettings(doc, { preheader: "Tre saker vi lärde oss" });
+  let doc = docWith([{ ...createBlock("text"), html: "<p>Body text</p>" }]);
+  doc = updateSettings(doc, { preheader: "Three things we learned" });
   const summary = messageSummary(doc);
-  assert.equal(summary.snippet, "Tre saker vi lärde oss");
+  assert.equal(summary.snippet, "Three things we learned");
   assert.equal(summary.snippetIsFallback, false);
 });
 
 test("without a preheader the snippet falls back to body text, and says so", () => {
   const doc = docWith([
-    { ...createBlock("text"), html: '<p>Visa detta mejl i <a href="#">webbläsaren</a></p>' },
+    { ...createBlock("text"), html: '<p>View this email in your <a href="#">browser</a></p>' },
   ]);
   const summary = messageSummary(doc);
   // Exactly the failure the fallback exists to expose: the browser link as the inbox teaser.
-  assert.equal(summary.snippet, "Visa detta mejl i webbläsaren");
+  assert.equal(summary.snippet, "View this email in your browser");
   assert.equal(summary.snippetIsFallback, true);
 });
 
 test("snippet text is stripped of markup and entities, and collapsed", () => {
   const doc = docWith([
-    { ...createBlock("text"), html: "<p>Ett  &amp;  <strong>två</strong><br>tre</p>" },
+    { ...createBlock("text"), html: "<p>One  &amp;  <strong>two</strong><br>three</p>" },
   ]);
-  assert.equal(messageSummary(doc).snippet, "Ett & två tre");
+  assert.equal(messageSummary(doc).snippet, "One & two three");
 });
 
 test("a document with nothing in it summarises to nothing rather than throwing", () => {

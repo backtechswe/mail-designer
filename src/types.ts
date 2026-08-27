@@ -56,7 +56,7 @@ export interface DarkSettings {
  * Locks that travel with the block, in the document itself.
  *
  * That placement is the point: a host can ship a template where the legal footer and the
- * `[Datum]` line are fixed while everything around them is the user's to arrange. Permissions
+ * `[Date]` line are fixed while everything around them is the user's to arrange. Permissions
  * passed as a prop cannot express "this block, not that one".
  *
  * `true` locks everything. An object locks individual aspects.

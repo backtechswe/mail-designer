@@ -20,7 +20,7 @@ type Format = "html" | "text" | "json";
  * you store and what a template is.
  *
  * The sample-data switch is the one that matters in practice. Sending through Brevo or
- * SendGrid you keep `[Namn]` and let them substitute; rendering per recipient yourself you
+ * SendGrid you keep `[Name]` and let them substitute; rendering per recipient yourself you
  * substitute here. Both are one click, because getting it wrong means either a mail full of
  * brackets or a template that is already filled in for one person.
  */

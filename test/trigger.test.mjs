@@ -12,8 +12,8 @@ import { findTrigger, rankFields } from "../dist/data/trigger.js";
 const at = (text) => findTrigger(text);
 
 test("@ after a space opens it", () => {
-  assert.deepEqual(at("Hej @"), { char: "@", from: 4, query: "" });
-  assert.deepEqual(at("Hej @na"), { char: "@", from: 4, query: "na" });
+  assert.deepEqual(at("Hey @"), { char: "@", from: 4, query: "" });
+  assert.deepEqual(at("Hey @na"), { char: "@", from: 4, query: "na" });
 });
 
 test("@ at the very start of a run opens it", () => {
@@ -27,13 +27,13 @@ test("an email address does not open it — the whole point of the boundary rule
   assert.equal(at("niklas@ninetech"), null);
   assert.equal(at("niklas@ninetech.com"), null);
   assert.equal(at("Skriv till niklas@ninetech.com"), null);
-  assert.equal(at("kontakt.oss@exempel"), null);
+  assert.equal(at("contact.us@example"), null);
 });
 
 test("an address after a legitimate trigger closes it again", () => {
-  // "Hej @" opens, then the user turns out to be typing an address after all.
-  assert.deepEqual(at("Hej @niklas"), { char: "@", from: 4, query: "niklas" });
-  assert.equal(at("Hej @niklas@ninetech.com"), null, "a second @ means an address");
+  // "Hey @" opens, then the user turns out to be typing an address after all.
+  assert.deepEqual(at("Hey @anna"), { char: "@", from: 4, query: "anna" });
+  assert.equal(at("Hey @anna@example.com"), null, "a second @ means an address");
 });
 
 test("common punctuation counts as a boundary", () => {
@@ -49,20 +49,20 @@ test("a word character before the @ never counts as a boundary", () => {
 });
 
 test("the bracket form still works, for anyone who learned to type the token", () => {
-  assert.deepEqual(at("Hej ["), { char: "[", from: 4, query: "" });
-  assert.deepEqual(at("Hej [Na"), { char: "[", from: 4, query: "Na" });
+  assert.deepEqual(at("Hey ["), { char: "[", from: 4, query: "" });
+  assert.deepEqual(at("Hey [Na"), { char: "[", from: 4, query: "Na" });
   // No boundary rule for `[` — it is not ambiguous with anything.
   assert.deepEqual(at("x["), { char: "[", from: 1, query: "" });
 });
 
 test("a token that is already closed offers nothing to complete", () => {
-  assert.equal(at("Hej [Namn]"), null);
-  assert.equal(at("Hej [Namn], hur är det"), null);
+  assert.equal(at("Hi [Name]"), null);
+  assert.equal(at("Hey [Name], how are you"), null);
 });
 
 test("a newline ends the search, so the line above cannot leak in", () => {
-  assert.equal(at("Hej @Namn\nNy rad"), null);
-  assert.deepEqual(at("Rad ett\n@N"), { char: "@", from: 8, query: "N" });
+  assert.equal(at("Hey @Name\nNew line"), null);
+  assert.deepEqual(at("Row one\n@N"), { char: "@", from: 8, query: "N" });
 });
 
 test("prose long past a plausible field name gives up", () => {
@@ -72,14 +72,16 @@ test("prose long past a plausible field name gives up", () => {
 });
 
 test("the nearest trigger wins", () => {
-  assert.deepEqual(at("@ett och @två"), { char: "@", from: 9, query: "två" });
+  assert.deepEqual(at("@one and @two"), { char: "@", from: 9, query: "two" });
 });
 
 test("ranking puts prefix matches first and keeps field order", () => {
-  const fields = ["Ort", "Datum", "Namn", "Ordernummer", "Kontaktnamn"];
+  // ContactName sits *before* Name on purpose: field order alone would rank it first, so the
+  // prefix-beats-substring assertion below only means something with the list in this order.
+  const fields = ["OrderNumber", "OrderDate", "City", "ContactName", "Name"];
   assert.deepEqual(rankFields(fields, ""), fields, "no query means everything, unreordered");
-  assert.deepEqual(rankFields(fields, "or"), ["Ort", "Ordernummer"]);
-  assert.deepEqual(rankFields(fields, "namn"), ["Namn", "Kontaktnamn"], "prefix before substring");
-  assert.deepEqual(rankFields(fields, "NAMN"), ["Namn", "Kontaktnamn"], "case-insensitive");
+  assert.deepEqual(rankFields(fields, "order"), ["OrderNumber", "OrderDate"]);
+  assert.deepEqual(rankFields(fields, "name"), ["Name", "ContactName"], "prefix before substring");
+  assert.deepEqual(rankFields(fields, "NAME"), ["Name", "ContactName"], "case-insensitive");
   assert.deepEqual(rankFields(fields, "zzz"), []);
 });

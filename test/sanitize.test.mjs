@@ -32,9 +32,9 @@ test("the old IE style-attribute vectors are dropped", () => {
 });
 
 test("unknown tags go but their text stays", () => {
-  assert.equal(sanitizeInline("<marquee>Hej</marquee>"), "Hej");
-  assert.equal(sanitizeInline("<div>Hej</div>"), "Hej", "div is not inline-allowed");
-  assert.equal(sanitizeBlock("<div>Hej</div>"), "<div>Hej</div>", "but it is allowed in a raw block");
+  assert.equal(sanitizeInline("<marquee>Hi</marquee>"), "Hi");
+  assert.equal(sanitizeInline("<div>Hi</div>"), "Hi", "div is not inline-allowed");
+  assert.equal(sanitizeBlock("<div>Hi</div>"), "<div>Hi</div>", "but it is allowed in a raw block");
 });
 
 test("permitted formatting survives untouched", () => {
