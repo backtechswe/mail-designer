@@ -17,8 +17,9 @@ jobs:
       # publishing. Publishing alone left the Releases section permanently empty, so there was
       # no record in the repository of what any given version contained.
       contents: write
-      # Required for --provenance, which gives the package a verified build attestation on npm
-      # for free. Worth having on a package that renders other people's markup.
+      # This is the credential now. npm trusts this repository and this workflow file to
+      # publish the package, and the OIDC token proves the job really is that — so there is no
+      # NPM_TOKEN anywhere. It is also what signs the provenance attestation.
       id-token: write
 
     steps:
@@ -27,9 +28,16 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # 24 rather than 22: trusted publishing needs npm 11.5.1 or newer, and the npm
+          # bundled with Node 22 is 10.x. The explicit upgrade below is the actual guarantee —
+          # this only starts closer to it.
+          node-version: 24
           registry-url: https://registry.npmjs.org
-          cache: npm
+          # No dependency cache in a release build. A cache hit is a chance to publish
+          # something other than what a clean install would produce, for a few saved seconds.
+
+      - name: Ensure an npm that can authenticate over OIDC
+        run: npm install -g npm@latest
 
       - id: v
         run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
@@ -51,9 +59,10 @@ jobs:
       - run: npm ci
       - run: npm test
 
+      # No token. npm exchanges the workflow's OIDC identity with the registry, which has
+      # been told that this repository and this workflow file may publish this package.
+      # Nothing to leak, nothing to rotate, and provenance follows from the same exchange.
       - run: npm publish --provenance --tag ${{ inputs.tag }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # After the publish, not before: a tag pointing at a version that never shipped is worse
       # than no tag, because it is the thing people check to find out what shipped.
