@@ -72,7 +72,7 @@
   "scripts": {
     "build": "tsc && cp src/styles.css dist/styles.css && node scripts/post-build.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test 'test/*.test.mjs'",
+    "test": "npm run build && node scripts/run-tests.mjs",
     "icons": "node scripts/build-icons.mjs",
     "dev": "npm --prefix examples/playground run dev",
     "clean": "rm -rf dist",
