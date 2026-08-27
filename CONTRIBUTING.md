@@ -38,6 +38,16 @@ HTML meaningfully should be checked that way before it lands.
 **Icons.** `src/editor/icons.tsx` is generated. Add a name to `scripts/build-icons.mjs` and run
 `npm run icons`; the generator refuses Pro-only glyphs, which may not be redistributed.
 
+## How a change lands
+
+`main` is protected: everything arrives through a pull request that CI has passed on Node
+20/22/24, on Linux and Windows. That applies to the maintainer too — the branch rule is there
+to stop a hurried direct push as much as anything else.
+
+CI runs on pull requests from forks with a read-only token and no access to repository secrets,
+which is the `pull_request` trigger doing its job. Releases run from `workflow_dispatch` only,
+so the npm token is reachable from one place and by one person.
+
 ## Commits and licence
 
 Sign off your commits (`git commit -s`) to certify the

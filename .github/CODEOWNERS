@@ -1,0 +1,9 @@
+# Every path, one owner. On a solo project this is not about gatekeeping — it is what puts you
+# on a pull request as a reviewer automatically, so a contribution does not sit unseen.
+*       @backtechswe
+
+# The parts where a mistake is expensive and quiet, called out so they are never skimmed:
+# the renderer is what every sent email goes through, and the workflows hold the npm token.
+/src/render/            @backtechswe
+/test/golden/           @backtechswe
+/.github/workflows/     @backtechswe
