@@ -1,29 +1,29 @@
-Förhandsvisning för [Namn]
+Preview text for [Name]
 
-Hej [Namn]!
+Hi [Name]!
 
-Underrubrik
+Subheading
 
-Text med fet, kursiv och länk.
-Ett
-Två
+Text with bold, italic and a link.
+One
+Two
 
-[En bild] https://exempel.se
+[An image] https://example.com
 
-Boka tid: https://exempel.se/boka?ref=[Namn]
+Book a time: https://example.com/book?ref=[Name]
 
-Utan bredd: https://exempel.se
+No width: https://example.com
 
 ————————————————————————
 
 facebook: https://facebook.com/x
 instagram: https://instagram.com/x
 
-Rå HTML med borttaget.
+Raw HTML with removed.
 
-Vänster
+Left
 
-Mitten
+Centre
 
 [H]
 

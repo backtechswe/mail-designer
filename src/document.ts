@@ -97,7 +97,7 @@ export function createBlock(type: BlockType): Block {
         id,
         type: "heading",
         level: 2,
-        html: "Rubrik",
+        html: "Heading",
         align: "left",
         padding: [0, 0, 12, 0],
       };
@@ -107,7 +107,7 @@ export function createBlock(type: BlockType): Block {
       const block: TextBlock = {
         id,
         type: "text",
-        html: "Skriv din text här.",
+        html: "Write your text here.",
         align: "left",
         padding: [0, 0, 12, 0],
       };
@@ -128,7 +128,7 @@ export function createBlock(type: BlockType): Block {
       const block: ButtonBlock = {
         id,
         type: "button",
-        label: "Läs mer",
+        label: "Read more",
         href: "https://",
         backgroundColor: "#2f54eb",
         textColor: "#ffffff",
@@ -169,7 +169,7 @@ export function createBlock(type: BlockType): Block {
       return block;
     }
     case "html": {
-      const block: HtmlBlock = { id, type: "html", html: "<p>Rå HTML</p>" };
+      const block: HtmlBlock = { id, type: "html", html: "<p>Raw HTML</p>" };
       return block;
     }
   }

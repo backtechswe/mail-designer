@@ -1,17 +1,17 @@
-# .NET-backend
+# Using it from a .NET backend
 
-## Behöver du ett NuGet-paket?
+## Do you need a NuGet package?
 
-**Nej, inte för att redigeraren ska fungera.** Redigeraren är React och pratar med din
-backend över HTTP. Implementerar din ASP.NET-controller de fem endpoints i
-[templates.md](./templates.md) så använder du `createRestTemplateStore` och är klar.
+**No — not for the editor to work.** The editor is React, and it talks to your backend over
+HTTP. Implement the five endpoints in [templates.md](./templates.md) in an ASP.NET controller,
+point `createRestTemplateStore` at it, and you are done.
 
 ```csharp
 [ApiController]
 [Route("api/mail-templates")]
 public class MailTemplatesController : ControllerBase
 {
-    // document lagras som jsonb/nvarchar(max) — servern behöver aldrig tolka innehållet.
+    // document is stored as jsonb / nvarchar(max) — the server never parses its contents.
     [HttpGet] public Task<IEnumerable<TemplateSummary>> List() => ...;
     [HttpGet("{id}")] public Task<ActionResult<TemplateDto>> Get(string id) => ...;
     [HttpPost] public Task<ActionResult<TemplateDto>> Create(SaveTemplateDto body) => ...;
@@ -23,51 +23,17 @@ public record TemplateDto(string Id, string Name, JsonDocument Document,
                           string? CreatedAt, string? UpdatedAt, JsonDocument? Meta);
 ```
 
-Notera `JsonDocument`: **backend ska inte deserialisera dokumentet till typade klasser** för
-att lagra det. Gör den det blir varje nytt blockfält en breaking change i två språk. Lagra
-det ogenomskinligt.
+Note the `JsonDocument`: **do not deserialise the document into typed classes just to store
+it.** If you do, every new block field becomes a breaking change in two languages at once.
+Store it opaquely.
 
-## När ett NuGet-paket faktiskt vore värt det
+## Rendering the email from .NET
 
-Bara i ett fall: när **.NET-backenden själv ska rendera mailet** — köra ett schemalagt
-utskick från en worker utan Node i bilden.
+The one case where you need more than an HTTP controller is when the **backend itself has to
+render** — a scheduled send from a worker with no Node in the picture.
 
-Då behövs en port av `src/render/`. Två saker gör det överkomligt:
-
-1. **Renderaren är rena strängoperationer.** Ingen DOM, inga beroenden, ingen asynkronitet.
-   Filerna i `src/render/html/` går att översätta nästan rad för rad.
-2. **Specifikationen finns redan, i körbar form.**
-   - `schema/mail-document.v1.json` — indataformatet, tillräckligt för att generera C#-typer.
-   - `test/fixtures/*.json` + `test/golden/*.html` — **konformanssviten**. En C#-renderare är
-     korrekt exakt när den förvandlar fixtures till golden-filerna, byte för byte.
-
-Det gör porten till ett avgränsat arbete med ett objektivt slutkriterium, inte en
-öppen tolkningsfråga. Skissen på ett sådant paket:
-
-```
-BackTech.MailDesigner/
-├─ MailDocument.cs        records som speglar schemat (JsonDocument för okända fält)
-├─ Render/
-│  ├─ MailRenderer.cs     Render(MailDocument, RenderOptions) -> RenderResult
-│  ├─ Skeleton.cs         doctype, meta, MSO-fixar, preheader
-│  ├─ Css.cs              klientåterställningar + media-frågan
-│  ├─ Columns.cs          bredduträkning + stapling
-│  ├─ Blocks/*.cs         ett per blocktyp
-│  ├─ MergeFields.cs
-│  └─ Sanitizer.cs        eller HtmlSanitizer via NuGet
-└─ tests/ConformanceTests.cs   läser ../../test/fixtures + ../../test/golden
-```
-
-`Sanitizer` är den enda delen där ett riktigt beroende är att föredra framför en port —
-`HtmlSanitizer` i .NET bygger på en verklig HTML-parser och är strängt bättre än vår
-regex-baserade variant, som är medvetet begränsad (se docblocket i `src/render/sanitize.ts`).
-Det gör att C#-utdatan kan avvika från golden-filen för `html`-blocket; håll det blocket
-utanför konformanssviten eller normalisera dess utdata i testet.
-
-## Mellanvägen: kör renderaren i Node från .NET
-
-Innan du portar 700 rader, väg av mot alternativet. `@backtech/mail-designer/render` är
-ren ESM utan beroenden, så det räcker med ett script:
+Before porting anything, weigh it against running the renderer as-is.
+`@backtech/mail-designer/render` is plain ESM with no dependencies, so a script is enough:
 
 ```csharp
 // echo '<json>' | node render.mjs   ->  { "html": "...", "text": "..." }
@@ -81,6 +47,24 @@ const doc = JSON.parse(await new Response(process.stdin).text());
 process.stdout.write(JSON.stringify(toHtml(doc.document, doc.options)));
 ```
 
-En kodväg, inga två implementationer att hålla i synk, och garanterat samma mail som
-förhandsvisningen. Kräver att Node finns på maskinen — vilket det gör i en container du
-själv bygger, men inte nödvändigtvis i en delad IIS-miljö. Det är hela avvägningen.
+One code path, no second implementation to keep in sync, and the same email the preview
+showed. It needs Node on the machine — true in a container you build yourself, not
+necessarily true in a shared IIS environment. That is the whole trade-off.
+
+## If you do port the renderer
+
+Two things make it a bounded job rather than an open-ended one:
+
+1. **The renderer is pure string operations.** No DOM, no dependencies, nothing async. The
+   files under `src/render/html/` translate almost line for line.
+2. **The specification already exists in executable form.**
+   - `schema/mail-document.v1.json` — the input format, enough to generate C# types from.
+   - `test/fixtures/*.json` + `test/golden/*.html` — the **conformance suite**. A C#
+     renderer is correct exactly when it turns the fixtures into the golden files, byte for
+     byte. That is an objective finish line, not a matter of interpretation.
+
+One caveat. Sanitising is the single part where a real dependency beats a port: .NET's
+`HtmlSanitizer` is built on an actual HTML parser and is strictly better than the scanner in
+`src/render/sanitize.ts`, which is deliberately limited (the reasoning is in that file's
+docblock). Using it means your output for the `html` block may differ from the golden file —
+so keep that block out of the conformance suite, or normalise its output in the test.

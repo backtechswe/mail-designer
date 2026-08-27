@@ -101,7 +101,7 @@ function docWithTokens(...htmls) {
 }
 
 test("coverage separates what is shown from what was silently dropped", () => {
-  const doc = docWithTokens("<p>Hi [Name], din tid är [Time].</p>");
+  const doc = docWithTokens("<p>Hi [Name], your time is [Time].</p>");
   const c = dataCoverage(doc, { Name: "Anna", Time: "10.30", Date: "14 april", Pris: "450 kr" });
 
   assert.deepEqual(c.used.sort(), ["Name", "Time"]);

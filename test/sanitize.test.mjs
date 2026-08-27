@@ -38,7 +38,7 @@ test("unknown tags go but their text stays", () => {
 });
 
 test("permitted formatting survives untouched", () => {
-  const input = '<p style="color:red"><b>fet</b> <i>kursiv</i><br /><a href="https://x.se" target="_blank">länk</a></p>';
+  const input = '<p style="color:red"><b>bold</b> <i>italic</i><br /><a href="https://x.se" target="_blank">link</a></p>';
   assert.equal(sanitizeInline(input), input);
 });
 
@@ -51,7 +51,7 @@ test("attributes not on the whitelist are dropped", () => {
 });
 
 test("stripTags turns markup into readable text", () => {
-  assert.equal(stripTags("<p>Ett</p><p>Två</p>"), "Ett\nTvå");
+  assert.equal(stripTags("<p>One</p><p>Two</p>"), "One\nTwo");
   assert.equal(stripTags("Rad<br />Rad2"), "Rad\nRad2");
   assert.equal(stripTags("<ul><li>A</li><li>B</li></ul>"), "A\nB");
   assert.equal(stripTags("Tre&nbsp;ord &amp; mer"), "Tre ord & mer");

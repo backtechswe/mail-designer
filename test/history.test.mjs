@@ -32,10 +32,10 @@ const commit = (state, previous, label, opts = {}) =>
   });
 
 test("a commit records the document as it was, not the one replacing it", () => {
-  const s = commit(initialHistory, doc(1), "Ändrade innehåll");
+  const s = commit(initialHistory, doc(1), "Changed content");
   assert.equal(s.past.length, 1);
   assert.equal(undoTarget(s).marker, 1);
-  assert.equal(undoLabel(s), "Ändrade innehåll");
+  assert.equal(undoLabel(s), "Changed content");
   assert.equal(s.future.length, 0);
 });
 
@@ -81,9 +81,9 @@ test("a new commit clears the redo stack", () => {
 
 test("commits sharing a key merge while they keep arriving", () => {
   let s = initialHistory;
-  s = commit(s, doc(1), "Ändrade innehåll", { key: "text:a", at: 0 });
-  s = commit(s, doc(2), "Ändrade innehåll", { key: "text:a", at: 100 });
-  s = commit(s, doc(3), "Ändrade innehåll", { key: "text:a", at: 200 });
+  s = commit(s, doc(1), "Changed content", { key: "text:a", at: 0 });
+  s = commit(s, doc(2), "Changed content", { key: "text:a", at: 100 });
+  s = commit(s, doc(3), "Changed content", { key: "text:a", at: 200 });
 
   assert.equal(s.past.length, 1, "a burst of typing is one step");
   assert.equal(undoTarget(s).marker, 1, "undo lands before the whole burst, not inside it");

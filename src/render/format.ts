@@ -7,8 +7,8 @@
  *
  * The rule that keeps it safe: **whitespace is only ever added between block-level tags.**
  * Between them and nowhere else — not around a comment, not inside a run of inline elements.
- * A newline inside inline content collapses to a space in the mail, so `<a>Läs</a>,` must
- * never become `<a>Läs</a>\n,` — that renders as "Läs ," in every client. So a line that has
+ * A newline inside inline content collapses to a space in the mail, so `<a>Read</a>,` must
+ * never become `<a>Read</a>\n,` — that renders as "Read ," in every client. So a line that has
  * picked up any content stays one line until its block closes, and `<td>Hej</td>` comes out
  * whole. See test/format.test.mjs, where the invariant is that collapsing the added
  * whitespace returns the original string exactly.

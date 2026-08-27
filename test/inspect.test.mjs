@@ -17,7 +17,7 @@ function check(doc) {
 
 test("a clean mail with a preheader raises nothing but the expected nudges", () => {
   const doc = emptyDocument();
-  doc.settings.preheader = "Kort förhandsvisning";
+  doc.settings.preheader = "Short preview text";
   doc.blocks = [createSection([set(createBlock("text"), { html: "Hi." })])];
   const w = check(doc);
   assert.equal(ids(w, "gmail-clipping"), undefined);

@@ -233,10 +233,10 @@ test("the preheader is present when set and absent when not", () => {
   assert.doesNotMatch(toHtml(without).html, /mso-hide:all/);
 
   const withText = emptyDocument();
-  withText.settings.preheader = "Kort förhandsvisning";
+  withText.settings.preheader = "Short preview text";
   const { html } = toHtml(withText);
   assert.match(html, /mso-hide:all/);
-  assert.match(html, /Kort förhandsvisning/);
+  assert.match(html, /Short preview text/);
 });
 
 test("every checked-in fixture is a structurally valid document", async () => {

@@ -83,8 +83,8 @@ test("opening a document resets the state to match what was opened", () => {
 
 test("renaming a clean document makes it dirty, but does not disturb a failed one", () => {
   let s = statusReducer(start(), { type: "opened", id: "a", name: "Ett" });
-  s = statusReducer(s, { type: "renamed", name: "Två" });
-  assert.equal(s.name, "Två");
+  s = statusReducer(s, { type: "renamed", name: "Two" });
+  assert.equal(s.name, "Two");
   assert.equal(s.state, "dirty", "the new name still has to reach the store");
 
   let e = statusReducer(start(), { type: "saveFailed", error: "boom" });

@@ -36,45 +36,45 @@ const minimal = withIds(() => {
 
 const allBlocks = withIds(() => {
   const doc = emptyDocument();
-  doc.settings.preheader = "Förhandsvisning för [Namn]";
+  doc.settings.preheader = "Preview text for [Name]";
   doc.blocks = [
     createSection([
-      set(createBlock("heading"), { html: "Hej [Namn]!", level: 1 }),
-      set(createBlock("heading"), { html: "Underrubrik", level: 3, align: "center" }),
+      set(createBlock("heading"), { html: "Hi [Name]!", level: 1 }),
+      set(createBlock("heading"), { html: "Subheading", level: 3, align: "center" }),
       set(createBlock("text"), {
-        html: "<p>Text med <b>fet</b>, <i>kursiv</i> och <a href='https://exempel.se'>länk</a>.</p><ul><li>Ett</li><li>Två</li></ul>",
+        html: "<p>Text with <b>bold</b>, <i>italic</i> and a <a href='https://example.com'>link</a>.</p><ul><li>One</li><li>Two</li></ul>",
       }),
       set(createBlock("image"), {
-        src: "https://exempel.se/bild.png",
-        alt: "En bild",
-        href: "https://exempel.se",
+        src: "https://example.com/image.png",
+        alt: "An image",
+        href: "https://example.com",
         width: 300,
         borderRadius: 8,
       }),
       set(createBlock("button"), {
-        label: "Boka tid",
-        href: "https://exempel.se/boka?ref=[Namn]",
+        label: "Book a time",
+        href: "https://example.com/book?ref=[Name]",
         width: 180,
       }),
-      set(createBlock("button"), { label: "Utan bredd", href: "https://exempel.se" }),
+      set(createBlock("button"), { label: "No width", href: "https://example.com" }),
       createBlock("divider"),
       createBlock("spacer"),
       set(createBlock("social"), {
         items: [
-          { network: "facebook", href: "https://facebook.com/x", iconUrl: "https://cdn.exempel.se/fb.png" },
-          { network: "instagram", href: "https://instagram.com/x", iconUrl: "https://cdn.exempel.se/ig.png" },
+          { network: "facebook", href: "https://facebook.com/x", iconUrl: "https://cdn.example.com/fb.png" },
+          { network: "instagram", href: "https://instagram.com/x", iconUrl: "https://cdn.example.com/ig.png" },
         ],
       }),
-      set(createBlock("html"), { html: "<p>Rå <b>HTML</b> med <script>alert(1)</script> borttaget.</p>" }),
+      set(createBlock("html"), { html: "<p>Raw <b>HTML</b> with <script>alert(1)</script> removed.</p>" }),
     ]),
     set(
       createSection([
         set(createBlock("columns"), {
           gap: 16,
           columns: [
-            createColumn([set(createBlock("text"), { html: "Vänster" })], 33.33),
-            createColumn([set(createBlock("text"), { html: "Mitten" })]),
-            createColumn([set(createBlock("image"), { src: "https://exempel.se/h.png", alt: "H" })]),
+            createColumn([set(createBlock("text"), { html: "Left" })], 33.33),
+            createColumn([set(createBlock("text"), { html: "Centre" })]),
+            createColumn([set(createBlock("image"), { src: "https://example.com/r.png", alt: "H" })]),
           ],
         }),
         set(createBlock("columns"), {

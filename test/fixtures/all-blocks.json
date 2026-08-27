@@ -9,7 +9,7 @@
     "lineHeight": 1.5,
     "textColor": "#1f1f1f",
     "linkColor": "#2f54eb",
-    "preheader": "Förhandsvisning för [Namn]"
+    "preheader": "Preview text for [Name]"
   },
   "blocks": [
     {
@@ -26,7 +26,7 @@
           "id": "id3",
           "type": "heading",
           "level": 1,
-          "html": "Hej [Namn]!",
+          "html": "Hi [Name]!",
           "align": "left",
           "padding": [
             0,
@@ -39,7 +39,7 @@
           "id": "id4",
           "type": "heading",
           "level": 3,
-          "html": "Underrubrik",
+          "html": "Subheading",
           "align": "center",
           "padding": [
             0,
@@ -51,7 +51,7 @@
         {
           "id": "id5",
           "type": "text",
-          "html": "<p>Text med <b>fet</b>, <i>kursiv</i> och <a href='https://exempel.se'>länk</a>.</p><ul><li>Ett</li><li>Två</li></ul>",
+          "html": "<p>Text with <b>bold</b>, <i>italic</i> and a <a href='https://example.com'>link</a>.</p><ul><li>One</li><li>Two</li></ul>",
           "align": "left",
           "padding": [
             0,
@@ -63,8 +63,8 @@
         {
           "id": "id6",
           "type": "image",
-          "src": "https://exempel.se/bild.png",
-          "alt": "En bild",
+          "src": "https://example.com/image.png",
+          "alt": "An image",
           "align": "center",
           "padding": [
             0,
@@ -72,15 +72,15 @@
             12,
             0
           ],
-          "href": "https://exempel.se",
+          "href": "https://example.com",
           "width": 300,
           "borderRadius": 8
         },
         {
           "id": "id7",
           "type": "button",
-          "label": "Boka tid",
-          "href": "https://exempel.se/boka?ref=[Namn]",
+          "label": "Book a time",
+          "href": "https://example.com/book?ref=[Name]",
           "backgroundColor": "#2f54eb",
           "textColor": "#ffffff",
           "borderRadius": 6,
@@ -103,8 +103,8 @@
         {
           "id": "id8",
           "type": "button",
-          "label": "Utan bredd",
-          "href": "https://exempel.se",
+          "label": "No width",
+          "href": "https://example.com",
           "backgroundColor": "#2f54eb",
           "textColor": "#ffffff",
           "borderRadius": 6,
@@ -149,12 +149,12 @@
             {
               "network": "facebook",
               "href": "https://facebook.com/x",
-              "iconUrl": "https://cdn.exempel.se/fb.png"
+              "iconUrl": "https://cdn.example.com/fb.png"
             },
             {
               "network": "instagram",
               "href": "https://instagram.com/x",
-              "iconUrl": "https://cdn.exempel.se/ig.png"
+              "iconUrl": "https://cdn.example.com/ig.png"
             }
           ],
           "iconSize": 24,
@@ -170,7 +170,7 @@
         {
           "id": "id12",
           "type": "html",
-          "html": "<p>Rå <b>HTML</b> med <script>alert(1)</script> borttaget.</p>"
+          "html": "<p>Raw <b>HTML</b> with <script>alert(1)</script> removed.</p>"
         }
       ]
     },
@@ -196,7 +196,7 @@
                 {
                   "id": "id19",
                   "type": "text",
-                  "html": "Vänster",
+                  "html": "Left",
                   "align": "left",
                   "padding": [
                     0,
@@ -214,7 +214,7 @@
                 {
                   "id": "id21",
                   "type": "text",
-                  "html": "Mitten",
+                  "html": "Centre",
                   "align": "left",
                   "padding": [
                     0,
@@ -231,7 +231,7 @@
                 {
                   "id": "id23",
                   "type": "image",
-                  "src": "https://exempel.se/h.png",
+                  "src": "https://example.com/r.png",
                   "alt": "H",
                   "align": "center",
                   "padding": [

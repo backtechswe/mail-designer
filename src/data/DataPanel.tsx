@@ -163,9 +163,12 @@ function Fields({
           type="button"
           className="md-secondary-button"
           onClick={() => {
-            let name = "Fält";
+            // English, and deliberately not a locale key: this becomes a token in the
+            // document, and a document must not differ depending on which language the
+            // editor happened to be in when a field was added.
+            let name = "Field";
             let n = 1;
-            while (name in data) name = `Fält ${++n}`;
+            while (name in data) name = `Field ${++n}`;
             setData({ ...data, [name]: "" });
           }}
         >

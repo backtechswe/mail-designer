@@ -1,134 +1,134 @@
-# E-postkompatibilitet
+# Email compatibility
 
-Vad renderaren gör för att HTML:en ska hålla i både nya och gamla klienter, vad som degraderar
-graciöst, och vad som inte går att garantera utan att skicka riktiga testmejl.
+What the renderer does to make its HTML survive both current and ancient clients, what
+degrades gracefully, and what cannot be guaranteed from here without sending real test mail.
 
-Varje punkt nedan finns som en kommentar i koden vid den rad som gör den, och de flesta vaktas
-av ett test i `test/render.test.mjs`. Det är avsiktligt: en workaround utan förklaring blir
-raderad av nästa person som läser koden.
+Every point below exists as a comment in the code at the line that implements it, and most are
+guarded by a test in `test/render.test.mjs`. That is deliberate: a workaround with no
+explanation gets deleted by the next person to read the code.
 
-## Grunden
+## The basics
 
-| Vad | Varför |
+| What | Why |
 |---|---|
-| XHTML 1.0 Transitional-doctype | Det klienterna förväntar sig. Utan doctype hamnar äldre Outlook i quirks mode |
-| Allt i tabeller, `role="presentation"` | Flexbox och grid finns inte i Word-motorn. `role` gör att skärmläsare inte läser upp layouten som en datatabell |
-| **Allt visuellt inline** | `<style>` i `<head>` strippas av ett fåtal klienter och gateways. Inget utseende får bero enbart på den |
-| `border-collapse` + `mso-table-lspace/rspace` | Utan dem visar flera klienter hårstreck mellan celler |
-| `<o:PixelsPerInch>96</o:PixelsPerInch>` | Utan den skalar Outlook om alla px-mått |
-| `x-apple-disable-message-reformatting` | Stoppar Apple Mail från att flöda om layouten själv |
-| `format-detection: telephone=no` | Stoppar iOS från att göra telefonnummer och datum till blå länkar |
-| `a[x-apple-data-detectors]` | Färgar om dem som iOS ändå hittar |
-| `.ExternalClass` | Outlook.com sätter annars sitt eget radavstånd |
+| XHTML 1.0 Transitional doctype | What clients expect. With no doctype, older Outlook falls into quirks mode |
+| Tables throughout, `role="presentation"` | Flexbox and grid do not exist in the Word engine. The `role` stops screen readers announcing the layout as a data table |
+| **Everything visual inline** | `<style>` in `<head>` is stripped by a handful of clients and gateways. No appearance may depend on it alone |
+| `border-collapse` + `mso-table-lspace/rspace` | Without them several clients show hairlines between cells |
+| `<o:PixelsPerInch>96</o:PixelsPerInch>` | Without it Outlook rescales every px measurement |
+| `x-apple-disable-message-reformatting` | Stops Apple Mail reflowing the layout on its own |
+| `format-detection: telephone=no` | Stops iOS turning phone numbers and dates into blue links |
+| `a[x-apple-data-detectors]` | Recolours the ones iOS finds anyway |
+| `.ExternalClass` | Otherwise Outlook.com applies its own line height |
 
 ## Layout
 
-**Innehållskolumnen är `width:100%` med `max-width`, inte en fast bredd.** En tabell med fast
-bredd kan inte krympa, så ett 600 px-mejl skrollar i sidled på en telefon. Outlook ignorerar
-`max-width` och skulle då sträcka innehållet över hela fönstret — därför får just Outlook en
-**ghost-tabell** med den riktiga bredden bakom `<!--[if mso]>`.
+**The content column is `width:100%` with a `max-width`, not a fixed width.** A fixed-width
+table cannot shrink, so a 600px email scrolls sideways on a phone. Outlook ignores `max-width`
+and would then stretch the content across the whole window — so Outlook alone gets a **ghost
+table** carrying the real width, behind `<!--[if mso]>`.
 
-**Kolumnmellanrum är cellpadding, inte `gap`** — `gap` finns inte i e-post. Procenten breddas
-för att kompensera, så alla kolumner får exakt samma innehållsbredd och raden ligger ändå kant
-i kant. Summan blir alltid exakt 100 %, även om de angivna bredderna överstiger det: Outlook
-skjuter ut en för bred kolumn ur mejlet i stället för att radbryta.
+**Column gaps are cell padding, not `gap`** — `gap` does not exist in email. The percentages
+are widened to compensate, so every column gets exactly the same content width and the row
+still sits edge to edge. The total is always exactly 100%, even when the given widths exceed
+it: Outlook pushes an over-wide column out of the email rather than wrapping it.
 
-**Stapling på mobil sker via en media-fråga.** Outlook för dator ignorerar media-frågor, vilket
-är precis vad man vill — den är alltid en bred vy.
+**Stacking on mobile happens through a media query.** Outlook on the desktop ignores media
+queries, which is exactly what you want — it is always a wide view.
 
-## Typografi
+## Typography
 
-**Radavstånd anges i px, med `mso-line-height-rule: exactly`.** Word-motorn ignorerar ett
-enhetslöst radavstånd och sätter sitt eget, vilket tyst ändrar rytmen i varje stycke.
+**Line height is set in px, with `mso-line-height-rule: exactly`.** The Word engine ignores a
+unitless line height and applies its own, quietly changing the rhythm of every paragraph.
 
-**`word-break: break-word` på all text.** En inklistrad URL utan blanksteg vidgar annars
-tabellen förbi mejlets egen bredd i Outlook och slår sönder all justering.
+**`word-break: break-word` on all text.** Otherwise a pasted URL with no spaces widens the
+table past the email's own width in Outlook and breaks every alignment in it.
 
-**Inget generellt typsnittsöverstyre för Outlook.** Ett `font-family: … !important` i ett
-`[if mso]`-block är ett vanligt råd, men det slår ut varje medvetet typsnittsval i dokumentet.
-Det är bara rätt när man använder ett webbtypsnitt — och den här redigeraren erbjuder bara
-web-safe-stackar, som Outlook kan rendera. (Det här *fanns* här och är borttaget; ett test
-vaktar att det inte kommer tillbaka.)
+**No blanket font override for Outlook.** A `font-family: … !important` inside an `[if mso]`
+block is common advice, but it overrides every deliberate font choice in the document. It is
+only right when you use a web font — and this editor offers only web-safe stacks, which
+Outlook can render. (This *was* here and has been removed; a test guards against its return.)
 
-**`<p>`, `<ul>` och `<a>` får explicita marginaler och färger.** E-post har inga pålitliga
-descendant-selektorer, och klienternas standardvärden skiljer sig kraftigt — Gmail färgar om
-länkar till sin egen blå om man inte säger annat.
+**`<p>`, `<ul>` and `<a>` get explicit margins and colours.** Email has no reliable descendant
+selectors, and client defaults differ wildly — Gmail recolours links to its own blue unless
+told otherwise.
 
-## Knappar
+## Buttons
 
-En tabellcell med bakgrund och radie, med en `<a>` som fyller den, plus `mso-padding-alt` som
-ger Outlook den padding den vägrar ta från länken.
+A table cell with a background and a radius, an `<a>` filling it, plus `mso-padding-alt` to
+give Outlook the padding it refuses to take from the link.
 
-Rundade hörn är det enda Outlook inte kan göra med CSS — det kräver VML. VML kräver bestämda
-pixelmått, så vi genererar det **bara när knappen har en angiven bredd**. Utan bredd blir
-knappen rak i Outlook och rundad i övriga: en kosmetisk skillnad, inte en trasig layout, och
-klart bättre än att gissa en storlek och skicka en klippt knapp.
+Rounded corners are the one thing Outlook cannot do in CSS — it needs VML. VML needs definite
+pixel measurements, so it is generated **only when the button has an explicit width**. Without
+one the button is square in Outlook and rounded elsewhere: a cosmetic difference rather than a
+broken layout, and much better than guessing a size and sending a clipped button.
 
-## Bilder
+## Images
 
-`width`-attribut *och* `max-width` i CSS: attributet för Outlook som ignorerar `max-width`,
-CSS:en för alla andra så bilden krymper på en telefon i stället för att tvinga fram sidoskroll.
-`display: block` tar bort luftgapet under bilden. `border="0"` mot ramar i äldre klienter.
+A `width` attribute *and* `max-width` in CSS: the attribute for Outlook, which ignores
+`max-width`; the CSS for everyone else, so the image shrinks on a phone instead of forcing
+sideways scroll. `display: block` removes the gap underneath. `border="0"` against frames in
+older clients.
 
-## Vad som degraderar, och till vad
+## What degrades, and to what
 
-| Funktion | Där den inte fungerar | Vad som händer i stället |
+| Feature | Where it does not work | What happens instead |
 |---|---|---|
-| Egen marginal på mobil | Outlook för dator (med flit), klienter som strippar `<style>` | Desktopmarginalen används |
-| Staplade kolumner på mobil | Samma | Kolumnerna står kvar sida vid sida |
-| Rundade hörn på knapp | Outlook, utan angiven bredd | Rak knapp |
-| Rundade hörn på bild | Outlook | Rak bild |
-| Bakgrundsbild på sektion | Outlook | Bakgrundsfärgen bakom den. **Renderaren varnar** |
+| Separate mobile padding | Outlook desktop (deliberately), clients that strip `<style>` | The desktop padding is used |
+| Columns stacking on mobile | Same | The columns stay side by side |
+| Rounded button corners | Outlook, with no explicit width | A square button |
+| Rounded image corners | Outlook | A square image |
+| Section background image | Outlook | The background colour behind it. **The renderer warns** |
 
-Därför måste desktopvärdet alltid vara det som *fungerar*, inte bara det som är rymligast.
-Mobilvärdet är en förbättring ovanpå.
+Which is why the desktop value must always be the one that *works*, not merely the roomiest.
+The mobile value is an improvement layered on top.
 
-## Kontroller som körs automatiskt
+## Checks that run automatically
 
-`inspectEmail(doc, result)` returnerar det en förhandsvisning inte kan visa:
+`inspectEmail(doc, result)` returns what a preview cannot show you:
 
-| Kontroll | Nivå | Varför |
+| Check | Level | Why |
 |---|---|---|
-| `gmail-clipping` | fel | Gmail klipper mejl över ~102 KB och gömmer resten bakom en länk de flesta aldrig klickar — en avregistreringslänk kan försvinna helt |
-| `data-uri-image` | fel | Gmail vägrar `data:`-URI:er i `<img>`. Mottagaren ser alt-texten |
-| `background-image` | varning | Outlook behöver VML vi inte genererar |
-| `missing-alt` | varning | Bilder är blockerade som standard i många klienter; alt-texten *är* innehållet då |
-| `no-preheader` | varning | Inkorgen visar annars början av brödtexten |
-| `wide-content` | varning | Över 640 px blir trångt i flera förhandsvisningsrutor |
-| `no-plain-text` | varning | En saknad textdel räknas emot dig i skräppostfilter |
+| `gmail-clipping` | error | Gmail clips mail over ~102 KB and hides the rest behind a link most people never click — an unsubscribe link can disappear entirely |
+| `data-uri-image` | error | Gmail refuses `data:` URIs in `<img>`. The recipient sees the alt text |
+| `background-image` | warning | Outlook needs VML we do not generate |
+| `missing-alt` | warning | Images are blocked by default in many clients; there the alt text *is* the content |
+| `no-preheader` | warning | Otherwise the inbox shows the start of the body text |
+| `wide-content` | warning | Past 640px it gets cramped in several preview panes |
+| `no-plain-text` | warning | A missing text part counts against you in spam filters |
 
-## Vad som inte går att garantera härifrån
+## What cannot be guaranteed from here
 
-Renderaren skriver HTML som följer allt ovanstående, och testerna vaktar att den fortsätter
-göra det. Men **ingen mängd tester ersätter ett riktigt testmejl.** Klienter uppdateras, och
-samma klient beter sig olika beroende på konto­typ — Gmail strippar t.ex. `<style>` för konton
-som hämtas via POP/IMAP men inte för sina egna.
+The renderer writes HTML that follows all of the above, and the tests guard that it keeps
+doing so. But **no amount of testing replaces a real test email.** Clients update, and the
+same client behaves differently depending on account type — Gmail strips `<style>` for
+accounts fetched over POP/IMAP but not for its own, for instance.
 
-Innan en mall används i skarpt läge: skicka den till dig själv och titta i **Gmail (web och
-iOS), Apple Mail, Outlook för Windows och Outlook.com**. Det är de fyra som täcker de olika
-renderingsmotorerna. `test/golden/*.html` går att öppna direkt i en webbläsare, men en
-webbläsare är inte en e-postklient.
+Before a template goes anywhere real: send it to yourself and look at it in **Gmail (web and
+iOS), Apple Mail, Outlook for Windows and Outlook.com**. Those four cover the distinct
+rendering engines. `test/golden/*.html` opens directly in a browser, but a browser is not an
+email client.
 
-## Mörkt läge
+## Dark mode
 
-Tre mekanismer, för klienterna gör tre olika saker. Sätts via `settings.dark` med fyra
-färger: sidbakgrund, innehållets bakgrund, textfärg, länkfärg.
+Three mechanisms, because clients do three different things. Enabled through `settings.dark`
+with four colours: page background, content background, text, links.
 
-| Klient | Vad som händer | Vad vi gör |
+| Client | What it does | What we do |
 |---|---|---|
-| Apple Mail, iOS Mail, Outlook för Mac | Följer `prefers-color-scheme`, men **bara** om mejlet också deklarerar `color-scheme` — annars beslutar Apple Mail att mejlet är ljust-bara och inverterar självt | Två meta-taggar i head, `:root{color-scheme:light dark}`, och en media query med `!important` |
-| Outlook.com | Ignorerar media queries. Skriver om DOM:en: kopierar `bgcolor` till `data-ogsb` och färgstilar till `data-ogsc`, och stylar sedan om utifrån dem | Selektorer på `[data-ogsb]` och `[data-ogsc]` |
-| Gmail | Har inget mörkt läge för HTML-mejl på desktop, och inverterar på Android inget som författaren satt uttryckligen | Att sätta färgerna *är* hanteringen |
+| Apple Mail, iOS Mail, Outlook for Mac | Honours `prefers-color-scheme`, but **only** if the email also declares `color-scheme` — otherwise Apple Mail decides the email is light-only and inverts it itself | Two meta tags in the head, `:root{color-scheme:light dark}`, and a media query with `!important` |
+| Outlook.com | Ignores media queries. Rewrites the DOM instead: it copies `bgcolor` to `data-ogsb` and colour styles to `data-ogsc`, then restyles from those | Selectors on `[data-ogsb]` and `[data-ogsc]` |
+| Gmail | Has no dark mode for HTML mail on desktop, and on Android inverts nothing the author set explicitly | Setting the colours *is* the handling |
 
-`!important` och en efterkommande-selektor (`.md-dark-text, .md-dark-text *`) är båda
-nödvändiga: rubriker och textblock sätter sin färg **inline**, och inline slår en klass om inte
-klassen är mer specifik och `!important`.
+Both the `!important` and the descendant selector (`.md-dark-text, .md-dark-text *`) are
+necessary: headings and text blocks set their colour **inline**, and inline beats a class
+unless the class is more specific and marked important.
 
-**Bilder inverteras inte, av någon klient.** En PNG-logotyp på vit bakgrund blir en lysande vit
-fyrkant i ett mörkt mejl. Det är den vanligaste dark-mode-buggen i e-post och den går inte att
-lösa i CSS — använd en logotyp med transparens. Inspektorn säger det, och `inspectEmail` varnar
-med `no-dark-mode` för ett mejl som inte satt några mörka färger alls.
+**No client inverts images.** A PNG logo on a white background becomes a glowing white
+rectangle in a dark email. It is the most common dark-mode bug in email and it cannot be
+solved in CSS — use a logo with transparency. The inspector says so, and `inspectEmail` raises
+`no-dark-mode` for an email that set no dark colours at all.
 
-**Ingenting emitteras för ett dokument utan `settings.dark`.** Inga meta-taggar, inga klasser,
-inga regler — varje byte räknas mot Gmails klippgräns, och en klass utan regel bakom sig är
-markup i varje mejl som inte gör något.
+**Nothing is emitted for a document without `settings.dark`.** No meta tags, no classes, no
+rules — every byte counts against Gmail's clipping limit, and a class with no rule behind it
+is markup in every email that does nothing.
