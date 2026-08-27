@@ -89,9 +89,13 @@ export function DocumentBar({
         }}
       />
 
-      <SaveStatus session={session} savedTime={savedTime} />
-
       <div className="md-docbar-spacer" />
+
+      {/* Anchored to the right edge next to the other document-level controls. Beside the
+          name it floated: an <input> is 20-odd characters wide whatever you type into it, so
+          the state sat in dead space that moved with the title's length, lining up with
+          nothing. */}
+      <SaveStatus session={session} savedTime={savedTime} />
 
       {onReset ? (
         <button type="button" className="md-docbar-reset" onClick={onReset}>

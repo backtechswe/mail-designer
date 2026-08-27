@@ -96,3 +96,13 @@ test("!important is not how this file settles arguments with itself", () => {
   // rules. Asserted so it cannot creep back up unnoticed.
   assert.ok(count <= 21, `!important count rose to ${count}`);
 });
+
+test("the document title sizes to its name, and says so against the base rule", () => {
+  const css = readFileSync("src/styles.css", "utf8");
+  const rule = css.match(/\.md-docname \{[\s\S]*?\n\}/)?.[0] ?? "";
+  assert.match(rule, /field-sizing: content/);
+  // Without this the base form rule's `width: 100%` wins by cascade order and pins the field
+  // at max-width for every name, which is what put the save state in dead space. It looks
+  // redundant next to field-sizing; it is not.
+  assert.match(rule, /width: auto/);
+});

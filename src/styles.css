@@ -1551,6 +1551,14 @@
  * size.
  */
 .md-docname {
+  /* Hugs the name instead of standing at the input default of ~20 characters, so the
+     hover chip is the width of the title and not of a form field waiting to be filled.
+     Progressive: without it the box is merely wider, which is what it was before. */
+  field-sizing: content;
+  /* The base form rule sets width:100%, which pins the field at max-width whatever it
+     contains — field-sizing has nothing left to decide. One class beats a :where() rule,
+     so this needs no !important. */
+  width: auto;
   min-width: 8ch;
   max-width: 34ch;
   padding: 5px 8px;
