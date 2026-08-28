@@ -77,7 +77,7 @@ export function receipt(): MailDocument {
             gap: 20,
             padding: [0, 0, 20, 0],
           }),
-          columns([detail("With", "Anna Lind"), detail("Where", "12 Example Street, Exampleton")], {
+          columns([detail("With", "Robin Alvarez"), detail("Where", "12 Example Street, Exampleton")], {
             gap: 20,
             padding: [0, 0, 0, 0],
           }),
@@ -121,7 +121,7 @@ export function receipt(): MailDocument {
       lineHeight: 1.6,
       textColor: ink,
       linkColor: accent,
-      preheader: "Tuesday 14 April, 10:30 with Anna Lind. 12 Example Street, Exampleton.",
+      preheader: "Tuesday 14 April, 10:30 with Robin Alvarez. 12 Example Street, Exampleton.",
     },
   );
 }

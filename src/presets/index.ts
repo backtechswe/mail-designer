@@ -37,7 +37,14 @@ export const builtInPresets: MailPreset[] = [
 ];
 
 export function findPreset(presetId: string, presets: MailPreset[] = builtInPresets) {
-  return presets.find((p) => p.id === presetId);
+  const wanted = presetId.trim().toLowerCase();
+  // Also by display name, because that is the word the editor and the README show. The
+  // Confirmation preset has the id `receipt`, so `new confirmation` failed for someone who
+  // had only ever seen it called Confirmation — an id is an implementation detail to them.
+  return (
+    presets.find((p) => p.id.toLowerCase() === wanted) ??
+    presets.find((p) => p.name.toLowerCase() === wanted)
+  );
 }
 
 export { PHOTOS, photo, unsplash } from "./images.js";

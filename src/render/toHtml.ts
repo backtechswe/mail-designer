@@ -6,7 +6,7 @@ import type {
   Spacing,
 } from "../types.js";
 import { defaultSettings, walkBlocks } from "../document.js";
-import { applyDataValues } from "./dataFields.js";
+import { applyDataValues, extractDataFields } from "./dataFields.js";
 import { neutraliseUrls } from "./esc.js";
 import { renderSection } from "./html/section.js";
 import { mobilePaddingClass } from "./html/css.js";
@@ -54,13 +54,16 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
 
   const text = toPlainText(doc);
   const onMissing = options.onMissingField ?? "keep";
+  // Scoped to what this document declares, so substitution cannot reach the brackets the
+  // renderer wrote itself — the MSO conditionals and the Outlook.com dark-mode selectors.
+  const fields = extractDataFields(doc);
 
   return {
     // neutraliseUrls runs *after* substitution, and that order is the point: a token in an
     // href passes safeUrl at render time as the harmless string it is, and only becomes a
     // URL once a recipient row is applied. Recipient data comes from outside.
-    html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing })),
-    text: applyDataValues(text, options.data, { escape: "none", onMissing }),
+    html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing, fields })),
+    text: applyDataValues(text, options.data, { escape: "none", onMissing, fields }),
   };
 }
 

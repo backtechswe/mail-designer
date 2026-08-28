@@ -26,7 +26,7 @@ const [doc, setDoc] = useState(emptyDocument());
   value={doc}
   onChange={setDoc}
   theme={{ accent: "#2f54eb", radius: 8 }}
-  dataFields={["Name", "City"]}
+  data={{ Name: "Robin Alvarez", City: "Göteborg" }}
   onUploadImage={uploadToStorage}
   previewIdentity={{ name: "Klubben", email: "utskick@klubben.se" }}
   locale="sv"
@@ -290,7 +290,7 @@ Everything defaults to permitted. Restrict what a particular integration allows:
     blocks: ["heading", "text", "image", "columns", "divider", "spacer"],
     requiredFields: ["Name", "Date", "Time"],
   }}
-  data={{ Name: "Anna Lind", Date: "14 April", Time: "10:30" }}
+  data={{ Name: "Robin Alvarez", Date: "14 April", Time: "10:30" }}
   resetTo={confirmationTemplate}
 />
 ```
@@ -568,7 +568,7 @@ raised as a protocol error.
 ## Starting points
 
 Six built-in presets — **Newsletter**, **Invitation**, **Campaign**, **Welcome**,
-**Confirmation**, **Blank** — each designed as its own piece rather than one layout recoloured:
+**Confirmation** (`receipt`), **Blank** — each designed as its own piece rather than one layout recoloured:
 its own palette, measure and typography. A user who opens a template and finds something
 worth keeping edits it; one who finds a grey skeleton starts over, and the template has cost
 them time instead of saving it.

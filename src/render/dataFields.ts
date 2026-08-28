@@ -17,6 +17,23 @@ export interface DataOptions {
   escape?: "html" | "none";
   /** "keep" leaves an unmatched token visible (default); "blank" removes it. */
   onMissing?: "keep" | "blank";
+  /**
+   * The names that are data fields. When given, every other [Bracketed] run is left exactly
+   * as it was found.
+   *
+   * This exists because the renderer writes brackets of its own. `<!--[if mso]>` and
+   * `<![endif]-->` hold the Outlook ghost table together, and `[data-ogsb]` / `[data-ogsc]`
+   * are what Outlook.com's dark mode is keyed on — all of them match DATA_TOKEN. With
+   * onMissing "keep" that was invisible, because an unmatched token is left alone anyway.
+   * With "blank" they were erased, which turns `<!--[if mso]>` into `<!-->`: an
+   * abrupt-closing comment that every client ends the comment at, so the ghost table becomes
+   * live markup and the layout doubles. Not an Outlook-only bug — a broken email everywhere.
+   *
+   * An allowlist rather than a list of reserved patterns, because the reserved list would
+   * need extending every time the renderer learns a new client workaround, and forgetting
+   * would be silent. A token the document itself never declared is not a data field.
+   */
+  fields?: readonly string[];
 }
 
 export function applyDataValues(
@@ -25,12 +42,15 @@ export function applyDataValues(
   options: DataOptions = {},
 ): string {
   if (!input) return input;
-  const { escape = "html", onMissing = "keep" } = options;
-  if (!values) return onMissing === "blank" ? input.replace(DATA_TOKEN, "") : input;
+  const { escape = "html", onMissing = "keep", fields } = options;
+  // Matched the way substitution matches below: trimmed and case-insensitive, so `[ namn ]`
+  // and `[NAMN]` are the same field to the allowlist as they are to the lookup.
+  const declared = fields ? new Set(fields.map((f) => f.trim().toLowerCase())) : null;
 
   return input.replace(DATA_TOKEN, (whole, name: string) => {
     const key = name.trim();
-    const value = values[key] ?? findCaseInsensitive(values, key);
+    if (declared && !declared.has(key.toLowerCase())) return whole;
+    const value = values?.[key] ?? (values ? findCaseInsensitive(values, key) : undefined);
     if (value === undefined) return onMissing === "blank" ? "" : whole;
     return escape === "html" ? escAttr(value) : value;
   });
@@ -87,7 +107,11 @@ export function extractDataFields(doc: MailDocument): string[] {
         for (const item of block.items) {
           scan(item.href);
           scan(item.label);
+          scan(item.iconUrl);
         }
+        break;
+      case "section":
+        scan(block.backgroundUrl);
         break;
       default:
         break;

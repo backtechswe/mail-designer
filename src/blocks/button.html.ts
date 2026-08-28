@@ -2,7 +2,7 @@ import type { ButtonBlock } from "../types.js";
 import type { RenderContext } from "../render/html/context.js";
 import { escAttr, escText, safeUrl } from "../render/esc.js";
 import { TABLE_RESET, css, px, spacing } from "../render/style.js";
-import { align, num } from "../render/values.js";
+import { align, num, spacingOf } from "../render/values.js";
 
 /**
  * A bulletproof button: a table cell carrying the background and radius, with an <a>
@@ -58,7 +58,8 @@ export function renderButton(block: ButtonBlock, ctx: RenderContext): string {
   if (!block.width || block.borderRadius <= 0) return table;
 
   // Height Outlook will use for the VML box, from the same numbers the CSS uses.
-  const height = block.innerPadding[0] + block.innerPadding[2] + lineHeight;
+  const pad = spacingOf(block.innerPadding);
+  const height = pad[0] + pad[2] + lineHeight;
   // VML's arcsize is a percentage of the shorter side, and 50% is already a full pill —
   // a borderRadius of 999 used to emit arcsize="2300%", which Word does not understand.
   const arcsize = `${num(Math.round((block.borderRadius / height) * 100), 0, 0, 50)}%`;

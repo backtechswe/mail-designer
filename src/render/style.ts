@@ -4,6 +4,7 @@
  */
 
 import { isColour, safeCssValue } from "./esc.js";
+import { spacingOf } from "./values.js";
 
 export type StyleMap = Record<string, string | number | false | null | undefined>;
 
@@ -15,9 +16,17 @@ export function pct(value: number): string {
   return `${value}%`;
 }
 
-/** [t,r,b,l] -> "1px 2px 3px 4px". */
-export function spacing(value: readonly [number, number, number, number]): string {
-  return value.map(px).join(" ");
+/**
+ * [t,r,b,l] -> "1px 2px 3px 4px", from whatever the document actually holds.
+ *
+ * Takes `unknown` on purpose. This is the last thing between a stored document and a real
+ * inbox, and the two ways it used to fail were both silent from here: an object or a CSS
+ * string threw `value.map is not a function`, and `[NaN, 0, 0, 0]` emitted `padding:NaNpx`.
+ * validateDocument is the place to *report* a malformed value; this is the place to make
+ * sure the email is still valid CSS when nobody called it.
+ */
+export function spacing(value: unknown): string {
+  return spacingOf(value).map(px).join(" ");
 }
 
 /**

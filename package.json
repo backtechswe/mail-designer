@@ -36,16 +36,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": [
-    "dist",
-    "bin",
-    "schema",
-    "docs/authoring.md",
-    "docs/theming.md",
-    "README.md",
-    "LICENSE",
-    "NOTICE"
-  ],
+  "files": ["dist", "bin", "schema", "docs", "README.md", "LICENSE", "NOTICE"],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
