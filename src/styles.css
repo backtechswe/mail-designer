@@ -2706,6 +2706,36 @@
   white-space: pre;
 }
 
+/*
+ * The editable document. It replaces the highlighted <pre> in the same slot, so it has to
+ * carry the same box — the base form rule would otherwise give it a form field's padding,
+ * font and 100% width, and the tab would visibly change shape when it became editable.
+ */
+.md-code-editor {
+  width: 100%;
+  display: block;
+  resize: none;
+  color: var(--md-text);
+  white-space: pre;
+  /* No wrapping, matching the <pre>: a wrapped line in a document is a different line. */
+  overflow-wrap: normal;
+}
+
+.md-code-editor:focus {
+  outline: 2px solid var(--md-accent);
+  outline-offset: -1px;
+}
+
+.md-code-problem {
+  flex: none;
+  margin: var(--md-space) 0 0;
+  padding: calc(var(--md-space) * 0.75) var(--md-space);
+  border-radius: var(--md-radius-sm);
+  background: color-mix(in srgb, var(--md-danger) 12%, transparent);
+  color: var(--md-danger);
+  font-size: 12px;
+}
+
 .md-hl-tag {
   color: #1f6feb;
 }

@@ -587,6 +587,20 @@ between them is worth being clear about:
   an agent to modify, and render from a .NET backend. A template saved as HTML can only be
   sent again; a template saved as a document can be edited again.
 
+**Document is editable, and that is the way back in.** Paste a `MailDocument` there and
+*Apply* loads it into the canvas — what the CLI or the MCP server produced, a template moved
+between environments, one restored from a pull request. It is one undo step, so the document
+you replaced is one ctrl-Z away, and it goes through `validateDocument` first: malformed JSON
+and a document the canvas could not open are both refused with the reason, rather than
+half-applied.
+
+Only that tab. Reading **HTML** back into blocks would mean inferring structure from nested
+tables, ghost tables and MSO conditionals — which the renderer produces precisely *because* it
+is throwing structure away to survive Outlook — and it would fail on any HTML this renderer did
+not write, which is most of what anyone would paste. An html block is the honest home for a
+fragment from somewhere else. Pasting needs `structure`, `content` and `appearance` all
+permitted, not just the tab: replacing the document changes all three at once.
+
 *With sample data* decides whether `[Name]` is substituted or left standing — keep the tokens
 if Brevo or SendGrid will substitute them, replace them if you render per recipient yourself.
 *Format* indents the HTML for reading; what you see is what you copy. The renderer's own
