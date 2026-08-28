@@ -86,6 +86,26 @@ interface BlockBase {
    */
   mobilePadding?: Spacing;
   locked?: BlockLock;
+  /**
+   * Drop this block when the data has nothing to put in it.
+   *
+   * A transactional template almost always has a field that is sometimes absent, and
+   * without this the only way to express it is to move the label inside the value — a
+   * `[Note]` that the host sets to either `""` or `"Note: …"`. That leaves the block itself
+   * behind whatever happens, so an empty value still renders empty padding, and the label
+   * is no longer editable in the editor.
+   *
+   * "Empty" means the fields this block refers to, not the text it renders. A block reading
+   * `Note: [Note]` renders as `Note: ` when the value is missing, which is not blank — and
+   * the leftover label is exactly what this exists to remove. So: a block is dropped when it
+   * refers to at least one field and none of them have a value. A block that refers to no
+   * fields is never dropped, having nothing to be conditional on.
+   *
+   * Requires rendering per recipient — `toHtml(doc, { data })`. Rendering once and
+   * substituting downstream in an ESP cannot work, because by then the block is already in
+   * the HTML.
+   */
+  hideWhenEmpty?: boolean;
 }
 
 /**
@@ -234,11 +254,35 @@ export interface MailDocument {
 
 /* ------------------------------------------------------------------ rendering */
 
+/**
+ * A data field, described rather than merely named.
+ *
+ * `data` alone conflates two things that are not the same: what the field is called in the
+ * document, and what a person should be shown. They have to differ the moment an editor is
+ * multilingual — the token has to stay `[FirstName]` when the interface switches to Swedish,
+ * because the token is stored in the document and the document outlives the session.
+ *
+ * `data` still holds the values. This describes them.
+ */
+export interface DataField {
+  /** The token: `[name]` in the document. Stable, and never translated. */
+  name: string;
+  /** What the editor shows instead of `name`. Defaults to `name`. */
+  label?: string;
+  /** A preview value, used where `data` has none. Not written back into `data`. */
+  sample?: string;
+}
+
 export interface RenderOptions {
   /** Values substituted for [Token] placeholders after the HTML is built. */
   data?: Record<string, string>;
   /** What to do with a [Token] that has no value. Default: keep it visible. */
   onMissingField?: "keep" | "blank";
+  /**
+   * Fields whose values are markup, sanitised rather than escaped. See DataOptions.raw —
+   * the allowlist still applies, so this grants formatting, not trust.
+   */
+  rawFields?: readonly string[];
   /** <html lang>. Default "sv". */
   lang?: string;
   /** <title>. Clients rarely show it, but screen readers do. */

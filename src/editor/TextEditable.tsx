@@ -57,7 +57,7 @@ export function TextEditable({
   editable = true,
   plain = false,
 }: TextEditableProps) {
-  const { t, dataFields, endEdit } = useEditor();
+  const { t, dataFields, fieldLabel, endEdit } = useEditor();
   const ref = useRef<HTMLElement | null>(null);
   // What the DOM currently holds, as far as we know. null means "nothing written yet".
   const domHtml = useRef<string | null>(null);
@@ -133,7 +133,10 @@ export function TextEditable({
     // Only open when something actually matches. That is the second line of defence against
     // an email address — and it means a query that turns out to be ordinary prose closes the
     // menu rather than leaving it hanging with nothing in it.
-    if (!match || rankFields(dataFields, match.query).length === 0) {
+    // fieldLabel here as well as in the picker: this is the gate that decides whether the
+    // menu opens at all, so ranking it differently means a label-only query closes the menu
+    // before the picker ever gets to match it.
+    if (!match || rankFields(dataFields, match.query, fieldLabel).length === 0) {
       setPicker(null);
       return;
     }
@@ -144,7 +147,7 @@ export function TextEditable({
       node: node as Text,
       from: match.from,
     });
-  }, [dataFields]);
+  }, [dataFields, fieldLabel]);
 
   useEffect(() => {
     if (!active) {

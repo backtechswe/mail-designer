@@ -1,6 +1,6 @@
 {
   "name": "@backtech/mail-designer",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Block-based email designer for React. Zero-dependency table-based email HTML renderer, themeable via CSS variables, with a CLI and an MCP server.",
   "license": "MIT",
   "author": "BäckTech AB",

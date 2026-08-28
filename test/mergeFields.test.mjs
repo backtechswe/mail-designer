@@ -143,3 +143,53 @@ test("extractDataFields sees the URLs a token can hide in", () => {
   assert.ok(fields.includes("Hero"), "section backgroundUrl");
   assert.ok(fields.includes("Brand"), "social iconUrl");
 });
+
+/*
+ * rawFields — markup allowed, not trust granted.
+ *
+ * Asked for as "let a field's value pass through unescaped". Built as "sanitise instead of
+ * escape", because escaping is not the only thing standing between a data value and the
+ * mail: sanitize() runs at *render* time, on html blocks, and substitution happens after it.
+ * A genuinely raw value would therefore bypass the sanitiser entirely — the one place that
+ * strips script tags, event handlers and executable URL schemes.
+ */
+test("a raw field may carry markup", () => {
+  const doc = emptyDocument();
+  doc.blocks = [createSection([set(createBlock("text"), { html: "Rooms: [List]" })])];
+  const { html } = toHtml(doc, {
+    data: { List: '<b>Room A</b> and <i>Room B</i>' },
+    rawFields: ["List"],
+  });
+  assert.match(html, /<b>Room A<\/b> and <i>Room B<\/i>/);
+});
+
+test("a raw field is still sanitised", () => {
+  const doc = emptyDocument();
+  doc.blocks = [createSection([set(createBlock("text"), { html: "By [Who]" })])];
+  const { html } = toHtml(doc, {
+    data: { Who: '<script>alert(1)</script><img src=x onerror=alert(1)><b>ok</b>' },
+    rawFields: ["Who"],
+  });
+  assert.ok(!/<script/i.test(html), "script tag");
+  assert.ok(!/onerror/i.test(html), "event handler");
+  assert.match(html, /<b>ok<\/b>/, "and the legitimate markup survived");
+});
+
+test("escaping stays the default for every field not named", () => {
+  const doc = emptyDocument();
+  doc.blocks = [createSection([set(createBlock("text"), { html: "[A] [B]" })])];
+  const { html } = toHtml(doc, {
+    data: { A: "<b>raw</b>", B: "<b>escaped</b>" },
+    rawFields: ["A"],
+  });
+  assert.match(html, /<b>raw<\/b>/);
+  assert.match(html, /&lt;b&gt;escaped/);
+});
+
+test("the text alternative strips a raw field's tags rather than printing them", () => {
+  const doc = emptyDocument();
+  doc.blocks = [createSection([set(createBlock("text"), { html: "Rooms: [List]" })])];
+  const { text } = toHtml(doc, { data: { List: "<b>Room A</b>" }, rawFields: ["List"] });
+  assert.ok(text.includes("Room A"));
+  assert.ok(!text.includes("<b>"), "text has no markup to allow");
+});

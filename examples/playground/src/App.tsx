@@ -106,6 +106,21 @@ export function App() {
     City: "Exampleton",
     Date: "14 April",
   });
+  /*
+   * Labels separate from tokens, so the picker shows words while the document keeps the
+   * identifier. Unsubscribe carries only a sample: it is a field the design may want before
+   * anyone has typed a value for it, and naming it here is what makes it insertable.
+   */
+  const fields = useMemo(
+    () => [
+      { name: "Name", label: "Recipient", sample: "Robin Alvarez" },
+      { name: "City", label: "Town" },
+      { name: "Date", label: "Booking date", sample: "14 April" },
+      { name: "Unsubscribe", label: "Unsubscribe link", sample: "https://example.com/u/123" },
+    ],
+    [],
+  );
+
   const [themeId, setThemeId] = useState("default");
   const [locale, setLocale] = useState<Locale>("en");
   const [customised, setCustomised] = useState(false);
@@ -250,6 +265,7 @@ export function App() {
           store={store}
           autosaveMs={800}
           data={profile.data ?? data}
+          fields={fields}
           {...(profile.data ? {} : { onDataChange: setData })}
           {...(profile.permissions ? { permissions: profile.permissions } : {})}
           resetTo={builtInPresets[0]!.document}

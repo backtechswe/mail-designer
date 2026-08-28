@@ -275,6 +275,75 @@ Sample data is deliberately **not** part of the document: it is what you design 
 the real values arrive per recipient. Persist it in the template's `meta` if you want it back
 next time.
 
+#### Naming a field one thing and showing another
+
+`data` alone conflates the token stored in the document with the words a person reads. Those
+have to differ the moment the editor is multilingual: the token must stay `[FirstName]` when
+the interface switches to Swedish, because the document outlives the session.
+
+```tsx
+<MailDesigner
+  fields={[
+    { name: "FirstName", label: "Förnamn", sample: "Robin" },
+    { name: "City", label: "Ort" },
+  ]}
+  data={{ FirstName: "Robin" }}
+/>
+```
+
+`name` is the token. `label` is what the picker and the data panel show, and **what the picker
+also searches** — a list that displays "Förnamn" and only matches "FirstName" is one the user
+concludes is broken, because they type what they can see. `sample` fills the preview where
+`data` has no value, and is never written back into `data`.
+
+Optional and additive: without it, every field shows its token, exactly as before. Naming a
+field here also makes it insertable before the document uses it, the same way a key in `data`
+does. In the data panel the first column stays the **token**, because that is what renaming
+changes — the label rides along as a hint.
+
+#### Optional content
+
+A transactional template nearly always has a field that is sometimes absent. `hideWhenEmpty`
+on a block removes it when the data has nothing to put in it:
+
+```ts
+{ id: "n1", type: "text", html: "Note: [Note]", hideWhenEmpty: true }
+```
+
+"Empty" means **the fields the block refers to**, not the text it renders. `Note: [Note]`
+renders as `Note: ` with no value — not blank, and that leftover label is the thing worth
+removing. So a block goes when it refers to at least one field and none of them have a value;
+whitespace does not count as a value. A block referring to no field is never dropped, having
+nothing to be conditional on. A block with several fields survives on any one of them, since
+dropping it would lose the value that was there.
+
+A section carrying `hideWhenEmpty` goes when everything inside it went, taking its own
+background and padding with it. The plain-text alternative is pruned from the same document,
+so the two always describe the same mail.
+
+One constraint, and it is inherent: this needs the data at render time — `toHtml(doc, { data })`.
+Rendering once and letting an ESP substitute downstream cannot work, because by then the block
+is already in the HTML.
+
+#### Fields whose value is markup
+
+Values are HTML-escaped, and that is not negotiable for a string that came out of someone's
+database. But a host that has composed a fragment itself had no way to pass it through:
+
+```ts
+toHtml(doc, { data: { List: "<b>Room A</b> and <i>Room B</i>" }, rawFields: ["List"] });
+```
+
+`rawFields` means **markup is allowed**, not that anything is. The value goes through the same
+sanitiser as an html block, so the tag and attribute allowlist still applies and script tags,
+event handlers and executable URL schemes still go. The reason it is sanitised rather than
+truly raw is worth knowing: `sanitize()` runs at *render* time and substitution happens after
+it, so a genuinely raw value would bypass the one place that strips those.
+
+It is treated exactly like html-block content, which means you write your own entities — a
+bare `&` passes through rather than becoming `&amp;`, because escaping it would double-escape
+the entities an author legitimately wrote. In the plain-text alternative the tags are stripped.
+
 ### Permissions
 
 Everything defaults to permitted. Restrict what a particular integration allows:
