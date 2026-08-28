@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type {
+  DataField,
   Block,
   BlockType,
   ColorScheme,
@@ -122,6 +123,14 @@ export interface MailDesignerProps {
    * it in the template's `meta`.
    */
   data?: Record<string, string>;
+  /**
+   * Labels and sample values for the fields, keyed by token name.
+   *
+   * Optional and additive: without it every field is shown by its token, which is what
+   * happened before. A field named here that the document does not use yet is still
+   * insertable, the same way a key in `data` is.
+   */
+  fields?: readonly DataField[];
   onDataChange?: (next: Record<string, string>) => void;
 
   /**
@@ -233,6 +242,7 @@ export function MailDesigner({
   locale = "en",
   strings,
   data: dataProp,
+  fields,
   onDataChange,
   permissions: permissionsProp,
   resetTo,
@@ -278,13 +288,37 @@ export function MailDesigner({
   const dataFields = useMemo(() => {
     const fromDoc = extractDataFields(value);
     const seen = new Set<string>();
-    return [...Object.keys(data), ...fromDoc].filter((f) => {
+    const declared = (fields ?? []).map((f) => f.name);
+    return [...declared, ...Object.keys(data), ...fromDoc].filter((f) => {
       const key = f.toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
     });
-  }, [data, value]);
+  }, [data, value, fields]);
+
+  /*
+   * Token in, label out. Matched case-insensitively, the way substitution matches, so a
+   * document written with `[firstname]` still finds the label declared for `FirstName`.
+   *
+   * A lookup rather than a renamed key, because the name is what goes in the document and
+   * the label is only ever shown. Confusing the two is how a template breaks when a tenant
+   * switches language.
+   */
+  const fieldMeta = useMemo(() => {
+    const map = new Map<string, DataField>();
+    for (const field of fields ?? []) map.set(field.name.trim().toLowerCase(), field);
+    return map;
+  }, [fields]);
+
+  const fieldLabel = useCallback(
+    (name: string) => fieldMeta.get(name.trim().toLowerCase())?.label || name,
+    [fieldMeta],
+  );
+  const fieldSample = useCallback(
+    (name: string) => fieldMeta.get(name.trim().toLowerCase())?.sample,
+    [fieldMeta],
+  );
   const canvasRef = useRef<HTMLDivElement | null>(null);
 
   // Derived, not stored: keeping a width in state meant it went stale the moment the user
@@ -552,6 +586,8 @@ export function MailDesigner({
       },
       t,
       dataFields,
+      fieldLabel,
+      fieldSample,
       data,
       setData,
       insertDataField: (field) => {
@@ -656,7 +692,8 @@ export function MailDesigner({
     viewport,
     data,
     setData,
-    dataFields,
+    fieldLabel,
+    fieldSample,
     permissions,
   ]);
 

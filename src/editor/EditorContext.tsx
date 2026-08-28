@@ -23,6 +23,10 @@ export interface EditorApi {
   t: Translate;
   /** Field names offered in the insert menus, derived from the sample data. */
   dataFields: string[];
+  /** Token in, what to show a person out. Falls back to the token when no label was given. */
+  fieldLabel: (name: string) => string;
+  /** A preview value for a field the data has none for. Never written back into data. */
+  fieldSample: (name: string) => string | undefined;
   /** Sample values used to render the preview. */
   data: Record<string, string>;
   setData: (next: Record<string, string>) => void;

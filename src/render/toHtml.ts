@@ -8,6 +8,7 @@ import type {
 import { defaultSettings, walkBlocks } from "../document.js";
 import { applyDataValues, extractDataFields } from "./dataFields.js";
 import { neutraliseUrls } from "./esc.js";
+import { pruneEmptyBlocks } from "./conditional.js";
 import { renderSection } from "./html/section.js";
 import { mobilePaddingClass } from "./html/css.js";
 import { spacing } from "./style.js";
@@ -30,6 +31,12 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
    * into the mail. Partial settings are the normal shape of a machine-written document.
    */
   const settings = { ...defaultSettings, ...doc.settings };
+
+  // Before anything is measured or rendered, so the media queries, the plain-text
+  // alternative and the HTML all describe the same mail. A document with no hideWhenEmpty
+  // anywhere comes back untouched.
+  doc = pruneEmptyBlocks(doc, options.data);
+
   const stackGaps = collectStackGaps(doc);
   const mobilePaddings = collectMobilePaddings(doc);
 
@@ -62,8 +69,8 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
     // neutraliseUrls runs *after* substitution, and that order is the point: a token in an
     // href passes safeUrl at render time as the harmless string it is, and only becomes a
     // URL once a recipient row is applied. Recipient data comes from outside.
-    html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing, fields })),
-    text: applyDataValues(text, options.data, { escape: "none", onMissing, fields }),
+    html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing, fields, raw: options.rawFields })),
+    text: applyDataValues(text, options.data, { escape: "none", onMissing, fields, raw: options.rawFields }),
   };
 }
 

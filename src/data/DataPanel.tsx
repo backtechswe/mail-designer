@@ -87,7 +87,7 @@ function Fields({
   coverage: ReturnType<typeof dataCoverage>;
   readonly: boolean;
 }) {
-  const { t, selectedId, insertDataField } = useEditor();
+  const { t, selectedId, insertDataField, fieldLabel, fieldSample } = useEditor();
   const shown = new Set(coverage.used.map((f) => f.toLowerCase()));
   const entries = Object.entries(data);
 
@@ -113,6 +113,10 @@ function Fields({
                   className="md-mono"
                   value={key}
                   aria-label={t("data.fieldName")}
+                  // The token, not the label: this input renames what goes in the document.
+                  // A host-supplied label rides along as the hint, since renaming it here
+                  // would rename the wrong thing.
+                  title={fieldLabel(key) === key ? undefined : fieldLabel(key)}
                   disabled={readonly}
                   onChange={(e) => rename(key, e.target.value)}
                 />
@@ -120,7 +124,7 @@ function Fields({
                   type="text"
                   value={value}
                   aria-label={t("data.fieldValue")}
-                  placeholder={t("data.noValue")}
+                  placeholder={fieldSample(key) || t("data.noValue")}
                   disabled={readonly}
                   onChange={(e) => setData({ ...data, [key]: e.target.value })}
                 />

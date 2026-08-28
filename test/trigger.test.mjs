@@ -85,3 +85,15 @@ test("ranking puts prefix matches first and keeps field order", () => {
   assert.deepEqual(rankFields(fields, "NAME"), ["Name", "ContactName"], "case-insensitive");
   assert.deepEqual(rankFields(fields, "zzz"), []);
 });
+
+test("ranking searches the label as well as the token", () => {
+  // A picker that shows "Förnamn" and only matches "FirstName" is one the user concludes is
+  // broken, because they type what they can see. The token is what gets inserted either way.
+  const fields = ["FirstName", "City", "OrderNumber"];
+  const labelOf = (f) => ({ FirstName: "Förnamn", City: "Ort" })[f] ?? f;
+  assert.deepEqual(rankFields(fields, "för", labelOf), ["FirstName"]);
+  assert.deepEqual(rankFields(fields, "ort", labelOf), ["City"], "a label substring counts");
+  assert.deepEqual(rankFields(fields, "first", labelOf), ["FirstName"], "and the token still works");
+  assert.deepEqual(rankFields(fields, "order", labelOf), ["OrderNumber"], "unlabelled fields are unaffected");
+  assert.deepEqual(rankFields(fields, "för"), [], "and without a labelOf, nothing changed");
+});

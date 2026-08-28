@@ -27,11 +27,14 @@ export interface FieldPickerProps {
 }
 
 export function FieldPicker({ top, left, query, onSelect, onClose }: FieldPickerProps) {
-  const { dataFields, data, t } = useEditor();
+  const { dataFields, data, fieldLabel, fieldSample, t } = useEditor();
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLUListElement | null>(null);
 
-  const matches = useMemo(() => rankFields(dataFields, query), [dataFields, query]);
+  const matches = useMemo(
+    () => rankFields(dataFields, query, fieldLabel),
+    [dataFields, query, fieldLabel],
+  );
 
   // Reset the highlight whenever the list changes under it, so Enter never picks a row the
   // user cannot see.
@@ -95,9 +98,9 @@ export function FieldPicker({ top, left, query, onSelect, onClose }: FieldPicker
                 }}
                 onMouseEnter={() => setActive(index)}
               >
-                <span className="md-fieldpicker-name">{field}</span>
+                <span className="md-fieldpicker-name">{fieldLabel(field)}</span>
                 <span className="md-fieldpicker-value">
-                  {data[field]?.trim() || t("data.noValue")}
+                  {data[field]?.trim() || fieldSample(field) || t("data.noValue")}
                 </span>
               </button>
             </li>

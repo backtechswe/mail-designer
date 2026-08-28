@@ -69,15 +69,25 @@ export function findTrigger(textBeforeCaret: string): TriggerMatch | null {
  * Fields matching a query: prefix matches first, then substring, each keeping the original
  * order. Case-insensitive, like substitution.
  */
-export function rankFields(fields: readonly string[], query: string): string[] {
+export function rankFields(
+  fields: readonly string[],
+  query: string,
+  /**
+   * What the row shows, when that differs from the token. Searched as well as the token,
+   * because a picker that displays "Förnamn" and only matches "FirstName" is a picker the
+   * user concludes is broken — they type what they can see.
+   */
+  labelOf?: (field: string) => string,
+): string[] {
   const q = query.trim().toLowerCase();
   if (!q) return [...fields];
   const prefix: string[] = [];
   const contains: string[] = [];
   for (const field of fields) {
-    const lower = field.toLowerCase();
-    if (lower.startsWith(q)) prefix.push(field);
-    else if (lower.includes(q)) contains.push(field);
+    const label = labelOf?.(field);
+    const terms = label && label !== field ? [field.toLowerCase(), label.toLowerCase()] : [field.toLowerCase()];
+    if (terms.some((t) => t.startsWith(q))) prefix.push(field);
+    else if (terms.some((t) => t.includes(q))) contains.push(field);
   }
   return [...prefix, ...contains];
 }
