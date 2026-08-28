@@ -93,7 +93,7 @@ const PROFILES: { id: string; label: string; permissions?: Permissions; data?: R
       blocks: ["text", "heading", "image", "divider", "spacer", "columns"],
       requiredFields: ["Name", "Date", "Time"],
     },
-    data: { Name: "Anna Lind", Date: "14 April", Time: "10:30", Where: "12 Example Street" },
+    data: { Name: "Robin Alvarez", Date: "14 April", Time: "10:30", Where: "12 Example Street" },
   },
 ];
 
@@ -102,7 +102,7 @@ export function App() {
   const [depth, setDepth] = useState(0);
   const [profileId, setProfileId] = useState("full");
   const [data, setData] = useState<Record<string, string>>({
-    Name: "Anna Lind",
+    Name: "Robin Alvarez",
     City: "Exampleton",
     Date: "14 April",
   });

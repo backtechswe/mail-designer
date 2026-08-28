@@ -168,9 +168,10 @@ async function fields(args) {
 }
 
 async function newDocument(args) {
-  const { builtInPresets } = await dist("presets/index.js");
+  const { builtInPresets, findPreset } = await dist("presets/index.js");
   const wanted = args._[1] ?? "blank";
-  const preset = builtInPresets.find((p) => p.id === wanted);
+  // findPreset, so the CLI takes the display name too — `new confirmation` for `receipt`.
+  const preset = findPreset(wanted, builtInPresets);
   if (!preset) {
     fail(`No preset "${wanted}". Try: ${builtInPresets.map((p) => p.id).join(", ")}`);
   }

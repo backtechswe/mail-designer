@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyDataValues, extractDataFields, toHtml } from "../dist/render/index.js";
 import { createBlock, createSection, emptyDocument, setIdFactory } from "../dist/document.js";
+import { builtInPresets } from "../dist/presets/index.js";
 
 setIdFactory((() => { let n = 0; return () => `m${++n}`; })());
 const set = (block, patch) => Object.assign(block, patch);
@@ -67,4 +68,78 @@ test("substitution happens in both the html and the text part of one render", ()
   const { html, text } = toHtml(doc, { data: { Name: "Anna & Co" } });
   assert.match(html, /Anna &amp; Co/);
   assert.equal(text, "Hi Anna & Co");
+});
+
+/*
+ * The renderer writes [Bracketed] runs of its own, and they used to be substitutable.
+ *
+ * `<!--[if mso]>` and `<![endif]-->` hold the Outlook ghost table together; `[data-ogsb]`
+ * and `[data-ogsc]` are what Outlook.com keys its dark mode on. All four match DATA_TOKEN.
+ * With onMissingField "keep" nothing happened, because an unmatched token is left alone —
+ * so the bug was invisible until someone used "blank", which erased them and turned
+ * `<!--[if mso]>` into `<!-->`. That is an abrupt-closing comment: every client ends the
+ * comment there, the ghost table becomes live markup, and the layout doubles. Reported from
+ * a .NET integration, not from here.
+ */
+const darkDoc = () => {
+  const doc = emptyDocument();
+  doc.settings.dark = { backgroundColor: "#1a1a1a", textColor: "#e0e0e0" };
+  doc.settings.preheader = "Hi [Name]";
+  doc.blocks = [createSection([set(createBlock("text"), { html: "Note: [Note]" })])];
+  return doc;
+};
+
+test("the renderer's own brackets are not data fields", () => {
+  for (const onMissingField of ["keep", "blank"]) {
+    const { html } = toHtml(darkDoc(), { data: { Name: "Robin" }, onMissingField });
+    for (const marker of ["[if mso]", "[endif]", "[data-ogsb]", "[data-ogsc]"]) {
+      assert.ok(html.includes(marker), `${marker} was eaten with onMissingField: ${onMissingField}`);
+    }
+  }
+});
+
+test("substitution never changes the conditional-comment structure", () => {
+  /*
+   * Not "the output contains no `<!-->`": that string is legitimate on its own, as the
+   * second half of `<!--[if !mso]><!-->`, the pattern that reveals content to everything
+   * except Outlook. The real invariant is that the comment scaffolding a preset renders is
+   * the same whether or not data was applied — substitution belongs to the copy, not to the
+   * markup around it.
+   */
+  const scaffolding = (html) => (html.match(/<!--(?:\[[^\]]*\]>?|>|<!\[endif\]-->)/g) ?? []).join("|");
+  for (const preset of builtInPresets) {
+    const plain = scaffolding(toHtml(preset.document).html);
+    for (const onMissingField of ["keep", "blank"]) {
+      const applied = scaffolding(toHtml(preset.document, { data: {}, onMissingField }).html);
+      assert.equal(applied, plain, `${preset.id} lost markup with onMissingField: ${onMissingField}`);
+    }
+  }
+});
+
+test("scoping substitution to the document's fields does not stop it substituting", () => {
+  const doc = darkDoc();
+  const filled = toHtml(doc, { data: { Name: "Robin", Note: "hello" }, onMissingField: "blank" });
+  assert.ok(filled.html.includes("Robin"), "a declared field is still substituted");
+  assert.ok(filled.html.includes("hello"));
+  assert.ok(filled.text.includes("Robin"), "and in the text part too");
+
+  const missing = toHtml(doc, { data: { Name: "Robin" }, onMissingField: "blank" });
+  assert.ok(!missing.html.includes("[Note]"), "a declared field with no value still blanks");
+  const kept = toHtml(doc, { data: { Name: "Robin" }, onMissingField: "keep" });
+  assert.ok(kept.html.includes("[Note]"), "and is still kept in keep mode");
+});
+
+test("extractDataFields sees the URLs a token can hide in", () => {
+  const doc = emptyDocument();
+  doc.blocks = [
+    set(createSection([set(createBlock("social"), {
+      items: [{ network: "x", href: "https://x.se", iconUrl: "https://cdn.x.se/[Brand].png" }],
+    })]), { backgroundUrl: "https://x.se/[Hero].jpg" }),
+  ];
+  const fields = extractDataFields(doc);
+  // Both were invisible to the scan, so a host asking "which columns does this need?" was
+  // told the wrong answer — and with substitution now scoped to that answer, they would
+  // also have stopped being substituted at all.
+  assert.ok(fields.includes("Hero"), "section backgroundUrl");
+  assert.ok(fields.includes("Brand"), "social iconUrl");
 });

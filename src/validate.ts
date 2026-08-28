@@ -1,5 +1,6 @@
 import type { MailDocument } from "./types.js";
 import { defaultSettings } from "./document.js";
+import { toSpacing } from "./render/values.js";
 
 /**
  * Runtime validation for documents coming back from storage.
@@ -119,7 +120,37 @@ function asBlock(
   const block = value as Record<string, unknown>;
   if (typeof block.id !== "string" || !block.id) push(`${path}.id`, "Block is missing an id.");
   if (typeof block.type !== "string") push(`${path}.type`, "Block is missing a type.");
+  checkSpacing(block, path, push);
   return block;
+}
+
+/**
+ * Spacing is [top, right, bottom, left]. Nothing checked it, so a document holding
+ * `{ top, right, bottom, left }` or `"12px 24px"` — the shapes an agent or a hand-written
+ * fixture produces — passed as ok and then threw inside the renderer. A validator that
+ * approves a document which cannot be rendered is worse than no validator, because
+ * docs/backend-dotnet.md tells hosts to store the document opaquely and check it here.
+ *
+ * Only reported when the key is present. A missing one is filled by coerceDocument, and
+ * older stored documents predate some of these fields.
+ */
+function checkSpacing(
+  block: Record<string, unknown>,
+  path: string,
+  push: (path: string, message: string) => void,
+): void {
+  const keys = block.type === "button"
+    ? ["padding", "mobilePadding", "innerPadding"]
+    : ["padding", "mobilePadding"];
+  for (const key of keys) {
+    if (block[key] === undefined) continue;
+    if (toSpacing(block[key]) === null) {
+      push(
+        `${path}.${key}`,
+        "Spacing must be one to four finite numbers — [top, right, bottom, left].",
+      );
+    }
+  }
 }
 
 /**
@@ -139,6 +170,45 @@ export function coerceDocument(value: unknown): MailDocument {
   return {
     version: 1,
     settings: { ...defaultSettings, ...settings } as MailDocument["settings"],
-    blocks: Array.isArray(doc.blocks) ? (doc.blocks as MailDocument["blocks"]) : [],
+    blocks: Array.isArray(doc.blocks)
+      ? (doc.blocks.map(repairBlock) as MailDocument["blocks"])
+      : [],
   };
+}
+
+const BUTTON_INNER_PADDING: [number, number, number, number] = [12, 24, 12, 24];
+
+/**
+ * Normalise the spacing encodings that are a different way of saying the same thing.
+ *
+ * `{ top, right, bottom, left }` and `"12px 24px"` are not corruption — they are what
+ * someone writing a document by hand, or an agent writing one through the MCP server,
+ * reaches for. Turning them into the tuple is a repair in the same spirit as filling in a
+ * settings field an older release did not have. A value that cannot be read as spacing at
+ * all is dropped rather than guessed at, which leaves the renderer's own default.
+ */
+function repairBlock(value: unknown): unknown {
+  if (typeof value !== "object" || value === null) return value;
+  const block = { ...(value as Record<string, unknown>) };
+
+  for (const key of ["padding", "mobilePadding", "innerPadding"]) {
+    if (!(key in block)) continue;
+    const fixed = toSpacing(block[key]);
+    if (fixed) block[key] = fixed;
+    else delete block[key];
+  }
+  // A button reaches arithmetic that a missing value would turn into NaN, so it gets the
+  // same default createBlock would have given it rather than nothing.
+  if (block.type === "button" && !block.innerPadding) block.innerPadding = BUTTON_INNER_PADDING;
+
+  if (Array.isArray(block.children)) block.children = block.children.map(repairBlock);
+  if (Array.isArray(block.columns)) {
+    block.columns = block.columns.map((column) => {
+      if (typeof column !== "object" || column === null) return column;
+      const c = { ...(column as Record<string, unknown>) };
+      if (Array.isArray(c.children)) c.children = c.children.map(repairBlock);
+      return c;
+    });
+  }
+  return block;
 }
