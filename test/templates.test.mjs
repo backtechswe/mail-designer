@@ -182,3 +182,39 @@ test("parseTemplate refuses a row whose blocks are malformed", () => {
   );
   assert.equal(parseTemplate({ id: "x", document: { version: 7 } }), null, "wrong version");
 });
+
+/*
+ * The code view's document tab is editable, so what it shows has to be something you can
+ * paste back. That makes the round trip a contract rather than a nicety: serialise, parse,
+ * validate, coerce, and the mail must be the one you started with — byte for byte, or the
+ * feature quietly rewrites people's templates.
+ */
+test("every preset survives the trip through the document tab", async () => {
+  const { builtInPresets } = await import("../dist/presets/index.js");
+  const { toHtml } = await import("../dist/render/index.js");
+
+  for (const preset of builtInPresets) {
+    const shown = JSON.stringify(preset.document, null, 2);
+    const parsed = JSON.parse(shown);
+
+    const result = validateDocument(parsed);
+    assert.equal(result.ok, true, `${preset.id}: ${JSON.stringify(result.issues)}`);
+
+    const back = coerceDocument(parsed);
+    assert.equal(toHtml(back).html, toHtml(preset.document).html, `${preset.id} html`);
+    assert.equal(toHtml(back).text, toHtml(preset.document).text, `${preset.id} text`);
+  }
+});
+
+test("a document the paste box would refuse is one the renderer could not draw", () => {
+  // The pairing that matters: the box refuses exactly what validateDocument refuses, so a
+  // document that gets in is one the canvas can open.
+  const broken = {
+    version: 1,
+    settings: {},
+    blocks: [{ id: "s", type: "section", children: [{ id: "b", type: "button", innerPadding: "nonsense" }] }],
+  };
+  const result = validateDocument(broken);
+  assert.equal(result.ok, false);
+  assert.match(result.issues[0].path, /innerPadding$/);
+});

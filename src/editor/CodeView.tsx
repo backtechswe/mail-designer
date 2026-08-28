@@ -6,6 +6,7 @@ import { useEditor } from "./EditorContext.js";
 import { WarningStrip } from "./WarningStrip.js";
 import { highlightHtml, highlightJson } from "./highlight.js";
 import { messageSummary } from "./message.js";
+import { coerceDocument, validateDocument } from "../validate.js";
 import { Icon } from "./icons.js";
 
 type Format = "html" | "text" | "json";
@@ -25,7 +26,23 @@ type Format = "html" | "text" | "json";
  * brackets or a template that is already filled in for one person.
  */
 export function CodeView() {
-  const { doc, data, permissions, t } = useEditor();
+  const { doc, data, permissions, replaceDocument, t } = useEditor();
+
+  /*
+   * Pasting a document replaces structure, content and appearance in one go, so it takes all
+   * three permissions rather than just the one that opened the tab. A host that locked any of
+   * them did not mean "unless you use the code view".
+   *
+   * Deliberately only on the document tab. Reading HTML back into blocks would mean inferring
+   * structure from nested tables, ghost tables and MSO conditionals — the renderer destroys
+   * that structure on purpose to survive Outlook — and it would fail on any HTML this renderer
+   * did not write, which is most of the HTML anyone would paste. An html block is the honest
+   * home for a fragment from elsewhere.
+   */
+  const mayReplace =
+    permissions.structure !== false &&
+    permissions.content !== false &&
+    permissions.appearance !== false;
   const allowed = (["html", "text", "json"] as const).filter((id) => permissions.code[id]);
   const [format, setFormat] = useState<Format>(allowed[0] ?? "html");
   const [withData, setWithData] = useState(false);
@@ -43,6 +60,49 @@ export function CodeView() {
     if (format === "text") return rendered.text;
     return JSON.stringify(doc, null, 2);
   }, [format, rendered, doc, pretty]);
+
+  const editable = format === "json" && mayReplace;
+
+  /*
+   * A draft, not a controlled mirror of the document. `ours` records what we last rendered
+   * from the document, so a change made elsewhere in the editor refreshes the box while what
+   * the user is typing is left alone — the same shape the sample-data JSON box uses.
+   */
+  const [draft, setDraft] = useState(source);
+  const [problem, setProblem] = useState<string | null>(null);
+  const ours = useRef(source);
+
+  useEffect(() => {
+    if (source === ours.current) return;
+    ours.current = source;
+    setDraft(source);
+    setProblem(null);
+  }, [source]);
+
+  /*
+   * Applied on a click rather than as you type. A document is not a field: applying every
+   * keystroke would fill the undo stack with half-parsed documents and could throw away work
+   * mid-edit. One action, one undo step, and the old document is one ctrl-z away.
+   */
+  const apply = useCallback(() => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(draft);
+    } catch {
+      setProblem(t("code.invalidJson"));
+      return;
+    }
+    const result = validateDocument(parsed);
+    if (!result.ok) {
+      const first = result.issues[0];
+      setProblem(t("code.invalidDocument", { issue: first ? `${first.path}: ${first.message}` : "" }));
+      return;
+    }
+    setProblem(null);
+    // Coerced, not used as parsed: a document written by an older release or by hand may be
+    // missing fields the editor expects, and repairing beats refusing.
+    replaceDocument(coerceDocument(parsed));
+  }, [draft, replaceDocument, t]);
 
   const highlighted = useMemo(() => {
     if (format === "html") return highlightHtml(source);
@@ -138,6 +198,18 @@ export function CodeView() {
           </span>
         ) : null}
 
+        {editable ? (
+          <button
+            type="button"
+            className="md-menu-trigger"
+            disabled={draft === source}
+            onClick={apply}
+          >
+            <Icon name="check" size={12} />
+            {t("code.apply")}
+          </button>
+        ) : null}
+
         <button type="button" className="md-menu-trigger" onClick={copy}>
           <Icon name={copied ? "check" : "copy"} size={12} />
           {copied ? t("code.copied") : t("code.copy")}
@@ -148,13 +220,29 @@ export function CodeView() {
         </button>
       </div>
 
-      <pre className="md-code-body">
-        {highlighted === null ? (
-          <code>{source}</code>
-        ) : (
-          <code dangerouslySetInnerHTML={{ __html: highlighted }} />
-        )}
-      </pre>
+      {editable ? (
+        <>
+          <textarea
+            className="md-code-body md-code-editor"
+            value={draft}
+            spellCheck={false}
+            aria-label={t("code.json")}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setProblem(null);
+            }}
+          />
+          {problem ? <p className="md-code-problem">{problem}</p> : null}
+        </>
+      ) : (
+        <pre className="md-code-body">
+          {highlighted === null ? (
+            <code>{source}</code>
+          ) : (
+            <code dangerouslySetInnerHTML={{ __html: highlighted }} />
+          )}
+        </pre>
+      )}
     </div>
   );
 }
