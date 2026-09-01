@@ -1,5 +1,6 @@
 import type {
   ColumnsBlock,
+  EmailWarning,
   MailDocument,
   RenderOptions,
   RenderResult,
@@ -35,7 +36,9 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
   // Before anything is measured or rendered, so the media queries, the plain-text
   // alternative and the HTML all describe the same mail. A document with no hideWhenEmpty
   // anywhere comes back untouched.
-  doc = pruneEmptyBlocks(doc, options.data);
+  const pruned = pruneEmptyBlocks(doc, options.data);
+  doc = pruned.doc;
+  const warnings = conditionalWarnings(pruned.droppedForMissingValue, options);
 
   const stackGaps = collectStackGaps(doc);
   const mobilePaddings = collectMobilePaddings(doc);
@@ -71,7 +74,37 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
     // URL once a recipient row is applied. Recipient data comes from outside.
     html: neutraliseUrls(applyDataValues(html, options.data, { escape: "html", onMissing, fields, raw: options.rawFields })),
     text: applyDataValues(text, options.data, { escape: "none", onMissing, fields, raw: options.rawFields }),
+    warnings,
   };
+}
+
+/** Said once per process. A send loop would otherwise print this ten thousand times. */
+let saidItOnce = false;
+
+/**
+ * The one way `hideWhenEmpty` fails silently, named out loud.
+ *
+ * Render once, substitute in an ESP later, and a conditional block matches nothing at render
+ * time — so it is dropped from the HTML that gets stored, and no later substitution can bring
+ * it back for the recipients whose row would have filled it. Nothing throws, the mail looks
+ * fine, and the missing paragraph is only ever noticed by the person who did not receive it.
+ *
+ * Only when `data` was not supplied at all. With data, a dropped block is the feature working:
+ * that recipient genuinely has no value, which is the whole point of asking for the block to
+ * be hidden.
+ */
+function conditionalWarnings(dropped: string[], options: RenderOptions): EmailWarning[] {
+  if (dropped.length === 0 || options.data !== undefined) return [];
+  if (!saidItOnce) {
+    saidItOnce = true;
+    console.warn(
+      `[mail-designer] ${dropped.length} block(s) with hideWhenEmpty were dropped because ` +
+        `toHtml was called without \`data\`. hideWhenEmpty is decided at render time, so this ` +
+        `HTML is missing them for every recipient — render once per recipient with ` +
+        `toHtml(doc, { data }) instead of substituting downstream. Blocks: ${dropped.join(", ")}.`,
+    );
+  }
+  return [{ id: "conditional-without-data", level: "error", blocks: [...dropped] }];
 }
 
 /** Distinct mobile paddings, as CSS shorthand, in a stable order for the golden files. */

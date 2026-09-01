@@ -238,6 +238,8 @@ export const en = {
   "warn.no-plain-text": "No plain-text part. That counts against you in spam filters.",
   "warn.no-dark-mode":
     "No dark colours set. Apple Mail and Outlook.com will invert the mail themselves — and a logo on a white background becomes a glowing white rectangle.",
+  "warn.conditional-without-data":
+    "{{count}} block(s) hidden because this preview has no data. They are decided when the mail is rendered, so a mail rendered without data is missing them for everyone.",
   "data.pickerHint": "Pick a field · arrows and Enter",
   "data.noMatch": "No field matches \"{{query}}\"",
   "data.insert": "Data field",

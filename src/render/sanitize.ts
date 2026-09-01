@@ -9,7 +9,7 @@
  * they are not, sanitise again server-side with a real parser before storing.
  */
 
-import { escAttr, safeCssValue, safeImageUrl, safeUrl } from "./esc.js";
+import { escAttr, safeImageUrl, safeStyleAttribute, safeUrl } from "./esc.js";
 
 type AllowMap = Record<string, string[]>;
 
@@ -72,7 +72,10 @@ function cleanAttributes(raw: string, allowed: string[]): string {
       continue;
     }
     if (name === "style") {
-      const safe = safeCssValue(value);
+      // Declaration by declaration: the attribute's semicolons are its structure, and a
+      // cleaner that treats the whole thing as one value destroys every declaration but the
+      // first. Anything that survives is a property and a value CSS would accept.
+      const safe = safeStyleAttribute(value);
       if (!safe) continue;
       out.push(`style="${escAttr(safe)}"`);
       continue;

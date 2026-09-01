@@ -182,3 +182,25 @@ test("a flag without its value is refused rather than guessed at", () => {
   assert.equal(code, 2);
   assert.match(stderr, /--data needs a value/);
 });
+
+test("check on a conditional document without data says so, and does not pass", () => {
+  // Rendering it without data drops every conditional block, so what was measured is not the
+  // mail anyone receives. Exit 1 with the id is the actionable form of that: run it again
+  // with --data.
+  const path = join(dir, "conditional.json");
+  assert.equal(run("new", "newsletter", "--out", path).code, 0);
+  const doc = JSON.parse(readFileSync(path, "utf8"));
+  const section = doc.blocks[0];
+  section.children = [
+    ...section.children,
+    { id: "cond", type: "text", html: "Note: [Note]", align: "left", hideWhenEmpty: true },
+  ];
+  writeFileSync(path, JSON.stringify(doc));
+
+  const bare = run("check", path);
+  assert.equal(bare.code, 1);
+  assert.match(bare.stdout, /error: conditional-without-data/);
+
+  const withData = run("check", path, "--data", fixture("data.json", { Note: "careful" }));
+  assert.doesNotMatch(withData.stdout, /conditional-without-data/);
+});

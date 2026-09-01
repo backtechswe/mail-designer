@@ -1,6 +1,3 @@
-import type { MailDocument, RenderResult } from "../types.js";
-import { walkBlocks } from "../document.js";
-
 /**
  * Checks on the rendered mail that a preview cannot show.
  *
@@ -9,31 +6,22 @@ import { walkBlocks } from "../document.js";
  * them throws, so the only way anyone finds out is a check that names them.
  */
 
-export type WarningId =
-  | "gmail-clipping"
-  | "data-uri-image"
-  | "background-image"
-  | "no-preheader"
-  | "missing-alt"
-  | "wide-content"
-  | "no-plain-text"
-  | "no-dark-mode";
+import type { EmailWarning, MailDocument, RenderResult } from "../types.js";
+import { walkBlocks } from "../document.js";
 
-export interface EmailWarning {
-  id: WarningId;
-  /** "error" is something a recipient will certainly notice; "warning" is a risk. */
-  level: "error" | "warning";
-  /** Block ids the warning is about, where it is about specific blocks. */
-  blocks?: string[];
-  /** Numbers worth showing, e.g. the byte count. */
-  detail?: Record<string, number | string>;
-}
+/*
+ * The shapes live in types.ts so `RenderResult` can name them without importing from the
+ * renderer, and are re-exported here because this is where callers have always found them.
+ */
+export type { EmailWarning, WarningId } from "../types.js";
 
 /** Gmail truncates a message past roughly 102 KB and shows "[Message clipped]". */
 export const GMAIL_CLIP_BYTES = 102_400;
 
 export function inspectEmail(doc: MailDocument, result: RenderResult): EmailWarning[] {
-  const warnings: EmailWarning[] = [];
+  // What toHtml already found comes first: a render-time warning is about the mail not
+  // containing what the author wrote, which outranks anything measured on what it does.
+  const warnings: EmailWarning[] = [...(result.warnings ?? [])];
   const bytes = new TextEncoder().encode(result.html).length;
 
   if (bytes > GMAIL_CLIP_BYTES) {

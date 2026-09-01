@@ -4,7 +4,7 @@ import { escAttr } from "../esc.js";
 import { TABLE_RESET, css, px, spacing } from "../style.js";
 import { renderColumns } from "./columns.js";
 import { renderLeaf } from "./leaf.js";
-import { DARK_SURFACE } from "./css.js";
+import { DARK_LINK, DARK_SURFACE, DARK_TEXT } from "./css.js";
 
 /**
  * One section becomes two nested tables: a full-width outer one, and a *fluid* inner one
@@ -48,14 +48,26 @@ export function renderSection(section: SectionBlock, ctx: RenderContext): string
 
   const sectionMobile = ctx.mobileClass(section.mobilePadding);
   /*
-   * The surface hook, only where the surface colour actually comes from settings. A section
-   * that sets its own background has chosen it deliberately, and overriding that in dark mode
-   * would throw away the choice — a coloured band is usually the one thing meant to stay.
+   * The dark hooks, per section rather than on <body>, and all three governed by the same
+   * question: did the author choose this section's background themselves?
+   *
+   * If they did, dark mode leaves the whole section alone. Repainting the background would
+   * throw the choice away — a coloured band is usually the one thing meant to stay — and
+   * repainting only the *text* is worse than either: `.md-dark-text *` reaches into the band
+   * from <body>, so a tinted section kept its light background and got light text on top of
+   * it. Every tinted section was unreadable in dark mode, and nothing in the editor showed it.
+   *
+   * A section that takes its surface from settings has made no such choice, so it gets the
+   * full treatment; one that painted itself keeps the contrast it was designed with.
    */
-  const surfaceClass =
-    settings.dark?.contentBackgroundColor && !section.fullWidth && !section.backgroundColor
-      ? ` class="${DARK_SURFACE}"`
-      : "";
+  const dark = settings.dark;
+  const ownBackground = Boolean(section.backgroundColor);
+  const hooks = [
+    dark?.contentBackgroundColor && !section.fullWidth && !ownBackground ? DARK_SURFACE : "",
+    dark?.textColor && !ownBackground ? DARK_TEXT : "",
+    dark?.linkColor && !ownBackground ? DARK_LINK : "",
+  ].filter(Boolean);
+  const surfaceClass = hooks.length > 0 ? ` class="${hooks.join(" ")}"` : "";
 
   return (
     `<table${TABLE_RESET} width="100%" style="${escAttr(outerStyle)}"` +

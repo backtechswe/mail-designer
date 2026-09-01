@@ -109,3 +109,40 @@ test("a mail with no dark treatment is reported, once", () => {
     0,
   );
 });
+
+test("the dark hooks sit on the sections, not on <body>", () => {
+  // `.md-dark-text *` from <body> reaches every section in the document, including the ones
+  // dark mode is meant to leave alone. Where the class hangs is the whole fix.
+  const { html } = toHtml(withDark());
+  const body = /<body[^>]*>/.exec(html)?.[0] ?? "";
+  assert.match(body, /class="md-dark-page"/, "the page background still belongs to the body");
+  assert.doesNotMatch(body, /md-dark-text|md-dark-link/);
+  assert.match(html, /class="md-dark-surface md-dark-text md-dark-link"/);
+});
+
+test("a section that paints itself is left alone entirely, text included", () => {
+  // The bug this replaces: the section kept its light band — correctly, it is a deliberate
+  // choice — and then `.md-dark-text *` painted the text on it light as well. Every tinted
+  // section was unreadable in dark mode, and nothing in the editor showed it.
+  const doc = withDark();
+  const tinted = { ...doc.blocks[0], backgroundColor: "#ffe9c7" };
+  const { html } = toHtml({ ...doc, blocks: [tinted] });
+  // The rules stay in the stylesheet; what matters is that no element carries the hooks.
+  // The page background is still the body's, and unrelated to this section.
+  assert.doesNotMatch(html, /class="[^"]*md-dark-(surface|text|link)/);
+  assert.match(html, /#ffe9c7/);
+});
+
+test("a full-width section still takes the text treatment when it sets no colour", () => {
+  // fullWidth only decides which table carries the background. With no colour of its own the
+  // section shows the page background, which dark mode does change — so its text must follow.
+  const doc = withDark();
+  const wide = { ...doc.blocks[0], fullWidth: true };
+  const { html } = toHtml({ ...doc, blocks: [wide] });
+  assert.match(html, /class="md-dark-text md-dark-link"/);
+  assert.doesNotMatch(
+    html,
+    /class="[^"]*md-dark-surface/,
+    "there is no inner surface to recolour",
+  );
+});
