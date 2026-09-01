@@ -50,9 +50,18 @@
    */
   container: md-editor / inline-size;
 
-  display: grid;
-  /* Document bar (optional), toolbar, panels, data panel (optional). */
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  /*
+   * Flex, not grid, and for one reason: two of the four rows are optional.
+   *
+   * `grid-template-rows: auto auto minmax(0,1fr) auto` numbered the rows and trusted the
+   * children to arrive in the numbered order. A host without a TemplateStore renders no
+   * document bar, so everything shifted up one — the 1fr landed on the data panel and the
+   * panels row collapsed to its content. The layout worked only for the hosts that happened
+   * to render every optional part. Here each child keeps its own height and the panels take
+   * what is left, whoever else showed up.
+   */
+  display: flex;
+  flex-direction: column;
   height: 100%;
   min-height: 480px;
   color: var(--md-text);
@@ -478,9 +487,16 @@
 
 /* ------------------------------------------------------------------- layout */
 
+/* The chrome sizes itself; only the panels row absorbs the slack. */
+.md-root > * {
+  flex: 0 0 auto;
+}
+
 .md-layout {
   display: grid;
   grid-template-columns: 176px minmax(0, 1fr) 296px;
+  /* min-height:0 so a tall canvas scrolls inside the row instead of stretching it. */
+  flex: 1 1 auto;
   min-height: 0;
 }
 

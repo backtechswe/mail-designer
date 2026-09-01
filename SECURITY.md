@@ -32,5 +32,13 @@ break out of the renderer's own tables, but it is still the widest surface in th
 application that does not want it can remove it: `permissions={{ blocks: [...] }}` without
 `"html"`.
 
+**Author-written CSS cannot fetch anything.** A `style` attribute inside an `html` block is
+cleaned one declaration at a time, and any declaration containing `url()` is dropped whatever
+the scheme. `<span style="background:url(http://tracker/x)">` is a tracking pixel: invisible in
+the editor, invisible in the mail, and fetched by the recipient's client the moment the message
+is opened — in the sender's name, chosen by nobody who works there. A section background image
+is not covered by this and is not meant to be: it is a declared field of the document model,
+the editor shows it, and `inspectEmail` reports it.
+
 **Out of scope:** what an email client does with valid HTML, the security of the host
 application's storage or upload endpoint, and the contents of `onUploadImage`.

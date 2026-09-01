@@ -1,7 +1,7 @@
 import type { MailSettings } from "../../types.js";
 import { escAttr, escText } from "../esc.js";
 import { TABLE_RESET, css, px } from "../style.js";
-import { DARK_LINK, DARK_PAGE, DARK_TEXT, headCss } from "./css.js";
+import { DARK_PAGE, headCss } from "./css.js";
 
 export interface SkeletonOptions {
   lang: string;
@@ -33,15 +33,17 @@ export function wrapDocument(
    * to white in those clients.
    */
   const dark = settings.dark;
-  // One class per colour the document actually defines. A class with no rule behind it is
-  // markup in every mail that does nothing.
-  const bodyHooks = [
-    dark?.backgroundColor ? DARK_PAGE : "",
-    dark?.textColor ? DARK_TEXT : "",
-    dark?.linkColor ? DARK_LINK : "",
-  ].filter(Boolean);
-  const bodyClass = bodyHooks.length > 0 ? ` class="${bodyHooks.join(" ")}"` : "";
-  const pageClass = dark?.backgroundColor ? ` class="${DARK_PAGE}"` : "";
+  /*
+   * Only the page background hangs off <body>. The text and link hooks used to as well, and
+   * `.md-dark-text *` then reached every section including the ones that keep their own
+   * background in dark mode — light text on a light band. They are emitted per section now,
+   * where the decision about that section's background is actually made. See section.ts.
+   *
+   * A class with no rule behind it is markup in every mail that does nothing, so this is
+   * still conditional on the document defining the colour.
+   */
+  const bodyClass = dark?.backgroundColor ? ` class="${DARK_PAGE}"` : "";
+  const pageClass = bodyClass;
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="${escAttr(options.lang)}">

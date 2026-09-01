@@ -23,7 +23,15 @@ export {
 export { computeWidths } from "./html/columns.js";
 export { formatHtml } from "./format.js";
 export { inspectEmail, emailSize, GMAIL_CLIP_BYTES } from "./inspect.js";
-export { escAttr, escText, safeUrl, safeImageUrl, safeCssValue, neutraliseUrls } from "./esc.js";
+export {
+  escAttr,
+  escText,
+  safeUrl,
+  safeImageUrl,
+  safeCssValue,
+  safeStyleAttribute,
+  neutraliseUrls,
+} from "./esc.js";
 export type { EmailWarning, WarningId } from "./inspect.js";
 export type { DataOptions } from "./dataFields.js";
 export type {
@@ -32,6 +40,7 @@ export type {
   BlockType,
   ButtonBlock,
   ColumnsBlock,
+  DataField,
   DividerBlock,
   HeadingBlock,
   HtmlBlock,

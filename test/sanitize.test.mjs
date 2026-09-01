@@ -57,3 +57,65 @@ test("stripTags turns markup into readable text", () => {
   assert.equal(stripTags("Tre&nbsp;ord &amp; mer"), "Tre ord & mer");
   assert.equal(stripTags("<script>evil()</script>Text"), "Text");
 });
+
+/* --------------------------------------------------- the style attribute, declaration by
+                                                        declaration */
+
+test("a style attribute keeps every declaration it came with", () => {
+  // The semicolon is the attribute's structure. Cleaning the attribute as if it were a single
+  // value deleted the separators, and `font-size:32px;font-weight:700` arrived in the mail as
+  // `font-size:32pxfont-weight:700` — one invalid declaration where there had been two valid
+  // ones, so the heading got neither its size nor its weight, and nothing said so.
+  assert.equal(
+    sanitizeInline('<span style="font-size:32px;font-weight:700">x</span>'),
+    '<span style="font-size:32px;font-weight:700">x</span>',
+  );
+  assert.equal(
+    sanitizeBlock('<td style="padding:0 12px;text-align:center;color:#333">x</td>'),
+    '<td style="padding:0 12px;text-align:center;color:#333">x</td>',
+  );
+});
+
+test("whitespace and a trailing semicolon are tidied, not treated as declarations", () => {
+  assert.equal(
+    sanitizeInline('<span style=" color : red ; font-weight : 700 ; ">x</span>'),
+    '<span style="color:red;font-weight:700">x</span>',
+  );
+});
+
+test("one bad declaration costs only itself", () => {
+  // Before, a single hostile declaration took the whole attribute with it — which is the
+  // safe direction, but it means an author loses formatting they cannot see a reason for.
+  assert.equal(
+    sanitizeInline('<span style="color:red;width:expression(alert(1));font-weight:700">x</span>'),
+    '<span style="color:red;font-weight:700">x</span>',
+  );
+  // A fragment that is not a declaration at all is not one after the split either.
+  assert.equal(sanitizeInline('<span style="color:red;garbage">x</span>'), '<span style="color:red">x</span>');
+});
+
+test("no declaration in author markup may fetch a remote resource", () => {
+  // `<span style="background:url(http://tracker/x)">` is a tracking pixel: invisible in the
+  // editor, invisible in the mail, and fetched by the recipient's client on open — in the
+  // tenant's name, chosen by nobody in the tenant. A section background image is a declared
+  // document field that the editor shows and inspectEmail warns about; this is not that.
+  assert.equal(
+    sanitizeBlock('<span style="background:url(http://tracker/x)">x</span>'),
+    "<span>x</span>",
+  );
+  assert.equal(
+    sanitizeBlock('<div style="color:#333;background-image:url(\'https://tracker/y.gif\')">x</div>'),
+    '<div style="color:#333">x</div>',
+  );
+  assert.equal(
+    sanitizeBlock('<div style="background:URL( //tracker/z )">x</div>'),
+    "<div>x</div>",
+  );
+});
+
+test("a semicolon smuggled in as an entity cannot become a separator", () => {
+  // A browser decodes entities in an attribute before it parses the CSS, so `&#59;` would be
+  // a live separator if it reached the output as one. Escaping the ampersand is what stops it.
+  const out = sanitizeInline('<span style="color:red&#59;background:url(http://tracker/x)">x</span>');
+  assert.doesNotMatch(out, /tracker/);
+});

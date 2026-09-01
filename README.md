@@ -66,6 +66,10 @@ flip but **images do not**, so a PNG logo on a white background becomes a glowin
 rectangle in the middle of a dark message. That is the most common dark-mode bug in email, it
 cannot be fixed in CSS, and `inspectEmail` reports a mail that has not considered it.
 
+A section that sets its own `backgroundColor` is left out of the whole treatment — background,
+text and links alike. A coloured band is usually the one thing meant to stay, and recolouring
+only its text is how a light band ends up with light text on it.
+
 ### Mobile-specific padding
 
 Any block or section can carry `mobilePadding`, used instead of `padding` on narrow screens.
@@ -301,6 +305,12 @@ field here also makes it insertable before the document uses it, the same way a 
 does. In the data panel the first column stays the **token**, because that is what renaming
 changes — the label rides along as a hint.
 
+The element type is `DataField`, exported from both entry points:
+
+```ts
+import type { DataField } from "@backtech/mail-designer";
+```
+
 #### Optional content
 
 A transactional template nearly always has a field that is sometimes absent. `hideWhenEmpty`
@@ -324,6 +334,21 @@ so the two always describe the same mail.
 One constraint, and it is inherent: this needs the data at render time — `toHtml(doc, { data })`.
 Rendering once and letting an ESP substitute downstream cannot work, because by then the block
 is already in the HTML.
+
+And it fails in the direction that loses content, so it does not fail quietly. With no `data`
+at all, every conditional block matches nothing and is dropped — from the HTML you then store
+and send to *everyone*, including the recipients whose row would have filled it. Rendering
+without `data` therefore reports it:
+
+```ts
+const { html, warnings } = toHtml(doc);
+// warnings: [{ id: "conditional-without-data", level: "error", blocks: ["n1"] }]
+```
+
+`inspectEmail` folds the same warning in, so the editor's warning strip shows it; `toHtml`
+also writes it to the console once per process, because the case it exists for is the one
+where nobody was reading the return value. Passing `data` — even `{}` — says the omission was
+a decision about this recipient, and nothing is reported.
 
 #### Fields whose value is markup
 

@@ -119,6 +119,8 @@ export type {
   ButtonBlock,
   ColorScheme,
   ColumnsBlock,
+  /* The type of the public `fields` prop, so nobody has to write MailDesignerProps["fields"][number]. */
+  DataField,
   DesignerTheme,
   DividerBlock,
   HeadingBlock,

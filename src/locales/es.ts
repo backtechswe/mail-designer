@@ -274,6 +274,8 @@ export const es: Locale = {
   "warn.no-plain-text": "Sin parte de texto plano. Los filtros de spam lo tienen en cuenta.",
   "warn.no-dark-mode":
     "No hay colores oscuros definidos. Apple Mail y Outlook.com invertirán el correo por su cuenta — y un logotipo sobre fondo blanco queda como un rectángulo blanco brillante.",
+  "warn.conditional-without-data":
+    "{{count}} bloque(s) ocultos porque esta vista previa no tiene datos. Se deciden al renderizar: un correo renderizado sin datos no los lleva para nadie.",
   "data.pickerHint": "Elige un campo · flechas y Enter",
   "data.noMatch": "Ningún campo coincide con «{{query}}»",
   "data.insert": "Campo de datos",

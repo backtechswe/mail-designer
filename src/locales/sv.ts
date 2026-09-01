@@ -237,6 +237,7 @@ export const sv: Locale = {
   "warn.wide-content": "{{width}} px är brett — flera förhandsvisningsrutor är smalare än så.",
   "warn.no-plain-text": "Ingen textversion. Det räknas emot dig i skräppostfilter.",
   "warn.no-dark-mode": "Inga mörka färger satta. Apple Mail och Outlook.com inverterar då själva — och en logotyp med vit bakgrund blir en lysande vit fyrkant.",
+  "warn.conditional-without-data": "{{count}} block dolda för att den här förhandsvisningen saknar data. De avgörs när mejlet renderas, så ett mejl som renderats utan data saknar dem för alla.",
   "data.pickerHint": "Välj ett fält · piltangenter och Enter",
   "data.noMatch": "Inget fält matchar \"{{query}}\"",
   "data.insert": "Datafält",

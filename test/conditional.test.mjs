@@ -13,7 +13,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { toHtml } from "../dist/render/index.js";
+import { toHtml, inspectEmail } from "../dist/render/index.js";
 
 const doc = (blocks) => ({
   version: 1,
@@ -98,4 +98,47 @@ test("a document with no conditional block is returned untouched", () => {
   const plain = doc([section("s1", [text("a", "Hello [Name]")])]);
   assert.equal(toHtml(plain, { data: { Name: "Robin" } }).html, toHtml(plain, { data: { Name: "Robin" } }).html);
   assert.ok(toHtml(plain, { data: {} }).html.includes("Hello"));
+});
+
+/* ------------------------------------------------- rendering without data at all, which is
+                                                      the one way this feature fails silently */
+
+test("rendering with no data at all is reported, and names the blocks", () => {
+  // The failure it catches: render once, store the HTML, substitute in an ESP later. At render
+  // time the conditional block matches nothing and is dropped — from the stored HTML, for
+  // every recipient, including the ones whose row would have filled it. Nothing throws, the
+  // mail looks finished, and the only person who notices is the one who did not get it.
+  const { html, warnings } = toHtml(conditional);
+  assert.ok(!html.includes("Note:"));
+  assert.deepEqual(warnings, [
+    { id: "conditional-without-data", level: "error", blocks: ["b"] },
+  ]);
+});
+
+test("with data, a dropped block is the feature working and says nothing", () => {
+  assert.deepEqual(toHtml(conditional, { data: {} }).warnings, []);
+  assert.deepEqual(toHtml(conditional, { data: { Note: "x" } }).warnings, []);
+});
+
+test("a document with no conditional blocks is never warned about", () => {
+  const plain = doc([section("s1", [text("a", "Always")])]);
+  assert.deepEqual(toHtml(plain).warnings, []);
+});
+
+test("a block dropped for having no fields at all is not a missing-data problem", () => {
+  // hideWhenEmpty on a block that refers to no field is never dropped, so there is nothing
+  // for the absent data to explain.
+  const noFields = doc([section("s1", [text("a", "Static", { hideWhenEmpty: true })])]);
+  const { html, warnings } = toHtml(noFields);
+  assert.ok(html.includes("Static"));
+  assert.deepEqual(warnings, []);
+});
+
+test("inspectEmail carries the render warning through, so the strip shows it", () => {
+  const result = toHtml(conditional);
+  const ids = inspectEmail(conditional, result).map((w) => w.id);
+  assert.ok(ids.includes("conditional-without-data"));
+  // First: the mail not containing what the author wrote outranks anything measured on what
+  // it does contain.
+  assert.equal(ids[0], "conditional-without-data");
 });

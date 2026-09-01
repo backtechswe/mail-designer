@@ -103,7 +103,11 @@ interface BlockBase {
    *
    * Requires rendering per recipient — `toHtml(doc, { data })`. Rendering once and
    * substituting downstream in an ESP cannot work, because by then the block is already in
-   * the HTML.
+   * the HTML. Worse, it fails in the direction that loses content: with no `data` the block
+   * matches nothing, is dropped, and is dropped from the *stored* HTML — for every recipient,
+   * including the ones whose values would have filled it. Rendering without `data` therefore
+   * puts a `conditional-without-data` warning in `RenderResult.warnings` naming the blocks
+   * that went, rather than letting the mail go out short and silent.
    */
   hideWhenEmpty?: boolean;
 }
@@ -292,6 +296,35 @@ export interface RenderOptions {
 export interface RenderResult {
   html: string;
   text: string;
+  /**
+   * What went wrong while rendering, as opposed to what is wrong with the result —
+   * `inspectEmail` covers the second and folds these in. Always set by `toHtml`; optional
+   * only so a hand-built result still satisfies the type.
+   */
+  warnings?: EmailWarning[];
+}
+
+/* ---------------------------------------------------------------- warnings */
+
+export type WarningId =
+  | "gmail-clipping"
+  | "data-uri-image"
+  | "background-image"
+  | "no-preheader"
+  | "missing-alt"
+  | "wide-content"
+  | "no-plain-text"
+  | "no-dark-mode"
+  | "conditional-without-data";
+
+export interface EmailWarning {
+  id: WarningId;
+  /** "error" is something a recipient will certainly notice; "warning" is a risk. */
+  level: "error" | "warning";
+  /** Block ids the warning is about, where it is about specific blocks. */
+  blocks?: string[];
+  /** Numbers worth showing, e.g. the byte count. */
+  detail?: Record<string, number | string>;
 }
 
 /* ------------------------------------------------------------------- editor */
