@@ -272,6 +272,8 @@ export const de: Locale = {
   "warn.no-plain-text": "Kein Nur-Text-Teil. Das rechnen Spamfilter dir an.",
   "warn.no-dark-mode":
     "Keine dunklen Farben gesetzt. Apple Mail und Outlook.com invertieren die E-Mail dann selbst — und ein Logo auf weißem Hintergrund wird zu einem leuchtend weißen Rechteck.",
+  "warn.conditional-without-data":
+    "{{count}} Block/Blöcke ausgeblendet, weil dieser Vorschau Daten fehlen. Sie werden beim Rendern entschieden — eine ohne Daten gerenderte E-Mail enthält sie für niemanden.",
   "data.pickerHint": "Feld wählen · Pfeiltasten und Enter",
   "data.noMatch": "Kein Feld passt zu „{{query}}“",
   "data.insert": "Datenfeld",

@@ -135,3 +135,45 @@ export function safeCssValue(value: string): string {
     UNSAFE_IMAGE.has(schemeOf(url)) ? "" : whole,
   );
 }
+
+/** A property name CSS would accept, custom properties included. */
+const CSS_PROPERTY = /^-{0,2}[a-z][a-z0-9-]*$/i;
+
+/**
+ * A whole `style="..."` attribute, cleaned one declaration at a time.
+ *
+ * `safeCssValue` cleans a *value*, and one of the things it does is delete semicolons — which
+ * is right for a value and wrong for an attribute, where the semicolon is the separator.
+ * Running it over the attribute turned `font-size:32px;font-weight:700` into
+ * `font-size:32pxfont-weight:700`: one invalid declaration where there were two valid ones,
+ * so both were lost and nothing said so. Splitting first is the whole fix — each declaration
+ * is then cleaned as the value it is, and a bad one costs only itself.
+ *
+ * Splitting on a bare `;` is exact here because the value cleaner drops the two constructs
+ * that could otherwise contain one — a quoted string is left intact but cannot hold a
+ * semicolon past `safeCssValue`, and `url()` is removed outright below.
+ */
+export function safeStyleAttribute(value: string): string {
+  const out: string[] = [];
+  for (const declaration of String(value ?? "").split(";")) {
+    const colon = declaration.indexOf(":");
+    if (colon === -1) continue;
+    const property = declaration.slice(0, colon).trim().toLowerCase();
+    if (!CSS_PROPERTY.test(property)) continue;
+    const safe = safeCssValue(declaration.slice(colon + 1));
+    if (!safe) continue;
+    /*
+     * No remote fetch from author-written markup, whatever the scheme.
+     *
+     * `safeCssValue` only rejects a URL that can *execute*, which is the right test for the
+     * document model: a section background image is a declared field, the editor shows it, and
+     * inspectEmail warns about it. A `url()` inside a style attribute in an HTML block is none
+     * of those things — it is invisible in the editor, invisible in the mail, and fetched by
+     * the recipient's client the moment the mail is opened. `background:url(http://tracker/x)`
+     * is a tracking pixel, sent in the tenant's name, that no one in the tenant chose.
+     */
+    if (/url\s*\(/i.test(safe)) continue;
+    out.push(`${property}:${safe}`);
+  }
+  return out.join(";");
+}

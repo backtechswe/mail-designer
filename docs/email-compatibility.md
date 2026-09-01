@@ -96,6 +96,7 @@ The mobile value is an improvement layered on top.
 | `no-preheader` | warning | Otherwise the inbox shows the start of the body text |
 | `wide-content` | warning | Past 640px it gets cramped in several preview panes |
 | `no-plain-text` | warning | A missing text part counts against you in spam filters |
+| `conditional-without-data` | error | `toHtml` was called with no `data`, so every `hideWhenEmpty` block was dropped — from HTML that goes to every recipient, including the ones whose row would have filled it |
 
 ## What cannot be guaranteed from here
 
@@ -123,6 +124,15 @@ with four colours: page background, content background, text, links.
 Both the `!important` and the descendant selector (`.md-dark-text, .md-dark-text *`) are
 necessary: headings and text blocks set their colour **inline**, and inline beats a class
 unless the class is more specific and marked important.
+
+**A section that sets its own `backgroundColor` is left out of all of it.** Not just the
+background — the text and link hooks too. The reach of `.md-dark-text *` is the reason: hung
+off `<body>`, it painted the text inside a tinted band light while the band itself correctly
+stayed light, and every tinted section came out unreadable. So the hooks are emitted per
+section, and the question they answer is whether the author chose that section's background
+themselves. If they did, dark mode changes nothing there and the band keeps the contrast it
+was designed with; if the section takes its surface from `settings`, it gets the full
+treatment. The page background is still the body's, because that is nobody's section.
 
 **No client inverts images.** A PNG logo on a white background becomes a glowing white
 rectangle in a dark email. It is the most common dark-mode bug in email and it cannot be

@@ -280,6 +280,8 @@ export const fr: Locale = {
   "warn.no-plain-text": "Pas de partie texte brut. Les filtres antispam le retiennent contre toi.",
   "warn.no-dark-mode":
     "Aucune couleur sombre définie. Apple Mail et Outlook.com inverseront l'e-mail eux-mêmes — et un logo sur fond blanc devient un rectangle blanc éclatant.",
+  "warn.conditional-without-data":
+    "{{count}} bloc(s) masqué(s) faute de données dans cet aperçu. Ils sont décidés au rendu : un e-mail rendu sans données ne les contient pour personne.",
   "data.pickerHint": "Choisis un champ · flèches et Entrée",
   "data.noMatch": "Aucun champ ne correspond à « {{query}} »",
   "data.insert": "Champ de données",

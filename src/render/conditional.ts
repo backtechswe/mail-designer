@@ -4,6 +4,18 @@ import { fieldsInBlock } from "./dataFields.js";
 /** Keeps the element type through a filter, which a bare `!== null` predicate loses. */
 const present = <T,>(value: T | null): value is T => value !== null;
 
+export interface PruneResult {
+  doc: MailDocument;
+  /**
+   * Ids of the blocks dropped because the fields they refer to had no value — as opposed to
+   * a container dropped because everything inside it went. This is the list `toHtml` warns
+   * about when it was given no data at all: with none, every one of these was decided by an
+   * absence the caller never supplied, and the result is a mail missing content for
+   * recipients who had it.
+   */
+  droppedForMissingValue: string[];
+}
+
 /**
  * Remove the blocks that `hideWhenEmpty` says have nothing to show.
  *
@@ -18,12 +30,13 @@ const present = <T,>(value: T | null): value is T => value !== null;
 export function pruneEmptyBlocks(
   doc: MailDocument,
   data: Record<string, string> | undefined,
-): MailDocument {
-  if (!hasAnyConditional(doc)) return doc;
+): PruneResult {
+  if (!hasAnyConditional(doc)) return { doc, droppedForMissingValue: [] };
+  const droppedForMissingValue: string[] = [];
   const blocks = doc.blocks
-    .map((section) => pruneBlock(section, data))
+    .map((section) => pruneBlock(section, data, droppedForMissingValue))
     .filter(present);
-  return { ...doc, blocks };
+  return { doc: { ...doc, blocks }, droppedForMissingValue };
 }
 
 /** Nothing to do for the overwhelming majority of documents, so do not copy the tree. */
@@ -38,21 +51,25 @@ function hasAnyConditional(doc: MailDocument): boolean {
   return any(doc.blocks);
 }
 
-function pruneBlock<T extends Block>(block: T, data: Record<string, string> | undefined): T | null {
+function pruneBlock<T extends Block>(
+  block: T,
+  data: Record<string, string> | undefined,
+  dropped: string[],
+): T | null {
   let next = block;
 
   // Depth first: a section whose only child dropped is itself empty, and should go too if
   // it asked to. Pruning the parent before the child would miss that.
   if (block.type === "section") {
     const children = block.children
-      .map((child) => pruneBlock(child, data))
+      .map((child) => pruneBlock(child, data, dropped))
       .filter(present);
     next = { ...block, children } as T;
   } else if (block.type === "columns") {
     const columns = (block as ColumnsBlock).columns.map((column) => ({
       ...column,
       children: column.children
-        .map((child) => pruneBlock(child, data))
+        .map((child) => pruneBlock(child, data, dropped))
         .filter(present),
     }));
     next = { ...block, columns } as T;
@@ -69,7 +86,9 @@ function pruneBlock<T extends Block>(block: T, data: Record<string, string> | un
 
   const fields = fieldsInBlock(next);
   if (fields.length === 0) return next;
-  return fields.some((name) => hasValue(data, name)) ? next : null;
+  if (fields.some((name) => hasValue(data, name))) return next;
+  dropped.push(next.id);
+  return null;
 }
 
 /** Matched the way substitution matches: trimmed, case-insensitive, blank counts as absent. */
