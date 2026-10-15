@@ -57,6 +57,10 @@ export const sv: Locale = {
   "field.alt": "Alt-text",
   "field.altHint": "Beskriv bilden. Visas när bilder är blockerade — vilket de är som standard i många klienter.",
   "field.href": "Länk",
+  "field.lightSrc": "Bild i ljust läge",
+  "field.darkSrc": "Bild i mörkt läge",
+  "field.imageVariantsHint":
+    "Valfritt. Klienter som skiljer på ljust och mörkt, som Apple Mail och Outlook.com, visar dessa i stället. Alla andra visar bilden ovan, så den måste fungera mot båda bakgrunderna.",
   "field.label": "Etikett",
   "field.borderRadius": "Hörnradie",
   "field.innerPadding": "Innermarginal",
@@ -237,6 +241,8 @@ export const sv: Locale = {
   "warn.wide-content": "{{width}} px är brett — flera förhandsvisningsrutor är smalare än så.",
   "warn.no-plain-text": "Ingen textversion. Det räknas emot dig i skräppostfilter.",
   "warn.no-dark-mode": "Inga mörka färger satta. Apple Mail och Outlook.com inverterar då själva — och en logotyp med vit bakgrund blir en lysande vit fyrkant.",
+  "warn.dark-image-without-dark-mode":
+    "{{count}} bild(er) har en version för mörkt läge, men mejlet har inga mörka färger. Det blir aldrig mörkt, så versionen tas inte med.",
   "warn.conditional-without-data": "{{count}} block dolda för att den här förhandsvisningen saknar data. De avgörs när mejlet renderas, så ett mejl som renderats utan data saknar dem för alla.",
   "data.pickerHint": "Välj ett fält · piltangenter och Enter",
   "data.noMatch": "Inget fält matchar \"{{query}}\"",

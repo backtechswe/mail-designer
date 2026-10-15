@@ -146,3 +146,103 @@ test("a full-width section still takes the text treatment when it sets no colour
     "there is no inner surface to recolour",
   );
 });
+
+/* ------------------------------------------------- light and dark image variants */
+
+import { extractDataFields } from "../dist/render/dataFields.js";
+
+const LOGO = {
+  id: "logo",
+  type: "image",
+  src: "https://example.com/violet.png",
+  alt: "Bandcloud",
+  align: "left",
+  width: 140,
+};
+
+function withImage(image, dark = DARK) {
+  const doc = dark ? withDark(dark) : emptyDocument();
+  return { ...doc, blocks: [{ ...doc.blocks[0], children: [image] }] };
+}
+
+const imgs = (html) => [...html.matchAll(/<img [^>]*>/g)].map((m) => m[0]);
+
+test("an image without variants renders exactly one img and no swap rules", () => {
+  const { html } = toHtml(withImage(LOGO));
+  assert.equal(imgs(html).length, 1);
+  assert.doesNotMatch(html, /md-swap|md-img-/);
+  assert.doesNotMatch(html, /prefers-color-scheme:light/);
+});
+
+test("both variants: the fallback stays visible and gives way to each in turn", () => {
+  const { html } = toHtml(withImage({ ...LOGO, lightSrc: "https://example.com/black.png", darkSrc: "https://example.com/white.png" }));
+  const [fallback, light, dark] = imgs(html);
+  assert.match(fallback, /src="https:\/\/example\.com\/violet\.png"/);
+  assert.match(fallback, /class="md-swap-l md-swap-d"/);
+  assert.match(fallback, /display:block/);
+  assert.match(light, /src="https:\/\/example\.com\/black\.png"[^>]*class="md-img-l"/);
+  assert.match(dark, /src="https:\/\/example\.com\/white\.png"[^>]*class="md-img-d"/);
+  for (const variant of [light, dark]) {
+    // Hidden three ways, because clients disagree about which they keep.
+    assert.match(variant, /display:none;[^"]*max-height:0;overflow:hidden;mso-hide:all/);
+    // The swap changes the picture, not the layout.
+    assert.match(variant, /width="140"/);
+    assert.match(variant, /alt="Bandcloud"/);
+  }
+});
+
+test("the variants are invisible to Outlook for Windows", () => {
+  const { html } = toHtml(withImage({ ...LOGO, lightSrc: "https://example.com/black.png", darkSrc: "https://example.com/white.png" }));
+  const hidden = /<!--\[if !mso\]><!-->(.*?)<!--<!\[endif\]-->/s.exec(html)?.[1] ?? "";
+  assert.equal(imgs(hidden).length, 2);
+  assert.doesNotMatch(hidden, /violet\.png/, "the fallback is outside the conditional");
+});
+
+test("each branch is a media query, and Outlook.com's dark mode is reached through data-ogsb", () => {
+  const { html } = toHtml(withImage({ ...LOGO, lightSrc: "https://example.com/black.png", darkSrc: "https://example.com/white.png" }));
+  assert.match(html, /@media \(prefers-color-scheme:light\)\{\.md-swap-l\{display:none!important\}\.md-img-l\{display:block!important;max-height:none!important;overflow:visible!important\}\}/);
+  assert.match(html, /@media \(prefers-color-scheme:dark\)\{\.md-swap-d\{display:none!important\}\.md-img-d\{display:block!important/);
+  assert.match(html, /\[data-ogsb\] \.md-swap-d\{display:none!important\}\[data-ogsb\] \.md-img-d\{display:block!important/);
+});
+
+test("an image with only a dark variant keeps its fallback in light mode", () => {
+  const { html } = toHtml(withImage({ ...LOGO, darkSrc: "https://example.com/white.png" }));
+  assert.match(imgs(html)[0], /class="md-swap-d"/);
+  assert.doesNotMatch(html, /md-swap-l|md-img-l|prefers-color-scheme:light/);
+});
+
+test("without dark colours the dark variant is left out, and the inspector says so", () => {
+  // The mail stays light in Apple Mail without them, and a white logo would land on white.
+  const doc = withImage({ ...LOGO, darkSrc: "https://example.com/white.png" }, null);
+  const result = toHtml(doc);
+  assert.equal(imgs(result.html).length, 1);
+  assert.doesNotMatch(result.html, /md-swap|md-img-|white\.png/);
+  const warning = inspectEmail(doc, result).find((w) => w.id === "dark-image-without-dark-mode");
+  assert.deepEqual(warning?.blocks, ["logo"]);
+});
+
+test("a light variant works without dark colours", () => {
+  const { html } = toHtml(withImage({ ...LOGO, lightSrc: "https://example.com/black.png" }, null));
+  assert.equal(imgs(html).length, 2);
+  assert.match(html, /prefers-color-scheme:light/);
+  assert.doesNotMatch(html, /color-scheme" content/, "no dark treatment is declared");
+});
+
+test("a linked image links every variant", () => {
+  const { html } = toHtml(withImage({ ...LOGO, href: "https://example.com/", lightSrc: "https://example.com/black.png", darkSrc: "https://example.com/white.png" }));
+  assert.equal([...html.matchAll(/<a href="https:\/\/example\.com\/"[^>]*><img /g)].length, 3);
+});
+
+test("an unsafe or embedded variant is refused like an unsafe src", () => {
+  const doc = withImage({ ...LOGO, lightSrc: "javascript:alert(1)", darkSrc: "data:image/png;base64,AAAA" });
+  const result = toHtml(doc);
+  assert.doesNotMatch(result.html, /javascript:|md-img-l/);
+  assert.ok(inspectEmail(doc, result).some((w) => w.id === "data-uri-image"), "Gmail refuses data: in any of the three");
+});
+
+test("a data field can name the variant, and is substituted there", () => {
+  const doc = withImage({ ...LOGO, darkSrc: "https://example.com/[Logo].png" });
+  assert.ok(extractDataFields(doc).includes("Logo"));
+  const { html } = toHtml(doc, { data: { Logo: "white" } });
+  assert.match(html, /src="https:\/\/example\.com\/white\.png"[^>]*class="md-img-d"/);
+});

@@ -81,6 +81,10 @@ export const es: Locale = {
   "field.altHint":
     "Describe la imagen. Se muestra cuando las imágenes están bloqueadas — que es lo habitual por defecto en muchos clientes.",
   "field.href": "Enlace",
+  "field.lightSrc": "Imagen en modo claro",
+  "field.darkSrc": "Imagen en modo oscuro",
+  "field.imageVariantsHint":
+    "Opcional. Los clientes que distinguen claro de oscuro, como Apple Mail y Outlook.com, muestran estas en su lugar. Todos los demás muestran la imagen de arriba, así que tiene que funcionar sobre ambos fondos.",
   "field.label": "Etiqueta",
   "field.borderRadius": "Radio de esquina",
   "field.innerPadding": "Relleno interior",
@@ -274,6 +278,8 @@ export const es: Locale = {
   "warn.no-plain-text": "Sin parte de texto plano. Los filtros de spam lo tienen en cuenta.",
   "warn.no-dark-mode":
     "No hay colores oscuros definidos. Apple Mail y Outlook.com invertirán el correo por su cuenta — y un logotipo sobre fondo blanco queda como un rectángulo blanco brillante.",
+  "warn.dark-image-without-dark-mode":
+    "{{count}} imagen(es) tienen una versión para modo oscuro, pero el correo no tiene colores oscuros. Nunca se vuelve oscuro, así que la versión se omite.",
   "warn.conditional-without-data":
     "{{count}} bloque(s) ocultos porque esta vista previa no tiene datos. Se deciden al renderizar: un correo renderizado sin datos no los lleva para nadie.",
   "data.pickerHint": "Elige un campo · flechas y Enter",

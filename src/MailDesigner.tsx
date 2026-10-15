@@ -72,6 +72,8 @@ const CONTENT_FIELDS = new Set([
   "html",
   "label",
   "src",
+  "lightSrc",
+  "darkSrc",
   "alt",
   "href",
   "items",

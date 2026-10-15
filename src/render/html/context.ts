@@ -13,4 +13,9 @@ export interface RenderContext {
    * not a percentage, so we carry it down the tree.
    */
   width: number;
+  /**
+   * Whether a dark image variant may be emitted: only when the document has a dark treatment,
+   * or the variant would show on a mail that stayed light. Absent means no.
+   */
+  darkImages?: boolean;
 }

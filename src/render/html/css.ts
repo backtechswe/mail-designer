@@ -13,6 +13,23 @@ export function mobilePaddingClass(index: number): string {
   return `md-mp${index}`;
 }
 
+/**
+ * An image with light and dark variants is up to three <img>: the fallback, visible by default,
+ * and a light and a dark one, hidden inline and revealed by a media query. The fallback carries
+ * a class per variant it gives way to, so an image with only a dark variant keeps its fallback
+ * in light mode rather than showing nothing.
+ */
+export const SWAP_LIGHT = "md-swap-l";
+export const SWAP_DARK = "md-swap-d";
+export const IMG_LIGHT = "md-img-l";
+export const IMG_DARK = "md-img-d";
+
+/** Which variants the document uses, so the rules for the other one are not emitted. */
+export interface ImageSwaps {
+  light: boolean;
+  dark: boolean;
+}
+
 /** Marks the page background, the content surface, body text and links for dark mode. */
 export const DARK_PAGE = "md-dark-page";
 export const DARK_SURFACE = "md-dark-surface";
@@ -85,6 +102,31 @@ function darkRules(settings: MailSettings): string[] {
 }
 
 /**
+ * Light and dark image variants, for the clients that say which they are in.
+ *
+ * Apple Mail, iOS Mail and Outlook for Mac answer `prefers-color-scheme` either way, so both
+ * branches are media queries. Outlook.com ignores media queries but marks the elements it has
+ * darkened with `data-ogsb`, which is how its dark variant is reached; in light mode it marks
+ * nothing and shows the fallback. Gmail supports neither and shows the fallback too, which is
+ * why the fallback must work on both backgrounds.
+ *
+ * `max-height` and `overflow` undo the belt-and-braces inline hiding of the variants: some
+ * clients drop `display:none` from an image but keep a zero height.
+ */
+function imageSwapRules(swaps: ImageSwaps): string[] {
+  const reveal = "{display:block!important;max-height:none!important;overflow:visible!important}";
+  const rules: string[] = [];
+  if (swaps.light) {
+    rules.push(`@media (prefers-color-scheme:light){.${SWAP_LIGHT}{display:none!important}.${IMG_LIGHT}${reveal}}`);
+  }
+  if (swaps.dark) {
+    rules.push(`@media (prefers-color-scheme:dark){.${SWAP_DARK}{display:none!important}.${IMG_DARK}${reveal}}`);
+    rules.push(`[data-ogsb] .${SWAP_DARK}{display:none!important}[data-ogsb] .${IMG_DARK}${reveal}`);
+  }
+  return rules;
+}
+
+/**
  * The only <style> block in the document.
  *
  * Everything in here is a rule that *cannot* be expressed inline: client-specific resets
@@ -99,6 +141,7 @@ export function headCss(
   settings: MailSettings,
   stackGaps: readonly number[],
   mobilePaddings: readonly string[] = [],
+  imageSwaps: ImageSwaps = { light: false, dark: false },
 ): string {
   const rules: string[] = [
     // Kill the default page chrome.
@@ -144,6 +187,7 @@ export function headCss(
   }
 
   rules.push(...darkRules(settings));
+  rules.push(...imageSwapRules(imageSwaps));
 
   return rules.join("\n");
 }

@@ -168,7 +168,24 @@ export interface TextBlock extends BlockBase {
 
 export interface ImageBlock extends BlockBase {
   type: "image";
+  /**
+   * The image every client can show. With `lightSrc` or `darkSrc` set, it is the fallback for
+   * the clients that cannot tell light from dark — Gmail, Outlook for Windows, anything that
+   * strips `<style>` — so it has to work on both backgrounds.
+   */
   src: string;
+  /**
+   * Shown instead of `src` where the client says it is in light mode: Apple Mail, iOS Mail,
+   * Outlook for Mac. The classic use is a logo with dark text, which `src` cannot carry
+   * because the same file would vanish on a dark background.
+   */
+  lightSrc?: string;
+  /**
+   * Shown instead of `src` where the client says it is in dark mode: the same clients, and
+   * Outlook.com. Only emitted when the document has `settings.dark` — without it the mail
+   * itself does not turn dark in those clients, and a light-on-dark logo would land on white.
+   */
+  darkSrc?: string;
   alt: string;
   href?: string;
   /** Intrinsic width in px. Omitted means full column width. */
@@ -315,6 +332,7 @@ export type WarningId =
   | "wide-content"
   | "no-plain-text"
   | "no-dark-mode"
+  | "dark-image-without-dark-mode"
   | "conditional-without-data";
 
 export interface EmailWarning {

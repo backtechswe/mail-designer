@@ -66,7 +66,7 @@ taken out of the columns, not added around them, so the widths still total 100.
 |---|---|---|
 | `heading` | `level` 1–3, `html`, `align` | `html` is inline markup only: `b i em strong a br span`. |
 | `text` | `html`, `align` | Wrap paragraphs in `<p>`. |
-| `image` | `src`, `alt`, `align` | `src` must be a hosted URL — Gmail blocks `data:` images. `alt` is not optional in practice: images are blocked by default in Outlook. |
+| `image` | `src`, `alt`, `align` | `src` must be a hosted URL — Gmail blocks `data:` images. `alt` is not optional in practice: images are blocked by default in Outlook. Optional `lightSrc` and `darkSrc` replace `src` in clients that say which mode they are in; `src` must then work on both backgrounds, and `darkSrc` needs `settings.dark`. |
 | `button` | `label`, `href`, `backgroundColor`, `textColor`, `borderRadius`, `fontSize`, `innerPadding`, `align` | Set `width` (px) whenever `borderRadius > 0`: Outlook cannot round a corner without the VML fallback, and the fallback needs a fixed width. |
 | `divider` | `color`, `thickness`, `width`, `align` | `width` is a percentage. |
 | `spacer` | `height` | px. |

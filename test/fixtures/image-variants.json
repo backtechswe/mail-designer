@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "settings": {
+    "width": 600,
+    "backgroundColor": "#f5f5f7",
+    "contentBackgroundColor": "#ffffff",
+    "fontFamily": "Helvetica, Arial, sans-serif",
+    "fontSize": 16,
+    "lineHeight": 1.5,
+    "textColor": "#1f1f1f",
+    "linkColor": "#2f54eb",
+    "dark": {
+      "backgroundColor": "#0b0f14",
+      "contentBackgroundColor": "#151b23",
+      "textColor": "#e6edf3",
+      "linkColor": "#7cc2ff"
+    }
+  },
+  "blocks": [
+    {
+      "id": "s1",
+      "type": "section",
+      "padding": [
+        24,
+        24,
+        24,
+        24
+      ],
+      "children": [
+        {
+          "id": "logo",
+          "type": "image",
+          "src": "https://example.com/logo-violet.png",
+          "lightSrc": "https://example.com/logo-black.png",
+          "darkSrc": "https://example.com/logo-white.png",
+          "alt": "Logo",
+          "align": "left",
+          "width": 140,
+          "href": "https://example.com/"
+        },
+        {
+          "id": "only-dark",
+          "type": "image",
+          "src": "https://example.com/photo.jpg",
+          "darkSrc": "https://example.com/photo-night.jpg",
+          "alt": "A photo",
+          "align": "center"
+        },
+        {
+          "id": "t1",
+          "type": "text",
+          "html": "<p>Hej.</p>",
+          "align": "left"
+        }
+      ]
+    }
+  ]
+}

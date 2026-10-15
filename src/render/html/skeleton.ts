@@ -1,7 +1,7 @@
 import type { MailSettings } from "../../types.js";
 import { escAttr, escText } from "../esc.js";
 import { TABLE_RESET, css, px } from "../style.js";
-import { DARK_PAGE, headCss } from "./css.js";
+import { DARK_PAGE, headCss, type ImageSwaps } from "./css.js";
 
 export interface SkeletonOptions {
   lang: string;
@@ -10,6 +10,8 @@ export interface SkeletonOptions {
   stackGaps: readonly number[];
   /** Distinct mobile paddings, as CSS shorthand. */
   mobilePaddings: readonly string[];
+  /** Which image variants the body uses. */
+  imageSwaps?: ImageSwaps;
 }
 
 /**
@@ -67,7 +69,7 @@ export function wrapDocument(
 <xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
 <![endif]-->
 <style type="text/css">
-${headCss(settings, options.stackGaps, options.mobilePaddings)}
+${headCss(settings, options.stackGaps, options.mobilePaddings, options.imageSwaps)}
 </style>
 </head>
 <body id="body"${bodyClass} style="${escAttr(

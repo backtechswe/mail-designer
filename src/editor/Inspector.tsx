@@ -686,6 +686,25 @@ function ImageFields({ block, labels }: { block: ImageBlock; labels: Record<Alig
           and a component instance that survived the selection change would carry them to the
           next one. */}
       {caps.editContent ? <ImageUpload key={block.id} block={block} /> : null}
+      {/* Addresses only, no upload: a variant is a logo or a mark, already hosted, and a data:
+          URI is the one thing Gmail refuses — the fallback above is where uploads belong. */}
+      {caps.editContent ? (
+        <>
+          <TextField
+            label={t("field.lightSrc")}
+            value={block.lightSrc ?? ""}
+            placeholder="https://"
+            onChange={(lightSrc) => update(block.id, { lightSrc: lightSrc || undefined })}
+          />
+          <TextField
+            label={t("field.darkSrc")}
+            hint={t("field.imageVariantsHint")}
+            value={block.darkSrc ?? ""}
+            placeholder="https://"
+            onChange={(darkSrc) => update(block.id, { darkSrc: darkSrc || undefined })}
+          />
+        </>
+      ) : null}
       {caps.editContent ? (
         <>
           <TextField

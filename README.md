@@ -66,6 +66,22 @@ flip but **images do not**, so a PNG logo on a white background becomes a glowin
 rectangle in the middle of a dark message. That is the most common dark-mode bug in email, it
 cannot be fixed in CSS, and `inspectEmail` reports a mail that has not considered it.
 
+**An image can change with the mode.** `lightSrc` and `darkSrc` on an image block are shown
+instead of `src` in the clients that say which mode they are in — Apple Mail, iOS Mail and
+Outlook for Mac either way, Outlook.com in dark. `src` stays what everyone else gets, Gmail
+and Outlook for Windows included, so it has to be the version that works on both backgrounds:
+
+```jsonc
+{ "id": "logo", "type": "image", "alt": "Bandcloud", "align": "left", "width": 140,
+  "src":      "https://example.com/logo-violet.png",   // violet wordmark: fine on either
+  "lightSrc": "https://example.com/logo-black.png",    // black wordmark, light mode
+  "darkSrc":  "https://example.com/logo-white.png" }   // white wordmark, dark mode
+```
+
+That is the fix for the logo problem above wherever a client allows one. The dark variant is
+only emitted when `settings.dark` is set, because without dark colours those clients keep the
+mail light and a white logo would land on white; `inspectEmail` reports one that is left out.
+
 A section that sets its own `backgroundColor` is left out of the whole treatment — background,
 text and links alike. A coloured band is usually the one thing meant to stay, and recolouring
 only its text is how a light band ends up with light text on it.

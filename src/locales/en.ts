@@ -57,6 +57,10 @@ export const en = {
   "field.alt": "Alt text",
   "field.altHint": "Describe the image. Shown when images are blocked — which they are by default in many clients.",
   "field.href": "Link",
+  "field.lightSrc": "Image in light mode",
+  "field.darkSrc": "Image in dark mode",
+  "field.imageVariantsHint":
+    "Optional. Clients that know light from dark, such as Apple Mail and Outlook.com, show these instead. Every other client shows the image above, so that one has to work on both backgrounds.",
   "field.label": "Label",
   "field.borderRadius": "Corner radius",
   "field.innerPadding": "Inner padding",
@@ -238,6 +242,8 @@ export const en = {
   "warn.no-plain-text": "No plain-text part. That counts against you in spam filters.",
   "warn.no-dark-mode":
     "No dark colours set. Apple Mail and Outlook.com will invert the mail themselves — and a logo on a white background becomes a glowing white rectangle.",
+  "warn.dark-image-without-dark-mode":
+    "{{count}} image(s) have a dark-mode version, but the email has no dark colours. It never turns dark, so the version is left out.",
   "warn.conditional-without-data":
     "{{count}} block(s) hidden because this preview has no data. They are decided when the mail is rendered, so a mail rendered without data is missing them for everyone.",
   "data.pickerHint": "Pick a field · arrows and Enter",

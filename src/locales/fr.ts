@@ -85,6 +85,10 @@ export const fr: Locale = {
   "field.altHint":
     "Décris l'image. S'affiche quand les images sont bloquées — ce qui est le cas par défaut dans beaucoup de clients.",
   "field.href": "Lien",
+  "field.lightSrc": "Image en mode clair",
+  "field.darkSrc": "Image en mode sombre",
+  "field.imageVariantsHint":
+    "Facultatif. Les clients qui distinguent clair et sombre, comme Apple Mail et Outlook.com, affichent celles-ci à la place. Tous les autres affichent l'image ci-dessus, qui doit donc fonctionner sur les deux fonds.",
   "field.label": "Libellé",
   "field.borderRadius": "Rayon des angles",
   "field.innerPadding": "Marge du bouton",
@@ -280,6 +284,8 @@ export const fr: Locale = {
   "warn.no-plain-text": "Pas de partie texte brut. Les filtres antispam le retiennent contre toi.",
   "warn.no-dark-mode":
     "Aucune couleur sombre définie. Apple Mail et Outlook.com inverseront l'e-mail eux-mêmes — et un logo sur fond blanc devient un rectangle blanc éclatant.",
+  "warn.dark-image-without-dark-mode":
+    "{{count}} image(s) ont une version pour le mode sombre, mais l'e-mail n'a pas de couleurs sombres. Il ne devient jamais sombre, donc la version est laissée de côté.",
   "warn.conditional-without-data":
     "{{count}} bloc(s) masqué(s) faute de données dans cet aperçu. Ils sont décidés au rendu : un e-mail rendu sans données ne les contient pour personne.",
   "data.pickerHint": "Choisis un champ · flèches et Entrée",

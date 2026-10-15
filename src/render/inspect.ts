@@ -61,11 +61,17 @@ export function inspectEmail(doc: MailDocument, result: RenderResult): EmailWarn
   const dataUri: string[] = [];
   const missingAlt: string[] = [];
   const backgrounds: string[] = [];
+  const darkWithoutDark: string[] = [];
+  const hasDark = Object.values(doc.settings.dark ?? {}).some(Boolean);
 
   walkBlocks(doc, (block) => {
     if (block.type === "image") {
       // Gmail refuses data: URIs in <img> outright — the recipient sees the alt text.
-      if (/^\s*data:/i.test(block.src)) dataUri.push(block.id);
+      if ([block.src, block.lightSrc, block.darkSrc].some((url) => url && /^\s*data:/i.test(url))) {
+        dataUri.push(block.id);
+      }
+      // The variant is left out of the HTML: without dark colours the mail never turns dark.
+      if (block.darkSrc?.trim() && !hasDark) darkWithoutDark.push(block.id);
       if (block.src && !block.alt.trim()) missingAlt.push(block.id);
     }
     if (block.type === "section" && block.backgroundUrl) {
@@ -83,6 +89,9 @@ export function inspectEmail(doc: MailDocument, result: RenderResult): EmailWarn
   }
   if (backgrounds.length > 0) {
     warnings.push({ id: "background-image", level: "warning", blocks: backgrounds });
+  }
+  if (darkWithoutDark.length > 0) {
+    warnings.push({ id: "dark-image-without-dark-mode", level: "warning", blocks: darkWithoutDark });
   }
 
   return warnings;

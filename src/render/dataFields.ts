@@ -151,6 +151,8 @@ export function fieldsInBlock(block: Block): string[] {
       case "image":
         scan(block.alt);
         scan(block.src);
+        scan(block.lightSrc);
+        scan(block.darkSrc);
         scan(block.href);
         break;
       case "button":

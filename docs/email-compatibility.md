@@ -139,6 +139,27 @@ rectangle in a dark email. It is the most common dark-mode bug in email and it c
 solved in CSS — use a logo with transparency. The inspector says so, and `inspectEmail` raises
 `no-dark-mode` for an email that set no dark colours at all.
 
-**Nothing is emitted for a document without `settings.dark`.** No meta tags, no classes, no
+**An image can be swapped instead**, in the clients that say which mode they are in. An image
+block with `lightSrc` or `darkSrc` renders as up to three `<img>`:
+
+| Image | How it is shown | Who sees it |
+|---|---|---|
+| `src`, the fallback | Visible; carries `md-swap-l` and/or `md-swap-d` for the variants it gives way to | Gmail, Outlook for Windows, Yahoo, anything that strips `<style>`, and Outlook.com in light mode |
+| `lightSrc` | Hidden inline (`display:none;max-height:0;overflow:hidden;mso-hide:all`), revealed by `@media (prefers-color-scheme:light)` | Apple Mail, iOS Mail, Outlook for Mac in light mode |
+| `darkSrc` | Hidden the same way, revealed by `@media (prefers-color-scheme:dark)` and by `[data-ogsb]` | The same clients in dark mode, and Outlook.com in dark mode |
+
+The variants sit inside `<!--[if !mso]><!-->…<!--<![endif]-->`. Outlook for Windows honours
+neither the media query nor, reliably, `display:none` on an image, so the only safe thing is
+for it never to see them. The hiding is three properties deep because clients disagree about
+which ones they keep: some drop `display:none` from an image but keep a zero height, which is
+why the reveal resets `max-height` and `overflow` too.
+
+Each variant gets the fallback's width, alt text, radius, alignment and link, so the swap
+changes the picture and nothing about the layout. **The dark variant needs `settings.dark`.**
+Without dark colours, Apple Mail keeps the mail light, and a white logo would be revealed on
+white; the renderer leaves it out and `inspectEmail` raises `dark-image-without-dark-mode`.
+
+**Nothing is emitted for a document without `settings.dark`**, except the light variant's one
+rule when an image has `lightSrc`. No meta tags, no classes, no
 rules — every byte counts against Gmail's clipping limit, and a class with no rule behind it
 is markup in every email that does nothing.

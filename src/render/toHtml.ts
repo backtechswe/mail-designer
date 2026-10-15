@@ -11,7 +11,8 @@ import { applyDataValues, extractDataFields } from "./dataFields.js";
 import { neutraliseUrls } from "./esc.js";
 import { pruneEmptyBlocks } from "./conditional.js";
 import { renderSection } from "./html/section.js";
-import { mobilePaddingClass } from "./html/css.js";
+import { mobilePaddingClass, type ImageSwaps } from "./html/css.js";
+import { safeImageUrl } from "./esc.js";
 import { spacing } from "./style.js";
 import { wrapDocument } from "./html/skeleton.js";
 import { toPlainText } from "./toPlainText.js";
@@ -42,6 +43,9 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
 
   const stackGaps = collectStackGaps(doc);
   const mobilePaddings = collectMobilePaddings(doc);
+  // A dark image variant needs the mail itself to turn dark, or it lands on a light page.
+  const darkImages = Object.values(settings.dark ?? {}).some(Boolean);
+  const imageSwaps = collectImageSwaps(doc, darkImages);
 
   // One rule per distinct value, so a document that uses the same tight mobile padding on
   // thirty blocks emits one rule rather than thirty.
@@ -52,7 +56,7 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
   };
 
   const body = doc.blocks
-    .map((section) => renderSection(section, { settings, width: settings.width, mobileClass }))
+    .map((section) => renderSection(section, { settings, width: settings.width, mobileClass, darkImages }))
     .join("\n");
 
   const html = wrapDocument(settings, body, {
@@ -60,6 +64,7 @@ export function toHtml(doc: MailDocument, options: RenderOptions = {}): RenderRe
     title: options.title ?? "",
     stackGaps,
     mobilePaddings,
+    imageSwaps,
   });
 
   const text = toPlainText(doc);
@@ -114,6 +119,17 @@ function collectMobilePaddings(doc: MailDocument): string[] {
     if (block.mobilePadding) seen.add(spacing(block.mobilePadding));
   });
   return [...seen].sort();
+}
+
+/** Which image variants appear, so the CSS for one that never does is not emitted. */
+function collectImageSwaps(doc: MailDocument, darkImages: boolean): ImageSwaps {
+  const swaps: ImageSwaps = { light: false, dark: false };
+  walkBlocks(doc, (block) => {
+    if (block.type !== "image" || !safeImageUrl(block.src)) return;
+    if (block.lightSrc && safeImageUrl(block.lightSrc)) swaps.light = true;
+    if (darkImages && block.darkSrc && safeImageUrl(block.darkSrc)) swaps.dark = true;
+  });
+  return swaps;
 }
 
 /** Gaps that need a stacked-mobile rule. Empty means we emit no media query at all. */

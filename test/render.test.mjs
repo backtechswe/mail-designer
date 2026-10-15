@@ -47,7 +47,13 @@ for (const [name, doc] of docs) {
     const { html } = toHtml(doc);
     for (const tag of html.match(/<img[^>]*>/g) ?? []) {
       assert.match(tag, /border="0"/, `missing border=0: ${tag}`);
-      assert.match(tag, /display:block/, `missing display:block: ${tag}`);
+      // A light or dark variant is hidden inline until its media query reveals it — and the
+      // rule that does says display:block, so it lands without the descender gap too.
+      const variant = /class="md-img-[ld]"/.test(tag);
+      assert.match(tag, variant ? /display:none/ : /display:block/, `wrong display: ${tag}`);
+    }
+    if (/class="md-img-[ld]"/.test(html)) {
+      assert.match(html, /\.md-img-[ld]\{display:block!important/);
     }
   });
 
